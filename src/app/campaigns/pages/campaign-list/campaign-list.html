@@ -1,0 +1,7 @@
+<h1>Campanhas</h1>
+@for (campaign of campaigns; track campaign.campanhaId) {
+  <div>
+    <h2>{{ campaign.nome }}</h2>
+    <p>{{ campaign.sistema }}</p>
+  </div>
+}

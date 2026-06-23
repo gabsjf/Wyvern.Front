@@ -1,35 +1,36 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { CampaignService } from '../../services/campaign';
-import { Campaign } from '../../models/campaign';
+import { SessaoService } from '../../services/sessao.service';
+import { Sessao } from '../../models/sessao';
 
 @Component({
-  selector: 'app-campaign-detail',
+  selector: 'app-sessao-detail',
   imports: [CommonModule, RouterModule],
-  templateUrl: './campaign-detail.html',
-  styleUrl: './campaign-detail.scss',
+  templateUrl: './sessao-detail.html',
+  styleUrl: './sessao-detail.scss',
 })
-export class CampaignDetail implements OnInit {
+export class SessaoDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private campaignService = inject(CampaignService);
+  private sessaoService = inject(SessaoService);
   private cdr = inject(ChangeDetectorRef);
 
-  campaign: Campaign | null = null;
+  sessao: Sessao | null = null;
   isLoading = true;
+  showDeleteModal = false;
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
-      this.campaignService.getById(id).subscribe({
+      this.sessaoService.getById(id).subscribe({
         next: (data) => {
-          this.campaign = data;
+          this.sessao = data;
           this.isLoading = false;
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error('Erro ao buscar campanha', err);
+          console.error('Erro ao buscar sessão', err);
           this.isLoading = false;
           this.cdr.detectChanges();
         }
@@ -40,9 +41,7 @@ export class CampaignDetail implements OnInit {
     }
   }
 
-  showDeleteModal = false;
-
-  deleteCampaign() {
+  deleteSessao() {
     this.showDeleteModal = true;
   }
 
@@ -51,13 +50,13 @@ export class CampaignDetail implements OnInit {
   }
 
   confirmDelete() {
-    if (this.campaign?.campanhaId) {
-      this.campaignService.delete(this.campaign.campanhaId).subscribe({
+    if (this.sessao?.sessaoId) {
+      this.sessaoService.delete(this.sessao.sessaoId).subscribe({
         next: () => {
-          this.router.navigate(['/campaigns']);
+          this.router.navigate(['/sessoes']);
         },
         error: (err) => {
-          console.error('Erro ao deletar campanha', err);
+          console.error('Erro ao deletar sessão', err);
           this.showDeleteModal = false;
         }
       });

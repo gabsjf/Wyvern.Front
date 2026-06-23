@@ -1,0 +1,65 @@
+<div class="container animate-fade-in">
+  @if (isLoading) {
+    <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-secondary);">
+      Decifrando os registros do cronista...
+    </div>
+  } @else if (sessao) {
+    <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+      <button class="btn-secondary" routerLink="/sessoes">← Voltar</button>
+      <div style="display: flex; gap: var(--spacing-sm);">
+        <button class="btn-primary" [routerLink]="['/sessoes', sessao.sessaoId, 'edit']" style="background: rgba(46, 213, 115, 0.2); border-color: rgba(46, 213, 115, 0.4); color: var(--primary-color);">Editar Sessão</button>
+        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteSessao()">Apagar Registro</button>
+      </div>
+    </div>
+
+    <div class="glass-panel" style="padding: var(--spacing-xl);">
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: var(--spacing-xs);">
+        <span style="background: rgba(46, 213, 115, 0.15); color: var(--primary-color); padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+          Sessão #{{ sessao.numeroSessao }}
+        </span>
+        <h1 class="title-glow text-accent" style="font-size: 2.2rem; margin: 0;">
+          {{ sessao.nome }}
+        </h1>
+      </div>
+      
+      <div style="display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-lg); flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+        <div style="flex: 1; min-width: 200px;">
+          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Data Ocorrida</h3>
+          <p style="font-size: 1.2rem; font-weight: 500;">{{ sessao.dataSessao | date:'longDate' }}</p>
+        </div>
+        
+        <div style="flex: 1; min-width: 200px;">
+          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Campanha Vinculada</h3>
+          <p style="font-size: 1.2rem; font-weight: 500; color: var(--accent-color);">ID #{{ sessao.campanhaId }}</p>
+        </div>
+      </div>
+      
+      <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid rgba(255,255,255,0.05);">
+        <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Notas e Resumo dos Eventos</h3>
+        <p style="color: var(--text-primary); font-size: 1.1rem; line-height: 1.7; white-space: pre-wrap;">
+          {{ sessao.obs || 'Nenhuma nota foi registrada para este dia.' }}
+        </p>
+      </div>
+    </div>
+  } @else {
+    <div style="text-align: center; padding: var(--spacing-xl);">
+      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Registro de sessão perdido no tempo.</h2>
+      <button class="btn-primary" routerLink="/sessoes">Voltar ao Arquivo</button>
+    </div>
+  }
+</div>
+
+@if (showDeleteModal) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel animate-fade-in">
+      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Confirmar Exclusão</h2>
+      <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+        Tem certeza que deseja esquecer a <strong>Sessão #{{ sessao?.numeroSessao }}</strong>? Esta ação é irreversível e as memórias da aventura serão perdidas.
+      </p>
+      <div class="flex-between" style="justify-content: flex-end; gap: 1rem;">
+        <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.8);" (click)="confirmDelete()">Apagar Memória</button>
+      </div>
+    </div>
+  </div>
+}

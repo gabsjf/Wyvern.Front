@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';import { CommonModule } from '@angular/common';
 import { CampaignService } from '../../services/campaign';
 import { Campaign } from '../../models/campaign';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-campaign-list',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './campaign-list.html',
   styleUrl: './campaign-list.scss',
 })

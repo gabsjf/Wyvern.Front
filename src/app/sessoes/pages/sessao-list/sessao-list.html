@@ -1,0 +1,40 @@
+<div class="container animate-fade-in">
+  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+    <div>
+      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Sessões</h1>
+      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Os registros históricos das suas campanhas.</p>
+    </div>
+    <button class="btn-primary" routerLink="/sessoes/create">+ Nova Sessão</button>
+  </div>
+
+  <div class="glass-panel" style="overflow-x: auto;">
+    <table class="premium-table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Título</th>
+          <th>Data</th>
+          <th>ID Campanha</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sessao of sessoes; track sessao.sessaoId) {
+          <tr>
+            <td style="font-weight: bold;">Sessão #{{ sessao.numeroSessao }}</td>
+            <td style="font-weight: 500; color: var(--primary-color);">{{ sessao.nome }}</td>
+            <td>{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</td>
+            <td>#{{ sessao.campanhaId }}</td>
+            <td>
+              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" style="text-align: center; padding: var(--spacing-lg);">Nenhuma sessão registrada.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

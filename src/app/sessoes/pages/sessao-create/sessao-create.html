@@ -1,0 +1,53 @@
+<div class="container animate-fade-in">
+  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+    <h1 class="title-glow text-accent" style="margin-bottom: 0;">
+      {{ isEditMode ? 'Editar Sessão' : 'Nova Sessão' }}
+    </h1>
+    <button class="btn-secondary" routerLink="/sessoes">Cancelar</button>
+  </div>
+
+  <div class="glass-panel" style="padding: var(--spacing-xl); max-width: 800px; margin: 0 auto;">
+    <form (ngSubmit)="save()" #sessaoForm="ngForm">
+      
+      <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1; min-width: 100px;">
+          <label class="form-label" for="numeroSessao">Sessão Nº</label>
+          <input type="number" id="numeroSessao" name="numeroSessao" class="form-control" [(ngModel)]="sessao.numeroSessao" required />
+        </div>
+
+        <div class="form-group" style="flex: 3; min-width: 250px;">
+          <label class="form-label" for="nome">Título da Sessão</label>
+          <input type="text" id="nome" name="nome" class="form-control" [(ngModel)]="sessao.nome" required placeholder="Ex: A Caverna dos Goblins..." />
+        </div>
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1; min-width: 200px;">
+          <label class="form-label" for="dataSessao">Data da Sessão</label>
+          <input type="date" id="dataSessao" name="dataSessao" class="form-control" [(ngModel)]="sessao.dataSessao" required />
+        </div>
+
+        <div class="form-group" style="flex: 1; min-width: 200px;">
+          <label class="form-label" for="campanhaId">Campanha</label>
+          <select id="campanhaId" name="campanhaId" class="form-control" [(ngModel)]="sessao.campanhaId" required>
+            <option [ngValue]="0" disabled>Selecione uma campanha...</option>
+            @for (campanha of campanhas; track campanha.campanhaId) {
+              <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="obs">Anotações / Resumo</label>
+        <textarea id="obs" name="obs" class="form-control" [(ngModel)]="sessao.obs" rows="6" placeholder="Escreva o que aconteceu de importante nesta sessão..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-lg);">
+        <button type="submit" class="btn-primary" [disabled]="!sessaoForm.form.valid || sessao.campanhaId === 0">
+          {{ isEditMode ? 'Salvar Alterações' : 'Registrar Sessão' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

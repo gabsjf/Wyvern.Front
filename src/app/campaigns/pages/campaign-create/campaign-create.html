@@ -1,1 +1,43 @@
-<p>campaign-create works!</p>
+<div class="container animate-fade-in">
+  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+    <div>
+      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Nova Campanha</h1>
+      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Crie um novo mundo para explorar.</p>
+    </div>
+    <button class="btn-secondary" routerLink="/campaigns">Voltar</button>
+  </div>
+
+  <div class="glass-panel" style="padding: var(--spacing-xl); max-width: 600px; margin: 0 auto;">
+    <form (ngSubmit)="save()" #campaignForm="ngForm">
+      <div class="form-group">
+        <label class="form-label" for="nome">Nome da Campanha</label>
+        <input 
+          type="text" 
+          id="nome" 
+          name="nome" 
+          class="form-control" 
+          [(ngModel)]="campaign.nome" 
+          required 
+          placeholder="Ex: O Dragão do Gelo"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="sistema">Sistema de RPG</label>
+        <input 
+          type="text" 
+          id="sistema" 
+          name="sistema" 
+          class="form-control" 
+          [(ngModel)]="campaign.sistema" 
+          required 
+          placeholder="Ex: D&D 5e, Tormenta20"
+        />
+      </div>
+
+      <div style="margin-top: var(--spacing-lg); text-align: right;">
+        <button type="submit" class="btn-primary" [disabled]="!campaignForm.valid">Criar Campanha</button>
+      </div>
+    </form>
+  </div>
+</div>

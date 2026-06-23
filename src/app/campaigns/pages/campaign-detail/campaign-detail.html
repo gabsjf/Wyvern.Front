@@ -1,1 +1,62 @@
-<p>campaign-detail works!</p>
+<div class="container animate-fade-in">
+  @if (isLoading) {
+    <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-secondary);">
+      Carregando os pergaminhos da campanha...
+    </div>
+  } @else if (campaign) {
+    <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+      <button class="btn-secondary" routerLink="/campaigns">← Voltar</button>
+      <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
+    </div>
+
+    <div class="glass-panel" style="padding: var(--spacing-xl);">
+      <h1 class="title-glow text-accent" style="font-size: 2.5rem; margin-bottom: var(--spacing-sm);">
+        {{ campaign.nome }}
+      </h1>
+      
+      <div style="display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-lg); flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px;">
+          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Sistema</h3>
+          <p style="font-size: 1.2rem; font-weight: 500;">{{ campaign.sistema || 'Não especificado' }}</p>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Mestre (ID)</h3>
+          <p style="font-size: 1.2rem; font-weight: 500;">{{ campaign.mestreId }}</p>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Status</h3>
+          <p style="font-size: 1.2rem; font-weight: 500; color: var(--accent-color);">
+            {{ campaign.ativo ? 'Em Andamento' : 'Concluída / Inativa' }}
+          </p>
+        </div>
+      </div>
+      
+      <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid rgba(255,255,255,0.05);">
+        <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Membros & Aventureiros</h3>
+        <p style="color: var(--text-muted); font-style: italic;">(Em breve... os personagens vinculados a esta campanha aparecerão aqui.)</p>
+      </div>
+    </div>
+  } @else {
+    <div style="text-align: center; padding: var(--spacing-xl);">
+      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Campanha não encontrada.</h2>
+      <button class="btn-primary" routerLink="/campaigns">Voltar para Campanhas</button>
+    </div>
+  }
+</div>
+
+@if (showDeleteModal) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel animate-fade-in">
+      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Confirmar Exclusão</h2>
+      <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+        Tem certeza que deseja apagar a campanha <strong>{{ campaign?.nome }}</strong>? Esta ação destruirá o mundo criado e não pode ser desfeita.
+      </p>
+      <div class="flex-between" style="justify-content: flex-end; gap: 1rem;">
+        <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.8);" (click)="confirmDelete()">Destruir Mundo</button>
+      </div>
+    </div>
+  </div>
+}

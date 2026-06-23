@@ -22,7 +22,7 @@ export class CampaignService {
   update(id: number, campaign: Campaign) {
     return this.http.put<Campaign>(`${this.apiUrl}/${id}`, campaign);
   }
-  delete(id: number){
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  delete(id: number) {
+    return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
   }
 }

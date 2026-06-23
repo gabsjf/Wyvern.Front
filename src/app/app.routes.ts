@@ -2,10 +2,23 @@ import { Routes } from '@angular/router';
 import { CampaignList } from './campaigns/pages/campaign-list/campaign-list';
 import { CampaignCreate } from './campaigns/pages/campaign-create/campaign-create';
 import { CampaignDetail } from './campaigns/pages/campaign-detail/campaign-detail';
+import { PersonagemList } from './personagens/pages/personagem-list/personagem-list';
+import { PersonagemCreate } from './personagens/pages/personagem-create/personagem-create';
+import { PersonagemDetail } from './personagens/pages/personagem-detail/personagem-detail';
+import { SessaoList } from './sessoes/pages/sessao-list/sessao-list';
+import { SessaoCreate } from './sessoes/pages/sessao-create/sessao-create';
+import { SessaoDetail } from './sessoes/pages/sessao-detail/sessao-detail';
 
 export const routes: Routes = [
     {path: '', redirectTo: '/campaigns', pathMatch: 'full'},
     {path: 'campaigns', component: CampaignList},
     {path: 'campaigns/create', component: CampaignCreate},
     {path: 'campaigns/:id', component: CampaignDetail},
+    {path: 'personagens', component: PersonagemList},
+    {path: 'personagens/create', component: PersonagemCreate},
+    {path: 'personagens/:id', component: PersonagemDetail},
+    {path: 'sessoes', component: SessaoList},
+    {path: 'sessoes/create', component: SessaoCreate},
+    {path: 'sessoes/:id/edit', component: SessaoCreate},
+    {path: 'sessoes/:id', component: SessaoDetail},
 ];

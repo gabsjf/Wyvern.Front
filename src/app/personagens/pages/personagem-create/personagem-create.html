@@ -1,0 +1,73 @@
+<div class="container animate-fade-in">
+  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+    <div>
+      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Novo Personagem</h1>
+      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Crie um herói lendário ou um NPC.</p>
+    </div>
+    <button class="btn-secondary" routerLink="/personagens">Voltar</button>
+  </div>
+
+  <div class="glass-panel" style="padding: var(--spacing-xl); max-width: 600px; margin: 0 auto;">
+    <form (ngSubmit)="save()" #personagemForm="ngForm">
+      <div class="form-group">
+        <label class="form-label" for="nome">Nome do Personagem</label>
+        <input 
+          type="text" 
+          id="nome" 
+          name="nome" 
+          class="form-control" 
+          [(ngModel)]="personagem.nome" 
+          required 
+          placeholder="Ex: Alatar, O Sábio"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="descricao">Descrição / Biografia</label>
+        <textarea 
+          id="descricao" 
+          name="descricao" 
+          class="form-control" 
+          [(ngModel)]="personagem.descricao" 
+          rows="4"
+          placeholder="Conte um pouco sobre a história dele..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="campanhaId">Campanha</label>
+        <select 
+          id="campanhaId" 
+          name="campanhaId" 
+          class="form-control" 
+          [(ngModel)]="personagem.campanhaId" 
+          required
+        >
+          <option [ngValue]="0" disabled>Selecione uma campanha...</option>
+          @for (campanha of campanhas; track campanha.campanhaId) {
+            <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="tipoId">Tipo</label>
+        <select 
+          id="tipoId" 
+          name="tipoId" 
+          class="form-control" 
+          [(ngModel)]="personagem.tipoId" 
+          required
+        >
+          <option [ngValue]="1">Jogador</option>
+          <option [ngValue]="2">NPC</option>
+          <option [ngValue]="3">Monstro</option>
+        </select>
+      </div>
+
+      <div style="margin-top: var(--spacing-lg); text-align: right;">
+        <button type="submit" class="btn-primary" [disabled]="!personagemForm.valid">Criar Personagem</button>
+      </div>
+    </form>
+  </div>
+</div>

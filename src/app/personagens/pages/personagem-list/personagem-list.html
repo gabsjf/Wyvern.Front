@@ -1,0 +1,38 @@
+<div class="container animate-fade-in">
+  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+    <div>
+      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Personagens</h1>
+      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Gerencie seus heróis e NPCs.</p>
+    </div>
+    <button class="btn-primary" routerLink="/personagens/create">+ Novo Personagem</button>
+  </div>
+
+  <div class="glass-panel" style="overflow-x: auto;">
+    <table class="premium-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>ID Campanha</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (personagem of personagens; track personagem.personagemId) {
+          <tr>
+            <td style="font-weight: 500; color: var(--primary-color);">{{ personagem.nome }}</td>
+            <td>{{ personagem.descricao || '-' }}</td>
+            <td>#{{ personagem.campanhaId }}</td>
+            <td>
+              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/personagens', personagem.personagemId]">Detalhes</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" style="text-align: center; padding: var(--spacing-lg);">Nenhum personagem encontrado.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

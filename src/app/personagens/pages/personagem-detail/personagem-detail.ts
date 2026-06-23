@@ -1,35 +1,35 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { CampaignService } from '../../services/campaign';
-import { Campaign } from '../../models/campaign';
+import { PersonagemService } from '../../services/personagem.service';
+import { Personagem } from '../../models/personagem';
 
 @Component({
-  selector: 'app-campaign-detail',
+  selector: 'app-personagem-detail',
   imports: [CommonModule, RouterModule],
-  templateUrl: './campaign-detail.html',
-  styleUrl: './campaign-detail.scss',
+  templateUrl: './personagem-detail.html',
+  styleUrl: './personagem-detail.scss',
 })
-export class CampaignDetail implements OnInit {
+export class PersonagemDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private campaignService = inject(CampaignService);
+  private personagemService = inject(PersonagemService);
   private cdr = inject(ChangeDetectorRef);
 
-  campaign: Campaign | null = null;
+  personagem: Personagem | null = null;
   isLoading = true;
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
-      this.campaignService.getById(id).subscribe({
+      this.personagemService.getById(id).subscribe({
         next: (data) => {
-          this.campaign = data;
+          this.personagem = data;
           this.isLoading = false;
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error('Erro ao buscar campanha', err);
+          console.error('Erro ao buscar personagem', err);
           this.isLoading = false;
           this.cdr.detectChanges();
         }
@@ -40,9 +40,18 @@ export class CampaignDetail implements OnInit {
     }
   }
 
+  getTipoName(tipoId: number): string {
+    switch (tipoId) {
+      case 1: return 'Jogador (PC)';
+      case 2: return 'NPC';
+      case 3: return 'Monstro';
+      default: return 'Desconhecido';
+    }
+  }
+
   showDeleteModal = false;
 
-  deleteCampaign() {
+  deletePersonagem() {
     this.showDeleteModal = true;
   }
 
@@ -51,13 +60,13 @@ export class CampaignDetail implements OnInit {
   }
 
   confirmDelete() {
-    if (this.campaign?.campanhaId) {
-      this.campaignService.delete(this.campaign.campanhaId).subscribe({
+    if (this.personagem?.personagemId) {
+      this.personagemService.delete(this.personagem.personagemId).subscribe({
         next: () => {
-          this.router.navigate(['/campaigns']);
+          this.router.navigate(['/personagens']);
         },
         error: (err) => {
-          console.error('Erro ao deletar campanha', err);
+          console.error('Erro ao deletar personagem', err);
           this.showDeleteModal = false;
         }
       });

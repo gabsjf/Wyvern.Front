@@ -19,6 +19,7 @@ export class PersonagemCreate implements OnInit {
   private router = inject(Router);
 
   campanhas: Campaign[] = [];
+  activeTab: string = 'basico';
 
   personagem: Personagem = {
     nome: '',
@@ -27,8 +28,16 @@ export class PersonagemCreate implements OnInit {
     tipoId: 1,
     criadoPorId: 1, // mock
     criadoEm: new Date().toISOString(),
-    ativo: true
+    ativo: true,
+    atributo: { forca: 10, destreza: 10, constituicao: 10, inteligencia: 10, sabedoria: 10, carisma: 10 },
+    personagemPlayer: { classe: '', raca: '', nivel: 1, antecedente: '', alinhamento: '', subclasse: '', tamanho: 'Médio', xp: 0 },
+    personagemCombate: { vidaMaxima: 10, vidaAtual: 10, classeArmadura: 10, iniciativa: 0, deslocamento: 9 },
+    personagemDetalhes: { aparencia: '', historiaPersonalidade: '', tracosEspecie: '', talentos: '', caracteristicasClasse: '', idiomas: '' }
   };
+
+  setTab(tab: string) {
+    this.activeTab = tab;
+  }
 
   ngOnInit() {
     this.campaignService.getAll().subscribe({

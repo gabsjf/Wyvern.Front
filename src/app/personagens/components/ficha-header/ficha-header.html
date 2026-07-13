@@ -1,0 +1,56 @@
+<div class="header-glass-panel glass-panel">
+  <div class="stat-box">
+    <span class="stat-label">Classe de Armadura</span>
+    <div class="shield-shape">
+       <span class="stat-value">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+    </div>
+  </div>
+  
+  <div class="stat-box">
+    <span class="stat-label">Iniciativa</span>
+    <div class="box-shape">
+       <span class="stat-value">{{ personagem?.personagemCombate?.iniciativa >= 0 ? '+' : '' }}{{ personagem?.personagemCombate?.iniciativa || 0 }}</span>
+    </div>
+  </div>
+  
+  <div class="stat-box">
+    <span class="stat-label">Deslocamento</span>
+    <div class="box-shape">
+       <span class="stat-value">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
+    </div>
+  </div>
+  
+  <div class="ficha-header">
+    <div class="avatar-container">
+        <!-- Temporary avatar placeholder -->
+        <div class="avatar-glow"></div>
+        <img src="https://i.pinimg.com/736x/ec/d7/6d/ecd76da2834b1d6438090723ff43ad05.jpg" alt="Avatar" class="avatar-img">
+    </div>
+    <div class="character-info">
+        <h1 class="character-name">{{ personagem?.nome || 'Nome do Personagem' }}</h1>
+        <div class="character-details">
+            <span class="detail-badge">{{ personagem?.personagemPlayer?.classe || 'Classe' }} Nível {{ personagem?.personagemPlayer?.nivel || 1 }}</span>
+            <span class="detail-badge">{{ personagem?.personagemPlayer?.raca || 'Espécie' }}</span>
+            <span class="detail-badge">{{ personagem?.personagemPlayer?.antecedente || 'Antecedente' }}</span>
+            <span class="detail-badge">{{ personagem?.personagemPlayer?.alinhamento || 'Alinhamento' }}</span>
+        </div>
+    </div>
+</div>
+  
+  <div class="stat-box hp-box">
+    <div class="hp-header">
+      <span class="stat-label">Pontos de Vida</span>
+      <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 10 }}</span>
+    </div>
+    <div class="hp-content">
+      <span class="hp-current">{{ personagem?.personagemCombate?.vidaAtual || 10 }}</span>
+    </div>
+  </div>
+  
+  <div class="stat-box">
+    <span class="stat-label">Bônus de Proficiência</span>
+    <div class="box-shape proficiency">
+       <span class="stat-value">+2</span>
+    </div>
+  </div>
+</div>

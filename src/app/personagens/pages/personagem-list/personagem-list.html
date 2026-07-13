@@ -24,7 +24,7 @@
             <td>{{ personagem.descricao || '-' }}</td>
             <td>#{{ personagem.campanhaId }}</td>
             <td>
-              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/personagens', personagem.personagemId]">Detalhes</button>
+              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/ficha', personagem.personagemId]">Ficha Completa</button>
             </td>
           </tr>
         } @empty {

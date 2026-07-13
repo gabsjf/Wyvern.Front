@@ -1,0 +1,209 @@
+<div class="ficha-container animate-fade-in">
+  <aside class="ficha-sidebar glass-panel">
+    <div class="character-portrait-section">
+      <div class="portrait-img-placeholder title-glow">
+        <i class="icon-user"></i>
+      </div>
+      <h2 class="text-accent character-name">{{ personagem?.nome || 'Carregando...' }}</h2>
+      <p class="text-secondary character-class">{{ personagem?.personagemPlayer?.classe || 'Sem Classe' }} Nv. {{ personagem?.personagemPlayer?.nivel || 1 }}</p>
+    </div>
+    
+    <nav class="ficha-nav">
+      <button class="nav-btn" [class.active]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos e Perícias</button>
+      <button class="nav-btn" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
+      <button class="nav-btn" [class.active]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
+      <button class="nav-btn" [class.active]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
+      <button class="nav-btn" [class.active]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
+    </nav>
+    
+    <div class="sidebar-actions">
+       <button class="btn-primary w-100" (click)="importPdf()">Importar PDF 5.5</button>
+       <button class="btn-secondary w-100 mt-2" (click)="exportPdf()">Exportar PDF</button>
+    </div>
+  </aside>
+
+  <main class="ficha-content">
+    <app-ficha-header [personagem]="personagem"></app-ficha-header>
+    
+    <div class="ficha-main-area">
+      <!-- ABA: ATRIBUTOS E PERÍCIAS -->
+      <ng-container *ngIf="activeTab === 'atributos'">
+        <app-ficha-atributos [personagem]="personagem"></app-ficha-atributos>
+        
+        <div class="secondary-info-grid">
+          <div class="info-card glass-panel">
+            <h3 class="text-accent title-glow">Sentidos</h3>
+            <div class="info-row"><span>Percepção Passiva</span> <span class="val">11</span></div>
+            <div class="info-row mt-2"><span class="text-secondary">Visão no Escuro 18m</span></div>
+          </div>
+          
+          <div class="info-card glass-panel">
+            <h3 class="text-accent title-glow">Defesas e Condições</h3>
+            <div class="info-text">
+               <strong>Resistências:</strong> Nenhuma<br><br>
+               <strong>Condições Ativas:</strong> Nenhuma
+            </div>
+          </div>
+          
+          <div class="info-card glass-panel">
+            <h3 class="text-accent title-glow">Proficiências</h3>
+            <div class="info-text">
+               <strong>Armaduras:</strong> {{ personagem?.personagemDetalhes?.proficienciaArmaduras || 'Nenhuma' }}<br>
+               <strong>Armas:</strong> {{ personagem?.personagemDetalhes?.proficienciaArmas || 'Nenhuma' }}<br>
+               <strong>Idiomas:</strong> {{ personagem?.personagemDetalhes?.idiomas || 'Comum' }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ABA: COMBATE -->
+      <ng-container *ngIf="activeTab === 'combate'">
+        <div class="weapons-panel glass-panel">
+          <h3 class="panel-title text-accent title-glow">Ataques e Armas</h3>
+          <table class="premium-table">
+            <thead>
+              <tr>
+                <th>Ataque</th>
+                <th>Alcance</th>
+                <th>Acerto</th>
+                <th>Dano / Tipo</th>
+                <th>Propriedades</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Espada Longa</strong></td>
+                <td>1,5m</td>
+                <td><span class="badge-acerto">+5</span></td>
+                <td>1d8+3 Cortante</td>
+                <td class="text-secondary">Versátil (1d10)</td>
+              </tr>
+              <tr>
+                <td><strong>Azagaia</strong></td>
+                <td>9m / 36m</td>
+                <td><span class="badge-acerto">+5</span></td>
+                <td>1d6+3 Perfurante</td>
+                <td class="text-secondary">Arremesso</td>
+              </tr>
+              <tr>
+                <td><strong>Ataque Desarmado</strong></td>
+                <td>1,5m</td>
+                <td><span class="badge-acerto">+5</span></td>
+                <td>4 Contundente</td>
+                <td class="text-secondary">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+      
+      <!-- ABA: MAGIAS -->
+      <ng-container *ngIf="activeTab === 'magias'">
+        <div class="magias-grid">
+          <div class="spell-panel glass-panel">
+             <div class="spell-header">
+                <h3 class="panel-title text-accent title-glow">Truques (Nível 0)</h3>
+             </div>
+             <div class="spell-list">
+                <div class="spell-card">
+                   <div class="spell-name">Impor os Penhores</div>
+                   <div class="spell-meta">1 Ação • 9m • V, S</div>
+                </div>
+             </div>
+          </div>
+          
+          <div class="spell-panel glass-panel">
+             <div class="spell-header flex-between">
+                <h3 class="panel-title text-accent title-glow">Magias de Nível 1</h3>
+                <div class="spell-slots">
+                  <span class="slot-lbl">Espaços:</span>
+                  <div class="slot-checkboxes">
+                    <input type="checkbox" checked>
+                    <input type="checkbox" checked>
+                  </div>
+                </div>
+             </div>
+             <div class="spell-list">
+                <div class="spell-card">
+                   <div class="spell-name">Curar Ferimentos</div>
+                   <div class="spell-meta">1 Ação • Toque • V, S</div>
+                </div>
+                <div class="spell-card">
+                   <div class="spell-name">Destruição Colérica</div>
+                   <div class="spell-meta">1 Ação Bônus • Pessoal • V</div>
+                </div>
+                <div class="spell-card">
+                   <div class="spell-name">Duelo Compelido</div>
+                   <div class="spell-meta">1 Ação Bônus • 9m • V</div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ABA: INVENTÁRIO -->
+      <ng-container *ngIf="activeTab === 'inventario'">
+        <div class="inventario-layout">
+          <div class="wealth-panel glass-panel">
+            <div class="coin-box pc"><span class="val">{{ personagem?.personagemDinheiro?.pc || 0 }}</span><span class="lbl">PC</span></div>
+            <div class="coin-box pp"><span class="val">{{ personagem?.personagemDinheiro?.pp || 0 }}</span><span class="lbl">PP</span></div>
+            <div class="coin-box pe"><span class="val">{{ personagem?.personagemDinheiro?.pe || 0 }}</span><span class="lbl">PE</span></div>
+            <div class="coin-box po"><span class="val">{{ personagem?.personagemDinheiro?.po || 0 }}</span><span class="lbl">PO</span></div>
+            <div class="coin-box pl"><span class="val">{{ personagem?.personagemDinheiro?.pl || 0 }}</span><span class="lbl">PL</span></div>
+          </div>
+          
+          <div class="items-panel glass-panel">
+             <h3 class="panel-title text-accent title-glow">Equipamentos</h3>
+             <ul class="item-list">
+                <li>
+                  <span class="item-name">Cota de Malha</span>
+                  <span class="item-weight text-secondary">25 kg</span>
+                </li>
+                <li>
+                  <span class="item-name">Pacote de Explorador</span>
+                  <span class="item-weight text-secondary">29 kg</span>
+                </li>
+                <li>
+                  <span class="item-name">Símbolo Sagrado (Amuleto)</span>
+                  <span class="item-weight text-secondary">--</span>
+                </li>
+             </ul>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ABA: CARACTERÍSTICAS E LORE -->
+      <ng-container *ngIf="activeTab === 'caracteristicas'">
+        <div class="features-layout">
+          <div class="feature-card glass-panel" *ngIf="personagem?.personagemDetalhes?.historiaPersonalidade">
+            <div class="feature-header">
+               <h4 class="text-accent">História e Personalidade</h4>
+            </div>
+            <p class="feature-desc" style="white-space: pre-wrap;">{{ personagem?.personagemDetalhes?.historiaPersonalidade }}</p>
+          </div>
+
+          <div class="feature-card glass-panel" *ngIf="personagem?.personagemDetalhes?.aparencia">
+            <div class="feature-header">
+               <h4 class="text-accent">Aparência</h4>
+            </div>
+            <p class="feature-desc" style="white-space: pre-wrap;">{{ personagem?.personagemDetalhes?.aparencia }}</p>
+          </div>
+          
+          <div class="feature-card glass-panel" *ngIf="personagem?.personagemDetalhes?.caracteristicasClasse">
+            <div class="feature-header">
+               <h4 class="text-accent">Características de Classe</h4>
+            </div>
+            <p class="feature-desc" style="white-space: pre-wrap;">{{ personagem?.personagemDetalhes?.caracteristicasClasse }}</p>
+          </div>
+
+          <div class="feature-card glass-panel" *ngIf="personagem?.personagemDetalhes?.talentos">
+            <div class="feature-header">
+               <h4 class="text-accent">Traços de Espécie & Talentos</h4>
+            </div>
+            <p class="feature-desc" style="white-space: pre-wrap;">{{ personagem?.personagemDetalhes?.talentos }}</p>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </main>
+</div>

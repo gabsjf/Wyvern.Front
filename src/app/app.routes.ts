@@ -17,6 +17,8 @@ export const routes: Routes = [
     {path: 'personagens', component: PersonagemList},
     {path: 'personagens/create', component: PersonagemCreate},
     {path: 'personagens/:id', component: PersonagemDetail},
+    {path: 'ficha', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
+    {path: 'ficha/:id', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
     {path: 'sessoes', component: SessaoList},
     {path: 'sessoes/create', component: SessaoCreate},
     {path: 'sessoes/:id/edit', component: SessaoCreate},

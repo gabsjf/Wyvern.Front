@@ -1,0 +1,175 @@
+<div class="atributos-grid">
+  <!-- Força -->
+  <div class="atributo-card glass-panel">
+    <div class="attr-header">FORÇA</div>
+    <div class="attr-score">{{ personagem?.atributo?.forca || 10 }}</div>
+    <div class="attr-mod">{{ getMod(personagem?.atributo?.forca) }}</div>
+    <div class="attr-skills">
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" checked disabled>
+        <span class="skill-name">Salvaguarda</span>
+        <span class="skill-val">+6</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" checked disabled>
+        <span class="skill-name">Atletismo</span>
+        <span class="skill-val">+6</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Destreza -->
+  <div class="atributo-card glass-panel">
+    <div class="attr-header">DESTREZA</div>
+    <div class="attr-score">{{ personagem?.atributo?.destreza || 10 }}</div>
+    <div class="attr-mod">{{ getMod(personagem?.atributo?.destreza) }}</div>
+    <div class="attr-skills">
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Salvaguarda</span>
+        <span class="skill-val">+2</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Acrobacia</span>
+        <span class="skill-val">+2</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Furtividade</span>
+        <span class="skill-val">+2</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Prestidigitação</span>
+        <span class="skill-val">+2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Constituição -->
+  <div class="atributo-card glass-panel">
+    <div class="attr-header">CONSTITUIÇÃO</div>
+    <div class="attr-score">{{ personagem?.atributo?.constituicao || 10 }}</div>
+    <div class="attr-mod">{{ getMod(personagem?.atributo?.constituicao) }}</div>
+    <div class="attr-skills">
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Salvaguarda</span>
+        <span class="skill-val">+2</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Inteligência -->
+  <div class="atributo-card glass-panel">
+    <div class="attr-header">INTELIGÊNCIA</div>
+    <div class="attr-score">{{ personagem?.atributo?.inteligencia || 10 }}</div>
+    <div class="attr-mod">{{ getMod(personagem?.atributo?.inteligencia) }}</div>
+    <div class="attr-skills">
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Salvaguarda</span>
+        <span class="skill-val">+0</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Arcanismo</span>
+        <span class="skill-val">+0</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">História</span>
+        <span class="skill-val">+0</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Investigação</span>
+        <span class="skill-val">+0</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Natureza</span>
+        <span class="skill-val">+0</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Religião</span>
+        <span class="skill-val">+0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sabedoria -->
+  <div class="atributo-card glass-panel">
+    <div class="attr-header">SABEDORIA</div>
+    <div class="attr-score">{{ personagem?.atributo?.sabedoria || 10 }}</div>
+    <div class="attr-mod">{{ getMod(personagem?.atributo?.sabedoria) }}</div>
+    <div class="attr-skills">
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Salvaguarda</span>
+        <span class="skill-val">+1</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Adestrar Animais</span>
+        <span class="skill-val">+1</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" checked disabled>
+        <span class="skill-name">Intuição</span>
+        <span class="skill-val">+4</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Medicina</span>
+        <span class="skill-val">+1</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Percepção</span>
+        <span class="skill-val">+1</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Sobrevivência</span>
+        <span class="skill-val">+1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carisma -->
+  <div class="atributo-card glass-panel">
+    <div class="attr-header">CARISMA</div>
+    <div class="attr-score">{{ personagem?.atributo?.carisma || 10 }}</div>
+    <div class="attr-mod">{{ getMod(personagem?.atributo?.carisma) }}</div>
+    <div class="attr-skills">
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" checked disabled>
+        <span class="skill-name">Salvaguarda</span>
+        <span class="skill-val">+5</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Atuação</span>
+        <span class="skill-val">+2</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Enganação</span>
+        <span class="skill-val">+2</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" checked disabled>
+        <span class="skill-name">Intimidação</span>
+        <span class="skill-val">+5</span>
+      </div>
+      <div class="skill-row">
+        <input type="radio" class="skill-prof" disabled>
+        <span class="skill-name">Persuasão</span>
+        <span class="skill-val">+2</span>
+      </div>
+    </div>
+  </div>
+</div>

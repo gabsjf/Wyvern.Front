@@ -7,4 +7,9 @@ export interface Personagem {
     criadoPorId?: number;
     criadoEm?: string;
     ativo?: boolean;
+    atributo?: any;
+    personagemPlayer?: any;
+    personagemCombate?: any;
+    personagemDetalhes?: any;
+    personagemDinheiro?: any;
 }

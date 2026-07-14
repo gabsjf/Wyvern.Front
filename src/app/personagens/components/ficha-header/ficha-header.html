@@ -9,7 +9,7 @@
   <div class="stat-box">
     <span class="stat-label">Iniciativa</span>
     <div class="box-shape">
-       <span class="stat-value">{{ personagem?.personagemCombate?.iniciativa >= 0 ? '+' : '' }}{{ personagem?.personagemCombate?.iniciativa || 0 }}</span>
+       <span class="stat-value">{{ getIniciativaStr() }}</span>
     </div>
   </div>
   
@@ -20,37 +20,58 @@
     </div>
   </div>
   
-  <div class="ficha-header">
-    <div class="avatar-container">
-        <!-- Temporary avatar placeholder -->
-        <div class="avatar-glow"></div>
-        <img src="https://i.pinimg.com/736x/ec/d7/6d/ecd76da2834b1d6438090723ff43ad05.jpg" alt="Avatar" class="avatar-img">
+  <div style="display: flex; gap: var(--spacing-md); flex: 1; justify-content: center;">
+    <!-- Dados de Vida -->
+    <div class="stat-box hp-box" style="flex: 1; max-width: 200px;">
+      <div class="hp-header">
+        <span class="stat-label">Dados de Vida</span>
+        <span class="hp-max">Max: {{ personagem?.personagemCombate?.dadoVidaMaximo || 0 }}</span>
+      </div>
+      <div class="hp-content" style="display: flex; justify-content: center; align-items: baseline; gap: 5px;">
+        <span class="hp-current">{{ personagem?.personagemCombate?.dadoVidaMaximo || 'Nenhum' }}</span>
+      </div>
     </div>
-    <div class="character-info">
-        <h1 class="character-name">{{ personagem?.nome || 'Nome do Personagem' }}</h1>
-        <div class="character-details">
-            <span class="detail-badge">{{ personagem?.personagemPlayer?.classe || 'Classe' }} Nível {{ personagem?.personagemPlayer?.nivel || 1 }}</span>
-            <span class="detail-badge">{{ personagem?.personagemPlayer?.raca || 'Espécie' }}</span>
-            <span class="detail-badge">{{ personagem?.personagemPlayer?.antecedente || 'Antecedente' }}</span>
-            <span class="detail-badge">{{ personagem?.personagemPlayer?.alinhamento || 'Alinhamento' }}</span>
+
+    <!-- Testes de Morte -->
+    <div class="stat-box hp-box" style="flex: 1; max-width: 250px; padding-top: 10px;">
+      <div class="hp-header" style="justify-content: center; margin-bottom: 5px;">
+        <span class="stat-label">Salvaguarda de Morte</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">SUCESSOS</span>
+          <div style="display: flex; gap: 5px;">
+             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 1"></div>
+             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 2"></div>
+             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 3"></div>
+          </div>
         </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">FALHAS</span>
+          <div style="display: flex; gap: 5px;">
+             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 1"></div>
+             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 2"></div>
+             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 3"></div>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
   
   <div class="stat-box hp-box">
     <div class="hp-header">
       <span class="stat-label">Pontos de Vida</span>
-      <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 10 }}</span>
+      <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
     </div>
     <div class="hp-content">
-      <span class="hp-current">{{ personagem?.personagemCombate?.vidaAtual || 10 }}</span>
+      <span class="hp-current">{{ personagem?.personagemCombate?.vidaAtual || personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
     </div>
   </div>
   
   <div class="stat-box">
     <span class="stat-label">Bônus de Proficiência</span>
     <div class="box-shape proficiency">
-       <span class="stat-value">+2</span>
+       <span class="stat-value">{{ getProficienciaStr() }}</span>
     </div>
   </div>
 </div>

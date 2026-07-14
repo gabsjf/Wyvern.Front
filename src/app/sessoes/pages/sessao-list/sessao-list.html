@@ -26,6 +26,7 @@
             <td>{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</td>
             <td>#{{ sessao.campanhaId }}</td>
             <td>
+              <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; margin-right: 0.5rem;" [routerLink]="['/play', sessao.sessaoId]">Jogar</button>
               <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</button>
             </td>
           </tr>

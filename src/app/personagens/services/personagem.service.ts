@@ -13,6 +13,9 @@ export class PersonagemService {
   getAll() {
     return this.http.get<Personagem[]>(this.apiUrl);
   }
+  getPericias() {
+    return this.http.get<any[]>(`${environment.apiUrl}/Pericia`);
+  }
   getById(id: number) {
     return this.http.get<Personagem>(`${this.apiUrl}/${id}`);
   }
@@ -24,5 +27,29 @@ export class PersonagemService {
   }
   delete(id: number){
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  addItem(personagemId: number, item: any) {
+    return this.http.post(`${this.apiUrl}/${personagemId}/items`, item);
+  }
+
+  removeItem(personagemId: number, itemId: number) {
+    return this.http.delete(`${this.apiUrl}/${personagemId}/items/${itemId}`);
+  }
+
+  addMagia(personagemId: number, magia: any) {
+    return this.http.post(`${this.apiUrl}/${personagemId}/magias`, magia);
+  }
+
+  removeMagia(personagemId: number, magiaId: number) {
+    return this.http.delete(`${this.apiUrl}/${personagemId}/magias/${magiaId}`);
+  }
+
+  addAtaque(personagemId: number, ataque: any) {
+    return this.http.post(`${this.apiUrl}/${personagemId}/ataques`, ataque);
+  }
+
+  removeAtaque(personagemId: number, ataqueId: number) {
+    return this.http.delete(`${this.apiUrl}/${personagemId}/ataques/${ataqueId}`);
   }
 }

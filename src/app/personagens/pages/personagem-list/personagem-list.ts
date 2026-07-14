@@ -14,6 +14,15 @@ export class PersonagemList implements OnInit {
   private personagemService = inject(PersonagemService);
   private cdr = inject(ChangeDetectorRef);
   personagens: Personagem[] = [];
+  activeTab: string = 'herois';
+
+  get filteredPersonagens() {
+    return this.personagens.filter(p => this.activeTab === 'herois' ? p.tipoId === 1 : p.tipoId !== 1);
+  }
+
+  setTab(tab: string) {
+    this.activeTab = tab;
+  }
 
   ngOnInit() {
     this.loadPersonagens();

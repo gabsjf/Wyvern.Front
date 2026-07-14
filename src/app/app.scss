@@ -1,8 +1,10 @@
 .app-container {
   display: flex;
+  min-height: 100vh;
+  padding: 0 1rem;
 }
 .main-content {
-  margin-left: 280px; /* 250px + margins */
-  width: calc(100% - 280px);
-  min-height: 100vh;
+  flex: 1;
+  padding: 1rem;
+  width: 0; /* allows flex children to shrink */
 }

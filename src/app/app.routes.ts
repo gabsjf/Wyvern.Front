@@ -8,6 +8,7 @@ import { PersonagemDetail } from './personagens/pages/personagem-detail/personag
 import { SessaoList } from './sessoes/pages/sessao-list/sessao-list';
 import { SessaoCreate } from './sessoes/pages/sessao-create/sessao-create';
 import { SessaoDetail } from './sessoes/pages/sessao-detail/sessao-detail';
+import { PlaySession } from './sessoes/pages/play-session/play-session';
 
 export const routes: Routes = [
     {path: '', redirectTo: '/campaigns', pathMatch: 'full'},
@@ -16,6 +17,7 @@ export const routes: Routes = [
     {path: 'campaigns/:id', component: CampaignDetail},
     {path: 'personagens', component: PersonagemList},
     {path: 'personagens/create', component: PersonagemCreate},
+    {path: 'personagens/:id/edit', component: PersonagemCreate},
     {path: 'personagens/:id', component: PersonagemDetail},
     {path: 'ficha', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
     {path: 'ficha/:id', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
@@ -23,4 +25,6 @@ export const routes: Routes = [
     {path: 'sessoes/create', component: SessaoCreate},
     {path: 'sessoes/:id/edit', component: SessaoCreate},
     {path: 'sessoes/:id', component: SessaoDetail},
+    {path: 'combate', loadComponent: () => import('./sessoes/pages/combate-tracker/combate-tracker').then(m => m.CombateTracker)},
+    {path: 'play/:id', component: PlaySession}
 ];

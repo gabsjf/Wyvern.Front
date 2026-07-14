@@ -1,25 +1,16 @@
 <div class="ficha-container animate-fade-in">
-  <aside class="ficha-sidebar glass-panel">
-    <div class="character-portrait-section">
-      <div class="portrait-img-placeholder title-glow">
-        <i class="icon-user"></i>
-      </div>
-      <h2 class="text-accent character-name">Novo Personagem</h2>
-      <p class="text-secondary character-class">Criação Manual</p>
-    </div>
-    
-    <nav class="ficha-nav">
-      <button type="button" class="nav-btn" [class.active]="activeTab === 'basico'" (click)="setTab('basico')">Básico</button>
-      <button type="button" class="nav-btn" [class.active]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos & Combate</button>
-      <button type="button" class="nav-btn" [class.active]="activeTab === 'detalhes'" (click)="setTab('detalhes')">Detalhes & História</button>
-    </nav>
-    
-    <div class="sidebar-actions">
-       <button type="button" class="btn-secondary w-100" routerLink="/personagens">Cancelar</button>
-    </div>
-  </aside>
-
   <main class="ficha-content">
+    <div class="page-header" style="margin-bottom: 2rem;">
+      <h2 class="text-accent title-glow">Criação Manual de Personagem</h2>
+      
+      <nav class="top-nav-tabs">
+        <button type="button" class="tab-btn" [class.active]="activeTab === 'basico'" (click)="setTab('basico')">Básico</button>
+        <button type="button" class="tab-btn" [class.active]="activeTab === 'atributos'" (click)="setTab('atributos')" *ngIf="personagem.tipoId === 1 || (personagem.tipoId !== 1 && personagem.personagemNpc.categoriaUso !== 'Narrativo')">Atributos & Defesas</button>
+        <button type="button" class="tab-btn" [class.active]="activeTab === 'detalhes'" (click)="setTab('detalhes')">Detalhes & História</button>
+        <button type="button" class="tab-btn" [class.active]="activeTab === 'acoes'" (click)="setTab('acoes')" *ngIf="personagem.tipoId !== 1 && personagem.personagemNpc.categoriaUso !== 'Narrativo'">Ações Especiais</button>
+      </nav>
+    </div>
+
     <form (ngSubmit)="save()" #personagemForm="ngForm" class="ficha-main-area">
       
       <!-- ABA BÁSICO -->
@@ -29,113 +20,167 @@
           
           <div class="form-group row">
             <div class="col">
-              <label class="form-label" for="nome">Nome do Personagem*</label>
-              <input type="text" id="nome" name="nome" class="form-control" [(ngModel)]="personagem.nome" required placeholder="Ex: Alatar, O Sábio" />
+              <label class="form-label">Nome*</label>
+              <input type="text" name="nome" class="form-control" [(ngModel)]="personagem.nome" required />
             </div>
             <div class="col">
-              <label class="form-label" for="campanhaId">Campanha*</label>
-              <select id="campanhaId" name="campanhaId" class="form-control" [(ngModel)]="personagem.campanhaId" required>
-                <option [ngValue]="0" disabled>Selecione uma campanha...</option>
+              <label class="form-label">Campanha*</label>
+              <select name="campanhaId" class="form-control" [(ngModel)]="personagem.campanhaId" required>
                 @for (campanha of campanhas; track campanha.campanhaId) {
                   <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
                 }
               </select>
             </div>
-          </div>
-
-          <div class="form-group row mt-2">
             <div class="col">
-              <label class="form-label" for="classe">Classe</label>
-              <input type="text" id="classe" name="classe" class="form-control" [(ngModel)]="personagem.personagemPlayer.classe" />
-            </div>
-            <div class="col">
-              <label class="form-label" for="subclasse">Subclasse</label>
-              <input type="text" id="subclasse" name="subclasse" class="form-control" [(ngModel)]="personagem.personagemPlayer.subclasse" />
-            </div>
-            <div class="col">
-              <label class="form-label" for="nivel">Nível</label>
-              <input type="number" id="nivel" name="nivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.nivel" min="1" max="20" />
+              <label class="form-label">Tipo*</label>
+              <select name="tipoId" class="form-control" [(ngModel)]="personagem.tipoId" required (change)="personagem.tipoId === 1 ? setTab('basico') : null">
+                @for (tipo of tiposPersonagem; track tipo.id) {
+                  <option [ngValue]="tipo.id">{{ tipo.nome }}</option>
+                }
+              </select>
             </div>
           </div>
 
-          <div class="form-group row mt-2">
-            <div class="col">
-              <label class="form-label" for="raca">Raça/Espécie</label>
-              <input type="text" id="raca" name="raca" class="form-control" [(ngModel)]="personagem.personagemPlayer.raca" />
+          <!-- JOGADOR -->
+          <ng-container *ngIf="personagem.tipoId === 1">
+            <div class="form-group row mt-2">
+              <div class="col"><label class="form-label">Classe</label><input type="text" name="classe" class="form-control" [(ngModel)]="personagem.personagemPlayer.classe" /></div>
+              <div class="col"><label class="form-label">Subclasse</label><input type="text" name="subclasse" class="form-control" [(ngModel)]="personagem.personagemPlayer.subclasse" /></div>
+              <div class="col"><label class="form-label">Nível</label><input type="number" name="nivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.nivel" /></div>
             </div>
-            <div class="col">
-              <label class="form-label" for="antecedente">Antecedente</label>
-              <input type="text" id="antecedente" name="antecedente" class="form-control" [(ngModel)]="personagem.personagemPlayer.antecedente" />
+            <div class="form-group row mt-2">
+              <div class="col"><label class="form-label">Raça</label><input type="text" name="raca" class="form-control" [(ngModel)]="personagem.personagemPlayer.raca" /></div>
+              <div class="col"><label class="form-label">Antecedente</label><input type="text" name="antecedente" class="form-control" [(ngModel)]="personagem.personagemPlayer.antecedente" /></div>
+              <div class="col"><label class="form-label">Alinhamento</label><input type="text" name="alinhamento" class="form-control" [(ngModel)]="personagem.personagemPlayer.alinhamento" /></div>
             </div>
-            <div class="col">
-              <label class="form-label" for="alinhamento">Alinhamento</label>
-              <input type="text" id="alinhamento" name="alinhamento" class="form-control" [(ngModel)]="personagem.personagemPlayer.alinhamento" />
+          </ng-container>
+
+          <!-- NPC/MONSTRO -->
+          <ng-container *ngIf="personagem.tipoId !== 1">
+            <div class="form-group row mt-2">
+              <div class="col" *ngIf="personagem.tipoId !== 3"><label class="form-label">Categoria de Uso</label>
+                <select name="categoriaUso" class="form-control" [(ngModel)]="personagem.personagemNpc.categoriaUso">
+                  <option value="Narrativo">NPC Narrativo (Comum)</option>
+                  <option value="Inimigo">Inimigo de Combate</option>
+                </select>
+              </div>
+              <div class="col"><label class="form-label">Tamanho</label><input type="text" name="tamanho" class="form-control" [(ngModel)]="personagem.personagemNpc.tamanho" /></div>
+              <div class="col"><label class="form-label">Tipo (ex: Fera, Humanoide)</label><input type="text" name="tipoCriatura" class="form-control" [(ngModel)]="personagem.personagemNpc.tipoCriatura" /></div>
+              <div class="col"><label class="form-label">Tendência</label><input type="text" name="tendencia" class="form-control" [(ngModel)]="personagem.personagemNpc.tendencia" /></div>
             </div>
-          </div>
+            <div class="form-group row mt-2">
+              <div class="col"><label class="form-label">CR (Nível Desafio)</label><input type="text" name="cr" class="form-control" [(ngModel)]="personagem.personagemNpc.nivelDesafio" /></div>
+              <div class="col"><label class="form-label">XP Concedido</label><input type="number" name="xpConcedido" class="form-control" [(ngModel)]="personagem.personagemNpc.xpConcedido" /></div>
+            </div>
+          </ng-container>
 
           <div class="form-group mt-2">
-            <label class="form-label" for="descricao">Descrição Rápida (Aparece na Lista)</label>
-            <textarea id="descricao" name="descricao" class="form-control" [(ngModel)]="personagem.descricao" rows="2"></textarea>
+            <label class="form-label">Descrição Rápida</label>
+            <textarea name="descricao" class="form-control" [(ngModel)]="personagem.descricao" rows="2"></textarea>
           </div>
         </div>
       </ng-container>
 
-      <!-- ABA ATRIBUTOS & COMBATE -->
+      <!-- ABA ATRIBUTOS & DEFESAS -->
       <ng-container *ngIf="activeTab === 'atributos'">
         <div class="glass-panel" style="padding: var(--spacing-xl);">
-          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Atributos</h3>
-          <div class="form-group row" style="display: flex; gap: 10px;">
-            <div class="col">
-              <label class="form-label text-center">FOR</label>
-              <input type="number" name="forca" class="form-control text-center" [(ngModel)]="personagem.atributo.forca" />
-            </div>
-            <div class="col">
-              <label class="form-label text-center">DES</label>
-              <input type="number" name="destreza" class="form-control text-center" [(ngModel)]="personagem.atributo.destreza" />
-            </div>
-            <div class="col">
-              <label class="form-label text-center">CON</label>
-              <input type="number" name="constituicao" class="form-control text-center" [(ngModel)]="personagem.atributo.constituicao" />
-            </div>
-            <div class="col">
-              <label class="form-label text-center">INT</label>
-              <input type="number" name="inteligencia" class="form-control text-center" [(ngModel)]="personagem.atributo.inteligencia" />
-            </div>
-            <div class="col">
-              <label class="form-label text-center">SAB</label>
-              <input type="number" name="sabedoria" class="form-control text-center" [(ngModel)]="personagem.atributo.sabedoria" />
-            </div>
-            <div class="col">
-              <label class="form-label text-center">CAR</label>
-              <input type="number" name="carisma" class="form-control text-center" [(ngModel)]="personagem.atributo.carisma" />
-            </div>
-          </div>
-
-          <h3 class="text-accent title-glow mt-4" style="margin-bottom: 1rem;">Status de Combate</h3>
+          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Núcleo de Combate e Defesas</h3>
+          
           <div class="form-group row">
-            <div class="col">
-              <label class="form-label">Vida Máxima</label>
-              <input type="number" name="vidaMaxima" class="form-control" [(ngModel)]="personagem.personagemCombate.vidaMaxima" />
-            </div>
-            <div class="col">
-              <label class="form-label">Vida Atual</label>
-              <input type="number" name="vidaAtual" class="form-control" [(ngModel)]="personagem.personagemCombate.vidaAtual" />
-            </div>
-            <div class="col">
-              <label class="form-label">Classe de Armadura (CA)</label>
-              <input type="number" name="ca" class="form-control" [(ngModel)]="personagem.personagemCombate.classeArmadura" />
-            </div>
+            <div class="col"><label class="form-label">Vida Máxima</label><input type="number" name="vidaMaxima" class="form-control" [(ngModel)]="personagem.personagemCombate.vidaMaxima" /></div>
+            <div class="col"><label class="form-label">Fórmula Dado de Vida (Opcional)</label><input type="text" name="formulaDadoVida" class="form-control" [(ngModel)]="personagem.personagemNpc.formulaDadoVida" [disabled]="personagem.tipoId === 1" placeholder="Ex: 2d8+2" /></div>
+            <div class="col"><label class="form-label">Dado de Vida Máximo (Jogador)</label><input type="text" name="dadoVidaMax" class="form-control" [(ngModel)]="personagem.personagemCombate.dadoVidaMaximo" placeholder="Ex: 3d10" /></div>
+            <div class="col"><label class="form-label">CA (Classe Armadura)</label><input type="number" name="ca" class="form-control" [(ngModel)]="personagem.personagemCombate.classeArmadura" /></div>
           </div>
           
           <div class="form-group row mt-2">
-            <div class="col">
-              <label class="form-label">Iniciativa</label>
-              <input type="number" name="iniciativa" class="form-control" [(ngModel)]="personagem.personagemCombate.iniciativa" />
+            <div class="col"><label class="form-label">Proficiência (Bônus)</label><input type="number" name="profBonus" class="form-control" [(ngModel)]="personagem.personagemCombate.proficienciaBonus" /></div>
+            <div class="col"><label class="form-label">Deslocamento (Ex: 9m)</label><input type="text" name="desloc" class="form-control" [(ngModel)]="personagem.personagemCombate.deslocamento" /></div>
+          </div>
+
+          <hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;" />
+
+          <!-- Atributos base e Salvaguardas -->
+          <div class="form-group row" style="display: flex; gap: 10px;">
+            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <label class="form-label text-center">FOR</label>
+              <input type="number" name="forca" class="form-control text-center" [(ngModel)]="personagem.atributo.forca" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveFor" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaForca" /> Save</label>
             </div>
-            <div class="col">
-              <label class="form-label">Deslocamento (metros)</label>
-              <input type="number" name="deslocamento" class="form-control" [(ngModel)]="personagem.personagemCombate.deslocamento" />
+            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <label class="form-label text-center">DES</label>
+              <input type="number" name="destreza" class="form-control text-center" [(ngModel)]="personagem.atributo.destreza" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveDes" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaDestreza" /> Save</label>
             </div>
+            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <label class="form-label text-center">CON</label>
+              <input type="number" name="constituicao" class="form-control text-center" [(ngModel)]="personagem.atributo.constituicao" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCon" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaConstituicao" /> Save</label>
+            </div>
+            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <label class="form-label text-center">INT</label>
+              <input type="number" name="inteligencia" class="form-control text-center" [(ngModel)]="personagem.atributo.inteligencia" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveInt" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaInteligencia" /> Save</label>
+            </div>
+            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <label class="form-label text-center">SAB</label>
+              <input type="number" name="sabedoria" class="form-control text-center" [(ngModel)]="personagem.atributo.sabedoria" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveSab" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaSabedoria" /> Save</label>
+            </div>
+            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <label class="form-label text-center">CAR</label>
+              <input type="number" name="carisma" class="form-control text-center" [(ngModel)]="personagem.atributo.carisma" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCar" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaCarisma" /> Save</label>
+            </div>
+          </div>
+
+          <ng-container *ngIf="personagem.tipoId !== 1">
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;" />
+            <div class="form-group row">
+              <div class="col"><label class="form-label">Vulnerabilidades a Dano</label><input type="text" name="vulnerabilidades" class="form-control" [(ngModel)]="personagem.personagemNpc.vulnerabilidades" /></div>
+              <div class="col"><label class="form-label">Resistências a Dano</label><input type="text" name="resistencias" class="form-control" [(ngModel)]="personagem.personagemNpc.resistencias" /></div>
+            </div>
+            <div class="form-group row mt-2">
+              <div class="col"><label class="form-label">Imunidades a Dano</label><input type="text" name="imunidades" class="form-control" [(ngModel)]="personagem.personagemNpc.imunidadesDano" /></div>
+              <div class="col"><label class="form-label">Imunidades a Condição</label><input type="text" name="imunidadesCond" class="form-control" [(ngModel)]="personagem.personagemNpc.imunidadesCondicao" /></div>
+            </div>
+            <div class="form-group mt-2">
+              <label class="form-label">Sentidos</label><input type="text" name="sentidos" class="form-control" [(ngModel)]="personagem.personagemNpc.sentidos" placeholder="Ex: Visão no escuro 18m, Percepção passiva 15" />
+            </div>
+          </ng-container>
+
+          <h3 class="text-accent title-glow mt-4" style="margin-bottom: 1rem;">Perícias (Proficiências)</h3>
+          <div class="pericias-grid">
+            @for (pericia of periciasDisponiveis; track pericia.periciaId) {
+              <label class="checkbox-label pericia-item">
+                <input type="checkbox" [checked]="selectedPericiasIds.includes(pericia.periciaId)" (change)="togglePericia(pericia.periciaId)" /> 
+                <span>{{ pericia.nome }}</span>
+              </label>
+            }
+          </div>
+
+          <h3 class="text-accent title-glow mt-4" style="margin-bottom: 1rem;">Magias e Conjuração</h3>
+          <div class="form-group row">
+            <div class="col">
+              <label class="form-label">Atributo de Conjuração</label>
+              <select name="atributoConjuracao" class="form-control" [(ngModel)]="personagem.personagemConjuracao.atributoConjuracao">
+                <option value="Nenhum">Nenhum</option>
+                <option value="Inteligencia">Inteligência</option>
+                <option value="Sabedoria">Sabedoria</option>
+                <option value="Carisma">Carisma</option>
+              </select>
+            </div>
+            <div class="col"><label class="form-label">Slots Nível 1</label><input type="number" name="slots1" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel1Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 2</label><input type="number" name="slots2" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel2Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 3</label><input type="number" name="slots3" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel3Max" /></div>
+          </div>
+          <div class="form-group row mt-2">
+            <div class="col"><label class="form-label">Slots Nível 4</label><input type="number" name="slots4" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel4Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 5</label><input type="number" name="slots5" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel5Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 6</label><input type="number" name="slots6" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel6Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 7</label><input type="number" name="slots7" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel7Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 8</label><input type="number" name="slots8" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel8Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 9</label><input type="number" name="slots9" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel9Max" /></div>
           </div>
         </div>
       </ng-container>
@@ -143,40 +188,140 @@
       <!-- ABA DETALHES & HISTÓRIA -->
       <ng-container *ngIf="activeTab === 'detalhes'">
         <div class="glass-panel" style="padding: var(--spacing-xl);">
-          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Lore & Habilidades</h3>
+          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Lore</h3>
           
-          <div class="form-group row">
-            <div class="col">
-              <label class="form-label">Aparência</label>
-              <textarea name="aparencia" class="form-control" [(ngModel)]="personagem.personagemDetalhes.aparencia" rows="3"></textarea>
-            </div>
-            <div class="col">
-              <label class="form-label">História e Personalidade</label>
-              <textarea name="historia" class="form-control" [(ngModel)]="personagem.personagemDetalhes.historiaPersonalidade" rows="3"></textarea>
-            </div>
+          <div class="form-group mt-2">
+            <label class="form-label">Idiomas</label>
+            <input type="text" name="idiomas" class="form-control" [(ngModel)]="personagem.personagemDetalhes.idiomas" />
           </div>
+
+          <ng-container *ngIf="personagem.tipoId !== 1">
+            <div class="form-group row mt-2">
+              <div class="col"><label class="form-label">Vínculos & Ideais</label><textarea name="vinculos" class="form-control" [(ngModel)]="personagem.personagemNpc.vinculosIdeais" rows="3"></textarea></div>
+              <div class="col"><label class="form-label">Segredos & Facções</label><textarea name="segredos" class="form-control" [(ngModel)]="personagem.personagemNpc.segredosFaccoes" rows="3"></textarea></div>
+            </div>
+            <div class="form-group mt-2">
+              <label class="form-label">Anotações Livres</label>
+              <textarea name="anotacoes" class="form-control" [(ngModel)]="personagem.personagemNpc.anotacoesLivres" rows="3"></textarea>
+            </div>
+          </ng-container>
 
           <div class="form-group row mt-2">
-            <div class="col">
-              <label class="form-label">Características da Classe</label>
-              <textarea name="caracteristicasClasse" class="form-control" [(ngModel)]="personagem.personagemDetalhes.caracteristicasClasse" rows="4"></textarea>
-            </div>
-            <div class="col">
-              <label class="form-label">Traços de Espécie & Talentos</label>
-              <textarea name="tracosTalentos" class="form-control" [(ngModel)]="personagem.personagemDetalhes.talentos" rows="4"></textarea>
-            </div>
-          </div>
-
-          <div class="form-group mt-2">
-            <label class="form-label">Idiomas e Outras Proficiências</label>
-            <input type="text" name="idiomas" class="form-control" [(ngModel)]="personagem.personagemDetalhes.idiomas" />
+            <div class="col"><label class="form-label">Aparência</label><textarea name="aparencia" class="form-control" [(ngModel)]="personagem.personagemDetalhes.aparencia" rows="3"></textarea></div>
+            <div class="col"><label class="form-label">História e Personalidade</label><textarea name="historia" class="form-control" [(ngModel)]="personagem.personagemDetalhes.historiaPersonalidade" rows="3"></textarea></div>
           </div>
         </div>
       </ng-container>
 
+      <!-- ABA AÇÕES (Somente NPC/Monstro) -->
+      <ng-container *ngIf="activeTab === 'acoes' && personagem.tipoId !== 1">
+        <div class="glass-panel" style="padding: var(--spacing-xl);">
+          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Montador de Stat Block</h3>
+
+
+          <!-- Ações Padrão -->
+          <div class="stat-block-section mt-4">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h4>Ações Padrão</h4>
+              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoPadrao()">+ Ação</button>
+            </div>
+            @for (acao of personagem.personagemAcoesPadrao; track $index) {
+              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoPadrao($index)" title="Remover Ação">&times;</button>
+                <div class="form-group row">
+                  <div class="col-2"><input type="text" name="acaoNome{{$index}}" class="form-control" [(ngModel)]="acao.nome" placeholder="Nome (Ex: Garra)" /></div>
+                  <div class="col-2"><input type="text" name="acaoAlc{{$index}}" class="form-control" [(ngModel)]="acao.alcance" placeholder="Alcance (1,5m)" /></div>
+                  <div class="col-2"><input type="number" name="acaoBonus{{$index}}" class="form-control" [(ngModel)]="acao.bonusAcerto" placeholder="Bônus (0)" /></div>
+                  <div class="col-2"><input type="text" name="acaoDano{{$index}}" class="form-control" [(ngModel)]="acao.dano" placeholder="Dano (1d8+3)" /></div>
+                  <div class="col-2"><input type="text" name="acaoTipo{{$index}}" class="form-control" [(ngModel)]="acao.tipoDano" placeholder="Tipo (Cortante)" /></div>
+                  <div class="col-2">
+                    <select name="acaoAtributo{{$index}}" class="form-control" [(ngModel)]="acao.atributoBase">
+                      <option value="Forca">Força</option>
+                      <option value="Destreza">Destreza</option>
+                      <option value="Constituicao">Constituição</option>
+                      <option value="Inteligencia">Inteligência</option>
+                      <option value="Sabedoria">Sabedoria</option>
+                      <option value="Carisma">Carisma</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group row mt-2">
+                  <div class="col-2">
+                    <select name="acaoTipoClass{{$index}}" class="form-control" [(ngModel)]="acao.tipoAcao">
+                      <option value="Ataque">Ataque</option>
+                      <option value="Magia">Magia</option>
+                      <option value="Habilidade">Habilidade</option>
+                    </select>
+                  </div>
+                  <div class="col-1"><label class="checkbox-label" style="font-size: 0.8rem; padding-top: 10px;"><input type="checkbox" name="acaoProf{{$index}}" [(ngModel)]="acao.proficiente" /> Prof.</label></div>
+                  <div class="col-9">
+                    <input type="text" name="acaoDesc{{$index}}" class="form-control" [(ngModel)]="acao.descricao" placeholder="Descrição adicional (Efeitos, Salvaguardas, Propriedades)" />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Ações Bônus -->
+          <div class="stat-block-section mt-4">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h4>Ações Bônus</h4>
+              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoBonus()">+ Ação Bônus</button>
+            </div>
+            @for (bonus of personagem.personagemAcoesBonus; track $index) {
+              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoBonus($index)" title="Remover Ação Bônus">&times;</button>
+                <div class="form-group row">
+                  <div class="col-3"><input type="text" name="bonusNome{{$index}}" class="form-control" [(ngModel)]="bonus.nome" placeholder="Nome" /></div>
+                  <div class="col-9"><input type="text" name="bonusDesc{{$index}}" class="form-control" [(ngModel)]="bonus.descricao" placeholder="Descrição" /></div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Reações -->
+          <div class="stat-block-section mt-4">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h4>Reações</h4>
+              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addReacao()">+ Reação</button>
+            </div>
+            @for (reacao of personagem.personagemReacoes; track $index) {
+              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeReacao($index)" title="Remover Reação">&times;</button>
+                <div class="form-group row">
+                  <div class="col-3"><input type="text" name="reacaoNome{{$index}}" class="form-control" [(ngModel)]="reacao.nome" placeholder="Nome" /></div>
+                  <div class="col-4"><input type="text" name="reacaoGatilho{{$index}}" class="form-control" [(ngModel)]="reacao.gatilho" placeholder="Gatilho (Quando atacado)" /></div>
+                  <div class="col-5"><input type="text" name="reacaoDesc{{$index}}" class="form-control" [(ngModel)]="reacao.descricao" placeholder="Descrição" /></div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Ações Lendárias -->
+          <div class="stat-block-section mt-4">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h4>Ações Lendárias</h4>
+              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoLendaria()">+ Ação Lendária</button>
+            </div>
+            @for (lendaria of personagem.personagemAcoesLendarias; track $index) {
+              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoLendaria($index)" title="Remover Ação Lendária">&times;</button>
+                <div class="form-group row">
+                  <div class="col-3"><input type="text" name="lendariaNome{{$index}}" class="form-control" [(ngModel)]="lendaria.nome" placeholder="Nome" /></div>
+                  <div class="col-2"><input type="number" name="lendariaCusto{{$index}}" class="form-control" [(ngModel)]="lendaria.custoAcao" placeholder="Custo (1)" /></div>
+                  <div class="col-7"><input type="text" name="lendariaDesc{{$index}}" class="form-control" [(ngModel)]="lendaria.descricao" placeholder="Descrição" /></div>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+      </ng-container>
+
       <!-- BARRA FLUTUANTE DE SALVAR -->
-      <div class="save-bar" style="margin-top: var(--spacing-xl); text-align: right; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
-        <button type="submit" class="btn-primary" style="padding: 10px 40px; font-size: 1.2rem;" [disabled]="!personagemForm.valid">💾 Salvar Personagem no Banco</button>
+      <div class="save-bar" style="margin-top: var(--spacing-xl); display: flex; justify-content: flex-end; gap: 1rem; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <button type="button" class="btn-secondary" style="padding: 10px 40px; font-size: 1.2rem;" routerLink="/personagens">Cancelar</button>
+        <button type="submit" class="btn-primary" style="padding: 10px 40px; font-size: 1.2rem;" [disabled]="!personagemForm.valid">Salvar Personagem no Banco</button>
       </div>
 
     </form>

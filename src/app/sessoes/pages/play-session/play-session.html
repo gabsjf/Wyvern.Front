@@ -1,0 +1,21 @@
+<div class="play-session-container animate-fade-in" *ngIf="sessao">
+  <div class="glass-panel header-panel">
+    <div>
+      <h2 class="title-glow text-accent">Modo Jogar: {{ sessao.nome }}</h2>
+      <p class="subtitle text-secondary">Sessão {{ sessao.numeroSessao }} | Campanha: {{ sessao.campanhaId }}</p>
+    </div>
+    <div class="tabs-container">
+      <button class="btn-tab" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">⚔️ Tracker de Combate</button>
+      <button class="btn-tab" [class.active]="activeTab === 'anotacoes'" (click)="setTab('anotacoes')">📝 Anotações</button>
+    </div>
+  </div>
+
+  <div class="content-panel">
+    <div *ngIf="activeTab === 'combate'">
+      <app-combate-tracker [sessaoId]="sessaoId" [campanhaId]="sessao.campanhaId"></app-combate-tracker>
+    </div>
+    <div *ngIf="activeTab === 'anotacoes'">
+      <app-anotacoes [campanhaId]="sessao.campanhaId"></app-anotacoes>
+    </div>
+  </div>
+</div>

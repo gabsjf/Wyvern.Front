@@ -4,8 +4,17 @@
       <h1 class="title-glow text-accent" style="margin-bottom: 0;">Personagens</h1>
       <p style="color: var(--text-secondary); margin-top: 0.5rem;">Gerencie seus heróis e NPCs.</p>
     </div>
-    <button class="btn-primary" routerLink="/personagens/create">+ Novo Personagem</button>
+    <button class="btn-primary" routerLink="/personagens/create">+ Novo Registro</button>
   </div>
+
+  <nav class="top-nav-tabs" style="margin-bottom: var(--spacing-xl);">
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'herois'" (click)="setTab('herois')">
+      Heróis
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'monstros'" (click)="setTab('monstros')">
+      Monstros & NPCs
+    </button>
+  </nav>
 
   <div class="glass-panel" style="overflow-x: auto;">
     <table class="premium-table">
@@ -18,13 +27,14 @@
         </tr>
       </thead>
       <tbody>
-        @for (personagem of personagens; track personagem.personagemId) {
+        @for (personagem of filteredPersonagens; track personagem.personagemId) {
           <tr>
             <td style="font-weight: 500; color: var(--primary-color);">{{ personagem.nome }}</td>
             <td>{{ personagem.descricao || '-' }}</td>
             <td>#{{ personagem.campanhaId }}</td>
             <td>
-              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/ficha', personagem.personagemId]">Ficha Completa</button>
+              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/personagens', personagem.personagemId, 'edit']">Editar</button>
+              <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; margin-left: 0.5rem;" [routerLink]="['/ficha', personagem.personagemId]">Ficha Completa</button>
             </td>
           </tr>
         } @empty {

@@ -88,3 +88,23 @@
     }
   }
 }
+
+.ds-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: transparent;
+  
+  &.filled {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px var(--primary-color);
+  }
+
+  &.danger.filled {
+    background: #ff4d4d;
+    border-color: #ff4d4d;
+    box-shadow: 0 0 5px #ff4d4d;
+  }
+}

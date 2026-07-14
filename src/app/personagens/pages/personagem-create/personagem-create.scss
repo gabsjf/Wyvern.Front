@@ -1,0 +1,144 @@
+/* Layout da página */
+.ficha-container {
+  padding: 0;
+  width: 100%;
+}
+
+.ficha-content {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  height: 100%;
+}
+
+.ficha-main-area {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.top-nav-tabs {
+  display: flex;
+  gap: 1rem;
+  background: rgba(0,0,0,0.3);
+  padding: 0.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+  }
+  
+  &.active {
+    background: rgba(var(--primary-color-rgb), 0.15);
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.2);
+  }
+}
+
+/* Remover spinners de inputs type number */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Checkboxes customizados estilo premium */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  
+  input[type="checkbox"] {
+    appearance: none;
+    background-color: rgba(0,0,0,0.3);
+    margin: 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.15em;
+    height: 1.15em;
+    border: 1px solid var(--border-color);
+    border-radius: 0.15em;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease-in-out;
+    
+    &::before {
+      content: "";
+      width: 0.65em;
+      height: 0.65em;
+      transform: scale(0);
+      transition: 120ms transform ease-in-out;
+      box-shadow: inset 1em 1em var(--primary-color);
+      background-color: var(--primary-color);
+      transform-origin: center;
+      clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    }
+    
+    &:checked {
+      border-color: var(--primary-color);
+    }
+    
+    &:checked::before {
+      transform: scale(1);
+    }
+  }
+}
+
+.pericias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.pericia-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(var(--primary-color-rgb), 0.1);
+    border-color: var(--primary-color);
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  input[type="checkbox"]:checked + span {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+}
+

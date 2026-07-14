@@ -10,4 +10,21 @@ import { CommonModule } from '@angular/common';
 })
 export class FichaHeader {
   @Input() personagem: any;
+
+  getIniciativaStr(): string {
+    let ini = this.personagem?.personagemCombate?.iniciativa;
+    if (!ini || ini === 0) {
+       if (this.personagem?.atributo?.destreza) {
+          ini = Math.floor((this.personagem.atributo.destreza - 10) / 2);
+       } else {
+          ini = 0;
+       }
+    }
+    return ini >= 0 ? `+${ini}` : `${ini}`;
+  }
+
+  getProficienciaStr(): string {
+    const pb = this.personagem?.personagemCombate?.proficienciaBonus || 0;
+    return pb >= 0 ? `+${pb}` : `${pb}`;
+  }
 }

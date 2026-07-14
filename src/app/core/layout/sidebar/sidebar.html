@@ -1,11 +1,15 @@
-<nav class="sidebar glass-panel">
-  <div class="sidebar-header">
+<nav class="sidebar glass-panel" [class.collapsed]="!isExpanded">
+  <button type="button" class="toggle-btn" (click)="toggle()">
+    <span *ngIf="isExpanded">◀</span>
+    <span *ngIf="!isExpanded">▶</span>
+  </button>
+  <div class="sidebar-header" *ngIf="isExpanded">
     <h2 class="title-glow text-accent">Wyvern</h2>
   </div>
   <ul class="nav-links">
-    <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Dashboard</a></li>
-    <li><a routerLink="/campaigns" routerLinkActive="active">Campanhas</a></li>
-    <li><a routerLink="/personagens" routerLinkActive="active">Personagens</a></li>
-    <li><a routerLink="/sessoes" routerLinkActive="active">Sessões</a></li>
+    <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"><span class="icon" *ngIf="isExpanded"></span><span class="label" *ngIf="isExpanded">Dashboard</span><span *ngIf="!isExpanded">Da</span></a></li>
+    <li><a routerLink="/campaigns" routerLinkActive="active"><span class="icon" *ngIf="isExpanded"></span><span class="label" *ngIf="isExpanded">Campanhas</span><span *ngIf="!isExpanded">Ca</span></a></li>
+    <li><a routerLink="/personagens" routerLinkActive="active"><span class="icon" *ngIf="isExpanded"></span><span class="label" *ngIf="isExpanded">Personagens</span><span *ngIf="!isExpanded">Pe</span></a></li>
+    <li><a routerLink="/sessoes" routerLinkActive="active"><span class="icon" *ngIf="isExpanded"></span><span class="label" *ngIf="isExpanded">Sessões</span><span *ngIf="!isExpanded">Se</span></a></li>
   </ul>
 </nav>

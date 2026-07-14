@@ -225,6 +225,16 @@
   .spell-meta { font-size: 0.85rem; color: var(--text-secondary); }
 }
 
+.clickable-card {
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  
+  &:hover {
+    border-color: var(--primary-color);
+    background: rgba(0,0,0,0.5);
+  }
+}
+
 .inventario-layout {
   display: flex;
   flex-direction: column;
@@ -255,6 +265,23 @@
     
     .val { font-weight: bold; font-size: 1.2rem; }
     .lbl { font-size: 0.7rem; font-weight: bold; }
+  }
+}
+
+.btn-icon-danger {
+  background: transparent;
+  color: #ff4d4d;
+  border: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 5px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+  
+  &:hover {
+    opacity: 1;
+    transform: scale(1.1);
   }
 }
 
@@ -304,3 +331,56 @@
     margin: 0;
   }
 }
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  
+  h3 {
+    margin-top: 0;
+    color: var(--text-primary);
+  }
+}
+
+.form-group {
+  margin-bottom: 15px;
+  label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    resize: vertical;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+

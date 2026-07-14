@@ -5,4 +5,5 @@ export interface Campaign {
     mestreId?: number;
     criadoEm?: string;
     ativo?: boolean;
+    sessoes?: any[];
 }

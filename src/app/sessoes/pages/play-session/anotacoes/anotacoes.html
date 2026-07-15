@@ -1,27 +1,4 @@
-<div class="anotacoes-container row">
-  <!-- Left Panel: Notes List -->
-  <div class="col-md-3 list-panel">
-    <div class="flex-between mb-3">
-      <h3 class="title-glow text-accent">Anotações</h3>
-      <button class="btn-primary btn-sm" (click)="novaAnotacao()">Nova</button>
-    </div>
 
-    <div class="notes-list">
-      @for (a of anotacoes; track a.anotacaoId) {
-        <div class="note-item glass-panel" 
-             [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
-             (click)="selecionarAnotacao(a)">
-          <div class="note-header">
-            <strong>{{ a.titulo }}</strong>
-            <span class="badge" [class.badge-public]="a.isPublica">{{ a.isPublica ? 'Pública' : 'Privada' }}</span>
-          </div>
-          <small class="text-secondary">{{ a.criadoEm | date:'short' }}</small>
-        </div>
-      }
-      @if (anotacoes.length === 0) {
-        <p class="text-secondary text-center">Nenhuma anotação criada.</p>
-      }
-    </div>
 <div class="anotacoes-container">
   <!-- Sidebar -->
   <aside class="sidebar glass-panel">
@@ -33,7 +10,7 @@
     </div>
 
     <div *ngIf="isCreatingPasta" class="mb-3 new-folder-form">
-      <input type="text" [(ngModel)]="newPastaName" class="premium-input mb-2" placeholder="Nome da pasta...">
+      <input type="text" [(ngModel)]="newPastaName" class="form-control mb-2" placeholder="Nome da pasta...">
       <div class="flex-between">
         <label class="switch-container">
           <input type="checkbox" [(ngModel)]="newPastaPublic">
@@ -56,7 +33,7 @@
                class="note-item flex-between"
                [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
                (click)="selecionarAnotacao(a)">
-            <span><span *ngIf="a.isPublica">👁️</span> {{ a.titulo }}</span>
+            <span><i class="fas fa-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;"></i> {{ a.titulo }}</span>
             <button class="btn-icon text-danger" (click)="excluirAnotacao(a.anotacaoId!, $event)">✕</button>
           </div>
           <button class="btn-add-note" (click)="novaAnotacao()">+ Nova Anotação</button>
@@ -67,7 +44,7 @@
       <div *ngFor="let p of pastas" class="folder-group">
         <div class="folder-title flex-between">
           <span>
-            <i class="fas fa-folder">📂</i> {{ p.nome }} <span *ngIf="p.isPublica">(Pública)</span>
+            <i class="fas fa-folder"></i> {{ p.nome }} <span *ngIf="p.isPublica">(Pública)</span>
           </span>
           <button class="btn-icon text-danger" (click)="excluirPasta(p.pastaId!, $event)">✕</button>
         </div>
@@ -76,7 +53,7 @@
                class="note-item flex-between"
                [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
                (click)="selecionarAnotacao(a)">
-            <span><span *ngIf="a.isPublica">👁️</span> {{ a.titulo }}</span>
+            <span><i class="fas fa-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;"></i> {{ a.titulo }}</span>
             <button class="btn-icon text-danger" (click)="excluirAnotacao(a.anotacaoId!, $event)">✕</button>
           </div>
           <button class="btn-add-note" (click)="novaAnotacao(p.pastaId)">+ Nova Anotação</button>
@@ -108,14 +85,14 @@
         <div class="actions">
           <ng-container *ngIf="isEditing">
             <button class="btn-icon" (click)="togglePreview()" title="Preview Markdown">
-              <i class="fas" [class.fa-eye]="!showPreview" [class.fa-edit]="showPreview">{{ showPreview ? '✍️' : '👁️' }}</i>
+              <i class="fas" [class.fa-eye]="!showPreview" [class.fa-edit]="showPreview"></i>
             </button>
-            <button class="btn-action primary" (click)="salvarAnotacao()">Salvar</button>
-            <button class="btn-action secondary" (click)="cancelarEdicao()">Cancelar</button>
+            <button class="btn-primary btn-sm" (click)="salvarAnotacao()">Salvar</button>
+            <button class="btn-secondary btn-sm" (click)="cancelarEdicao()">Cancelar</button>
           </ng-container>
           
           <ng-container *ngIf="!isEditing">
-            <button class="btn-action primary" (click)="editarAnotacao()">Editar</button>
+            <button class="btn-primary btn-sm" (click)="editarAnotacao()">Editar</button>
           </ng-container>
         </div>
       </div>

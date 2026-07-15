@@ -12,4 +12,7 @@
     <li><a routerLink="/personagens" routerLinkActive="active"><span class="icon" *ngIf="isExpanded"></span><span class="label" *ngIf="isExpanded">Personagens</span><span *ngIf="!isExpanded">Pe</span></a></li>
     <li><a routerLink="/sessoes" routerLinkActive="active"><span class="icon" *ngIf="isExpanded"></span><span class="label" *ngIf="isExpanded">Sessões</span><span *ngIf="!isExpanded">Se</span></a></li>
   </ul>
+  <div class="sidebar-footer" *ngIf="isExpanded" style="margin-top: auto; padding: 1rem;">
+    <button class="btn-secondary" style="width: 100%;" (click)="logout()">Sair</button>
+  </div>
 </nav>

@@ -1,0 +1,51 @@
+<div class="auth-container">
+  <div class="glass-panel auth-card animate-fade-in">
+    <div class="auth-header">
+      <h1 class="title-glow">Wyvern RPG</h1>
+      <p class="text-secondary">Faça login para continuar sua aventura.</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert-error">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail</label>
+        <input 
+          id="email" 
+          type="email" 
+          class="form-control" 
+          formControlName="email" 
+          placeholder="exemplo@email.com"
+          autocomplete="email">
+        <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="text-error">
+          E-mail inválido.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="senha">Senha</label>
+        <input 
+          id="senha" 
+          type="password" 
+          class="form-control" 
+          formControlName="senha" 
+          placeholder="Sua senha"
+          autocomplete="current-password">
+        <div *ngIf="loginForm.get('senha')?.invalid && loginForm.get('senha')?.touched" class="text-error">
+          Senha é obrigatória.
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit" [disabled]="loginForm.invalid || loading">
+        <span *ngIf="!loading">Entrar</span>
+        <span *ngIf="loading">Autenticando...</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Não tem uma conta? <a routerLink="/register" class="text-accent">Registre-se aqui</a></p>
+    </div>
+  </div>
+</div>

@@ -25,6 +25,20 @@ export class CombateTracker implements OnInit, OnChanges {
   participantesSelecionados: any[] = [];
   combateAtivo: any = null; 
   participantesCombate: any[] = [];
+  turnDeathSaveModified: boolean = false;
+
+  // Quick NPC Form
+  novoNpc: any = {
+    nome: '',
+    vidaMaxima: 10,
+    classeArmadura: 10,
+    iniciativa: 10
+  };
+
+  // Dice Roller
+  diceBox: any = null;
+  diceResult: string = '';
+  diceFormula: string = '1d20';
   
   ngOnInit() {
     this.carregarDadosIniciais();
@@ -48,6 +62,55 @@ export class CombateTracker implements OnInit, OnChanges {
     });
 
     this.carregarCombateAtivo();
+    this.initDiceBox();
+  }
+
+  async initDiceBox() {
+    try {
+      const DiceBox = (await import('@3d-dice/dice-box')).default;
+      this.diceBox = new DiceBox("#dice-box", {
+        assetPath: '/assets/dice-box/', // Will point to public folder or use CDN later if needed
+        theme: "default",
+        themeColor: "#6464ff",
+        scale: 6, // Scale acts as camera zoom. Lower scale = more space.
+        width: window.innerWidth,
+        height: window.innerHeight,
+        throwForce: 3,
+        startingHeight: 6,
+        spinForce: 4
+      });
+      await this.diceBox.init();
+
+      // Add resize listener
+      window.addEventListener("resize", () => {
+        if (this.diceBox) {
+          this.diceBox.updateConfig({
+            width: window.innerWidth,
+            height: window.innerHeight
+          });
+        }
+      });
+    } catch (e) {
+      console.warn("DiceBox failed to init. Did you serve the assets?", e);
+    }
+  }
+
+  rolarDados() {
+    if (this.diceBox && this.diceFormula) {
+      // Generate a random bright hex color
+      const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+      
+      this.diceBox.roll(this.diceFormula, { themeColor: randomColor }).then((result: any) => {
+        const total = result.reduce((acc: number, group: any) => acc + group.value, 0);
+        this.diceResult = `Resultado: ${total}`;
+        this.cdr.detectChanges();
+        
+        // Clear dice after 4 seconds
+        setTimeout(() => {
+          this.diceBox.clear();
+        }, 4000);
+      });
+    }
   }
 
   carregarCombateAtivo() {
@@ -86,8 +149,27 @@ export class CombateTracker implements OnInit, OnChanges {
         vidaAtual: personagem.personagemCombate?.vidaAtual || 10,
         vidaMaxima: personagem.personagemCombate?.vidaMaxima || 10,
         classeArmadura: personagem.personagemCombate?.classeArmadura || 10,
-        isInimigo: personagem.tipoId !== 1
+        isInimigo: personagem.tipoId !== 1,
+        sucessosMorte: 0,
+        falhasMorte: 0
       });
+      this.cdr.detectChanges();
+    }
+  }
+
+  adicionarNpcRapido() {
+    if (this.novoNpc.nome.trim()) {
+      this.participantesSelecionados.push({
+        personagemId: null, // Genérico
+        nome: this.novoNpc.nome,
+        iniciativa: this.novoNpc.iniciativa,
+        vidaAtual: this.novoNpc.vidaMaxima,
+        vidaMaxima: this.novoNpc.vidaMaxima,
+        classeArmadura: this.novoNpc.classeArmadura,
+        isInimigo: true
+      });
+      // Reset form
+      this.novoNpc = { nome: '', vidaMaxima: 10, classeArmadura: 10, iniciativa: 10 };
       this.cdr.detectChanges();
     }
   }
@@ -137,12 +219,22 @@ export class CombateTracker implements OnInit, OnChanges {
   }
 
   proximoTurno() {
-    if (this.combateAtivo) {
-      this.combateAtivo.turnoAtualIndex++;
-      if (this.combateAtivo.turnoAtualIndex >= this.participantesCombate.length) {
-        this.combateAtivo.turnoAtualIndex = 0;
-        this.combateAtivo.rodadaAtual++;
-      }
+    if (this.combateAtivo && this.participantesCombate.length > 0) {
+      let startIndex = this.combateAtivo.turnoAtualIndex;
+      do {
+        this.combateAtivo.turnoAtualIndex++;
+        if (this.combateAtivo.turnoAtualIndex >= this.participantesCombate.length) {
+          this.combateAtivo.turnoAtualIndex = 0;
+          this.combateAtivo.rodadaAtual++;
+        }
+
+        let p = this.participantesCombate[this.combateAtivo.turnoAtualIndex];
+        let isMorto = (p.isInimigo && p.vidaAtual <= 0) || (!p.isInimigo && p.falhasMorte >= 3);
+        if (!isMorto) break;
+
+      } while (this.combateAtivo.turnoAtualIndex !== startIndex);
+
+      this.turnDeathSaveModified = false;
       this.cdr.detectChanges();
       
       if (this.combateAtivo.combateId) {
@@ -151,16 +243,59 @@ export class CombateTracker implements OnInit, OnChanges {
     }
   }
 
-  aplicarDano(p: any, valor: string, ehCura: boolean) {
+  aplicarDano(p: any, valor: string, isCura: boolean) {
     const amount = parseInt(valor);
-    if (!isNaN(amount)) {
-      if (ehCura) {
-        p.vidaAtual = Math.min(p.vidaMaxima, p.vidaAtual + amount);
-      } else {
-        p.vidaAtual = Math.max(0, p.vidaAtual - amount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    if (isCura) {
+      p.vidaAtual = Math.min(p.vidaAtual + amount, p.vidaMaxima);
+      if (p.vidaAtual > 0 && !p.isInimigo) {
+        p.sucessosMorte = 0;
+        p.falhasMorte = 0;
       }
-      this.salvarParticipante(p);
+    } else {
+      p.vidaAtual = Math.max(p.vidaAtual - amount, 0);
     }
+    
+    this.salvarParticipante(p);
+  }
+
+  toggleSucessoMorte(p: any, value: number, isTurn: boolean) {
+    if (!isTurn || p.falhasMorte >= 3) return; // Só rola no próprio turno ou se não estiver morto
+
+    // Se clicar no atual, desmarca
+    if (p.sucessosMorte === value) {
+      p.sucessosMorte = value - 1;
+      this.turnDeathSaveModified = false;
+    } else {
+      if (this.turnDeathSaveModified) return; // Só 1 modificação por turno
+      p.sucessosMorte = value;
+      this.turnDeathSaveModified = true;
+    }
+
+    if (p.sucessosMorte >= 3) {
+      // Revival
+      p.sucessosMorte = 0;
+      p.falhasMorte = 0;
+      p.vidaAtual = 1;
+    }
+    
+    this.salvarParticipante(p);
+  }
+
+  toggleFalhaMorte(p: any, value: number, isTurn: boolean) {
+    if (!isTurn || p.sucessosMorte >= 3) return;
+
+    if (p.falhasMorte === value) {
+      p.falhasMorte = value - 1;
+      this.turnDeathSaveModified = false;
+    } else {
+      if (this.turnDeathSaveModified) return; // Só 1 modificação por turno
+      p.falhasMorte = value;
+      this.turnDeathSaveModified = true;
+    }
+
+    this.salvarParticipante(p);
   }
 
   salvarParticipante(p: any) {

@@ -1,0 +1,65 @@
+<div class="auth-container">
+  <div class="glass-panel auth-card animate-fade-in">
+    <div class="auth-header">
+      <h1 class="title-glow">Junte-se à Guilda</h1>
+      <p class="text-secondary">Crie sua conta para começar.</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert-error">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label" for="nome">Nome ou Apelido</label>
+        <input 
+          id="nome" 
+          type="text" 
+          class="form-control" 
+          formControlName="nome" 
+          placeholder="Seu nome"
+          autocomplete="name">
+        <div *ngIf="registerForm.get('nome')?.invalid && registerForm.get('nome')?.touched" class="text-error">
+          Nome é obrigatório.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail</label>
+        <input 
+          id="email" 
+          type="email" 
+          class="form-control" 
+          formControlName="email" 
+          placeholder="exemplo@email.com"
+          autocomplete="email">
+        <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="text-error">
+          E-mail inválido.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="senha">Senha</label>
+        <input 
+          id="senha" 
+          type="password" 
+          class="form-control" 
+          formControlName="senha" 
+          placeholder="Sua senha secreta"
+          autocomplete="new-password">
+        <div *ngIf="registerForm.get('senha')?.invalid && registerForm.get('senha')?.touched" class="text-error">
+          A senha deve ter pelo menos 6 caracteres.
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit" [disabled]="registerForm.invalid || loading">
+        <span *ngIf="!loading">Criar Conta</span>
+        <span *ngIf="loading">Registrando...</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Já tem uma conta? <a routerLink="/login" class="text-accent">Faça Login</a></p>
+    </div>
+  </div>
+</div>

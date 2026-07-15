@@ -10,9 +10,19 @@ import { SessaoCreate } from './sessoes/pages/sessao-create/sessao-create';
 import { SessaoDetail } from './sessoes/pages/sessao-detail/sessao-detail';
 import { PlaySession } from './sessoes/pages/play-session/play-session';
 
+import { authGuard } from './core/guards/auth.guard';
+import { Login } from './core/pages/login/login';
+import { Register } from './core/pages/register/register';
+
 export const routes: Routes = [
     {path: '', redirectTo: '/campaigns', pathMatch: 'full'},
-    {path: 'campaigns', component: CampaignList},
+    {path: 'login', component: Login},
+    {path: 'register', component: Register},
+    {
+      path: '',
+      canActivate: [authGuard],
+      children: [
+        {path: 'campaigns', component: CampaignList},
     {path: 'campaigns/create', component: CampaignCreate},
     {path: 'campaigns/:id', component: CampaignDetail},
     {path: 'personagens', component: PersonagemList},
@@ -26,5 +36,7 @@ export const routes: Routes = [
     {path: 'sessoes/:id/edit', component: SessaoCreate},
     {path: 'sessoes/:id', component: SessaoDetail},
     {path: 'combate', loadComponent: () => import('./sessoes/pages/combate-tracker/combate-tracker').then(m => m.CombateTracker)},
-    {path: 'play/:id', component: PlaySession}
+        {path: 'play/:id', component: PlaySession}
+      ]
+    }
 ];

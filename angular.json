@@ -29,6 +29,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@3d-dice/dice-box/dist/assets",
+                "output": "/assets/dice-box/"
               }
             ],
             "styles": ["src/styles.scss"]

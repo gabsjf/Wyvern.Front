@@ -1,4 +1,15 @@
-<div class="combate-container animate-fade-in">
+<div class="combate-container animate-fade-in" style="position: relative; min-height: 80vh;">
+  <!-- DICE BOX LAYER -->
+  <div id="dice-box" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></div>
+  
+  <!-- DICE ROLLER UI -->
+  <div class="dice-ui glass-panel" style="position: fixed; bottom: 30px; right: 30px; z-index: 10000; display: flex; gap: 10px; align-items: center; padding: 15px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <span style="font-weight: bold; color: var(--text-secondary);">Rolador</span>
+    <input type="text" class="form-control" [(ngModel)]="diceFormula" placeholder="Ex: 1d20+5" style="width: 100px;" (keyup.enter)="rolarDados()" />
+    <button class="btn-primary" (click)="rolarDados()">Rolar</button>
+    <strong *ngIf="diceResult" style="color: #6464ff; margin-left: 10px; font-size: 1.2rem;">{{ diceResult }}</strong>
+  </div>
+
   <!-- CONFIGURAÇÃO DE COMBATE -->
   <ng-container *ngIf="!combateAtivo">
     <div class="glass-panel preparation-panel">
@@ -8,13 +19,25 @@
         <!-- Seleção de Campanha -->
         <div class="prep-column">
           <h4 class="mb-3">Disponíveis</h4>
-          <div class="personagem-list scroller">
+          <div class="personagem-list scroller mb-4" style="max-height: 200px;">
             @for (p of personagens; track p.personagemId) {
               <div class="list-item" (click)="adicionarParticipante(p)">
                 <span>{{ p.nome }}</span>
                 <span class="badge" [class.badge-inimigo]="p.tipoId !== 1">{{ p.tipoId === 1 ? 'Herói' : 'Inimigo' }}</span>
               </div>
             }
+          </div>
+          
+          <!-- QUICK NPC FORM -->
+          <div class="quick-npc-panel glass-panel" style="padding: 15px; margin-top: 15px; border-radius: 8px;">
+            <h5 class="mb-2 text-accent">Adicionar NPC Rápido</h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <input type="text" class="form-control" placeholder="Nome" [(ngModel)]="novoNpc.nome" style="grid-column: span 2;" />
+              <input type="number" class="form-control" placeholder="Iniciativa" [(ngModel)]="novoNpc.iniciativa" title="Iniciativa" />
+              <input type="number" class="form-control" placeholder="Vida" [(ngModel)]="novoNpc.vidaMaxima" title="Vida Máxima" />
+              <input type="number" class="form-control" placeholder="CA" [(ngModel)]="novoNpc.classeArmadura" title="Classe de Armadura" style="grid-column: span 2;" />
+            </div>
+            <button class="btn-secondary w-100 mt-2" (click)="adicionarNpcRapido()">Adicionar</button>
           </div>
         </div>
 
@@ -89,7 +112,11 @@
 
     <div class="tracker-list">
       @for (p of participantesCombate; track $index) {
-        <div class="tracker-card" [class.active-turn]="$index === combateAtivo.turnoAtualIndex" [class.inimigo-card]="p.isInimigo" style="flex-wrap: wrap;">
+        <div class="tracker-card" 
+             [class.active-turn]="$index === combateAtivo.turnoAtualIndex" 
+             [class.inimigo-card]="p.isInimigo" 
+             [class.dead-card]="(p.isInimigo && p.vidaAtual <= 0) || (!p.isInimigo && p.falhasMorte >= 3)"
+             style="flex-wrap: wrap;">
           <div class="turn-indicator" *ngIf="$index === combateAtivo.turnoAtualIndex">▶</div>
           
           <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
@@ -105,7 +132,9 @@
               <div class="hp-bar-container">
                 <div class="hp-bar" [style.width.%]="(p.vidaAtual / p.vidaMaxima) * 100" [class.low-hp]="(p.vidaAtual / p.vidaMaxima) < 0.3"></div>
               </div>
-              <div class="text-center" style="margin-top: 5px;">{{ p.vidaAtual }} / {{ p.vidaMaxima }} HP</div>
+              <div class="text-center" style="margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 5px;">
+                <input type="number" class="form-control text-center" style="width: 60px; padding: 2px;" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" /> / {{ p.vidaMaxima }} HP
+              </div>
             </div>
 
             <div class="card-actions">
@@ -116,9 +145,42 @@
           </div>
 
           <!-- Condições Input -->
-          <div style="width: 100%; margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+          <div class="effects-row" style="width: 100%; margin-top: 10px; display: flex; gap: 10px; align-items: center;">
             <label style="font-size: 0.85rem; color: var(--text-secondary);">Efeitos:</label>
             <input type="text" class="form-control" style="flex: 1; font-size: 0.85rem; padding: 4px 10px;" placeholder="Ex: Agarrado, Envenenado..." [(ngModel)]="p.condicoes" (blur)="salvarParticipante(p)" />
+          </div>
+
+          <!-- Death Saving Throws -->
+          <div class="death-saves-panel" *ngIf="p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3" style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; gap: 30px;">
+            
+            <div class="text-center w-100 mb-2" *ngIf="$index !== combateAtivo.turnoAtualIndex" style="color: var(--text-secondary); font-size: 0.8rem; position: absolute; margin-top: -15px;">
+              Aguarde o turno deste herói para rolar as salvaguardas.
+            </div>
+
+            <div class="death-saves-group" [class.disabled-group]="$index !== combateAtivo.turnoAtualIndex">
+              <span class="text-success" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Sucessos</span>
+              <div class="circles">
+                <div class="circle success-circle" [class.filled]="p.sucessosMorte >= 1" (click)="toggleSucessoMorte(p, 1, $index === combateAtivo.turnoAtualIndex)"></div>
+                <div class="circle success-circle" [class.filled]="p.sucessosMorte >= 2" (click)="toggleSucessoMorte(p, 2, $index === combateAtivo.turnoAtualIndex)"></div>
+                <div class="circle success-circle" [class.filled]="p.sucessosMorte >= 3" (click)="toggleSucessoMorte(p, 3, $index === combateAtivo.turnoAtualIndex)"></div>
+              </div>
+            </div>
+            
+            <div class="death-saves-group" [class.disabled-group]="$index !== combateAtivo.turnoAtualIndex">
+              <span class="text-danger" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Falhas</span>
+              <div class="circles">
+                <div class="circle danger-circle" [class.filled]="p.falhasMorte >= 1" (click)="toggleFalhaMorte(p, 1, $index === combateAtivo.turnoAtualIndex)"></div>
+                <div class="circle danger-circle" [class.filled]="p.falhasMorte >= 2" (click)="toggleFalhaMorte(p, 2, $index === combateAtivo.turnoAtualIndex)"></div>
+                <div class="circle danger-circle" [class.filled]="p.falhasMorte >= 3" (click)="toggleFalhaMorte(p, 3, $index === combateAtivo.turnoAtualIndex)"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="p.falhasMorte >= 3 && !p.isInimigo" style="width: 100%; text-align: center; color: #d63031; font-weight: bold; margin-top: 15px;">
+            ESTADO: MORTO
+          </div>
+          <div *ngIf="p.vidaAtual <= 0 && p.isInimigo" style="width: 100%; text-align: center; color: #d63031; font-weight: bold; margin-top: 15px;">
+            ABATIDO
           </div>
         </div>
       }

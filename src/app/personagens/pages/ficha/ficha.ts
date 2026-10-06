@@ -7,6 +7,8 @@ import { FichaAtributos } from '../../components/ficha-atributos/ficha-atributos
 import { ItemService, Item } from '../../../core/services/item.service';
 import { MagiaService, Magia } from '../../../core/services/magia.service';
 import { PersonagemService } from '../../services/personagem.service';
+import { CampaignService } from '../../../campaigns/services/campaign';
+import { Campaign } from '../../../campaigns/models/campaign';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -23,9 +25,15 @@ export class FichaComponent implements OnInit {
   showItemModal = false;
   showMagiaModal = false;
   showAtaqueModal = false;
+  showImportModal = false;
 
   todosItens: Item[] = [];
   todasMagias: Magia[] = [];
+
+  campanhas: Campaign[] = [];
+  pendingImportFile: File | null = null;
+  importCampanhaId: number | null = null;
+  importing = false;
 
   novoAtaque = {
     nome: '',
@@ -52,6 +60,7 @@ export class FichaComponent implements OnInit {
     private itemService: ItemService,
     private magiaService: MagiaService,
     private personagemService: PersonagemService,
+    private campaignService: CampaignService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -63,6 +72,10 @@ export class FichaComponent implements OnInit {
       }
     });
     this.loadGlobais();
+    this.campaignService.getAll().subscribe(c => {
+      this.campanhas = c;
+      this.cdr.detectChanges();
+    });
   }
 
   async loadGlobais() {
@@ -156,33 +169,45 @@ export class FichaComponent implements OnInit {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf';
-    input.onchange = async (e: any) => {
+    input.onchange = (e: any) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const response = await fetch('https://localhost:7098/Personagem/import-pdf', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          alert('Ficha importada com sucesso!');
-          this.router.navigate(['/ficha', data.personagemId]);
-        } else {
-          const err = await response.text();
-          alert('Erro ao importar: ' + err);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Erro de conexão ao importar PDF.');
-      }
+      this.pendingImportFile = file;
+      this.importCampanhaId = this.personagem?.campanhaId ?? null;
+      this.showImportModal = true;
+      this.cdr.detectChanges();
     };
     input.click();
+  }
+
+  confirmarImportPdf() {
+    if (!this.pendingImportFile || !this.importCampanhaId) {
+      alert('Selecione a campanha para a qual o personagem será importado.');
+      return;
+    }
+
+    this.importing = true;
+    this.personagemService.importPdf(this.pendingImportFile, this.importCampanhaId).subscribe({
+      next: (data: any) => {
+        this.importing = false;
+        this.showImportModal = false;
+        this.pendingImportFile = null;
+        alert('Ficha importada com sucesso!');
+        this.router.navigate(['/ficha', data.personagemId]);
+      },
+      error: (err) => {
+        this.importing = false;
+        this.cdr.detectChanges();
+        console.error(err);
+        alert('Erro ao importar PDF: ' + (err?.error ?? err?.message ?? 'Erro desconhecido'));
+      }
+    });
+  }
+
+  cancelarImportPdf() {
+    this.showImportModal = false;
+    this.pendingImportFile = null;
   }
 
   exportPdf() {
@@ -190,8 +215,21 @@ export class FichaComponent implements OnInit {
       alert('Nenhum personagem carregado para exportar!');
       return;
     }
-    
-    window.open(`https://localhost:7098/Personagem/${this.personagem.personagemId}/export-pdf`, '_blank');
+
+    this.personagemService.exportPdf(this.personagem.personagemId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.personagem.nome || 'Personagem'}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Erro ao exportar PDF.');
+      }
+    });
   }
 
   getModValue(score: number | undefined): number {

@@ -254,6 +254,24 @@
   </div>
 </div>
 
+<!-- Modal de Importação de PDF -->
+<div class="modal-overlay" *ngIf="showImportModal">
+  <div class="modal-content">
+    <h3>Importar Ficha</h3>
+    <div class="form-group">
+      <label>Campanha de destino</label>
+      <select [(ngModel)]="importCampanhaId">
+        <option [ngValue]="null" disabled>Selecione uma campanha</option>
+        <option *ngFor="let c of campanhas" [ngValue]="c.campanhaId">{{ c.nome }}</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="cancelarImportPdf()" [disabled]="importing">Cancelar</button>
+      <button class="btn-primary" (click)="confirmarImportPdf()" [disabled]="importing">{{ importing ? 'Importando...' : 'Importar' }}</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal de Detalhes -->
 <div class="modal-overlay" *ngIf="showDetalhesModal" (click)="showDetalhesModal = false">
   <div class="modal-content" (click)="$event.stopPropagation()">

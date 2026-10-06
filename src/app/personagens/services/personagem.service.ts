@@ -52,4 +52,15 @@ export class PersonagemService {
   removeAtaque(personagemId: number, ataqueId: number) {
     return this.http.delete(`${this.apiUrl}/${personagemId}/ataques/${ataqueId}`);
   }
+
+  importPdf(file: File, campanhaId: number) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('campanhaId', String(campanhaId));
+    return this.http.post<Personagem>(`${this.apiUrl}/import-pdf`, formData);
+  }
+
+  exportPdf(id: number) {
+    return this.http.get(`${this.apiUrl}/${id}/export-pdf`, { responseType: 'blob' });
+  }
 }

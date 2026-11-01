@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.gabriel.wyvern",
+    "sha256_cert_fingerprints":
+    ["C1:04:D4:3D:51:5B:A4:F6:DE:5D:46:D3:05:9F:CB:74:6C:2E:D9:87:1E:57:44:DC:25:27:F8:47:6D:BA:0F:35"]
+  }
+}]

@@ -1,0 +1,110 @@
+<div class="container animate-fade-in" *ngIf="!loading && summary">
+  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+    <div>
+      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Bem-vindo ao Wyvern</h1>
+      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Seu centro de comando para aventuras épicas.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-secondary" routerLink="/personagens/create">+ Personagem</button>
+      <button class="btn-primary" routerLink="/campaigns/create">+ Nova Campanha</button>
+    </div>
+  </div>
+
+  <!-- Estatísticas Gerais -->
+  <div class="dashboard-grid">
+    <div class="glass-panel stat-card" routerLink="/campaigns">
+      <h2>{{ summary.totalCampanhas }}</h2>
+      <p>Campanhas</p>
+    </div>
+    <div class="glass-panel stat-card" routerLink="/personagens">
+      <h2>{{ summary.totalHerois }}</h2>
+      <p>Heróis</p>
+    </div>
+    <div class="glass-panel stat-card" routerLink="/personagens">
+      <h2>{{ summary.totalNpcs }}</h2>
+      <p>NPCs</p>
+    </div>
+    <div class="glass-panel stat-card" routerLink="/personagens">
+      <h2>{{ summary.totalViloes }}</h2>
+      <p>Vilões</p>
+    </div>
+  </div>
+
+  <div class="dashboard-sections">
+    <!-- Coluna Esquerda: Campanhas e Agendamentos -->
+    <div style="display: flex; flex-direction: column; gap: var(--spacing-xl);">
+      
+      <!-- Últimas Campanhas -->
+      <div class="glass-panel" style="padding: var(--spacing-lg);">
+        <div class="section-header">
+          <h3>Últimas Campanhas</h3>
+          <a routerLink="/campaigns" style="color: var(--primary-color); font-size: 0.9rem;">Ver Todas</a>
+        </div>
+        
+        <div class="campaign-list" *ngIf="summary.ultimasCampanhas.length > 0">
+          <div class="list-item" *ngFor="let camp of summary.ultimasCampanhas">
+            <div class="item-info">
+              <h4>{{ camp.nome }}</h4>
+              <p>{{ camp.sistema || 'Sistema não definido' }}</p>
+            </div>
+            <button class="btn-secondary" [routerLink]="['/campaigns', camp.campanhaId]">Acessar</button>
+          </div>
+        </div>
+        
+        <div class="empty-state" *ngIf="summary.ultimasCampanhas.length === 0">
+          Nenhuma campanha criada ainda.
+        </div>
+      </div>
+
+      <!-- Próximas Sessões (Calendário) -->
+      <div class="glass-panel" style="padding: var(--spacing-lg);">
+        <div class="section-header">
+          <h3 style="display: flex; align-items: center; gap: 10px;">
+            Calendário de Sessões
+          </h3>
+          <a routerLink="/sessoes" style="color: var(--primary-color); font-size: 0.9rem;">Gerenciar</a>
+        </div>
+        
+        <div class="session-list" *ngIf="summary.proximasSessoes.length > 0">
+          <div class="list-item" *ngFor="let sessao of summary.proximasSessoes" [routerLink]="['/sessoes', sessao.sessaoId]" style="cursor: pointer;">
+            <div class="item-info">
+              <h4>{{ sessao.nome }} <span style="font-size: 0.8rem; color: var(--primary-color);">(Sessão {{ sessao.numeroSessao }})</span></h4>
+              <p>Campanha: {{ sessao.campanha?.nome || 'Desconhecida' }}</p>
+            </div>
+            <div style="text-align: right; color: var(--accent-color); font-weight: bold;">
+              {{ sessao.dataAgendada | date:'dd/MM/yyyy' }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="empty-state" *ngIf="summary.proximasSessoes.length === 0">
+          Nenhuma sessão agendada para o futuro.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Coluna Direita: Jogadores -->
+    <div>
+      <div class="glass-panel" style="padding: var(--spacing-lg);">
+        <div class="section-header">
+          <h3 style="display: flex; align-items: center; gap: 10px;">
+            Jogadores na Mesa
+          </h3>
+        </div>
+        
+        <div class="player-list">
+          <div class="empty-state" style="padding: var(--spacing-xl) 0;">
+            <p style="margin-bottom: 10px;">O sistema de contas para Jogadores está em desenvolvimento.</p>
+            <p style="font-size: 0.85rem; color: var(--primary-color);">Em breve seus amigos poderão entrar nas suas campanhas via Link!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading state -->
+<div class="container" *ngIf="loading" style="display: flex; justify-content: center; align-items: center; height: 50vh;">
+  <h2 class="title-glow text-accent">Carregando Dashboard...</h2>
+</div>

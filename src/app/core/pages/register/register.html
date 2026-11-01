@@ -52,6 +52,20 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="form-label">Qual o seu papel principal?</label>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="radio" formControlName="papel" value="Jogador">
+            <span>Jogador (Aventureiro)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="radio" formControlName="papel" value="Mestre">
+            <span class="text-accent">Mestre (Narrador)</span>
+          </label>
+        </div>
+      </div>
+
       <button type="submit" class="btn-primary auth-submit" [disabled]="registerForm.invalid || loading">
         <span *ngIf="!loading">Criar Conta</span>
         <span *ngIf="loading">Registrando...</span>
@@ -59,7 +73,7 @@
     </form>
 
     <div class="auth-footer">
-      <p>Já tem uma conta? <a routerLink="/login" class="text-accent">Faça Login</a></p>
+      <p>Já tem uma conta? <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }" class="text-accent">Faça login aqui</a></p>
     </div>
   </div>
 </div>

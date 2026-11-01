@@ -6,6 +6,7 @@ import { SessaoService } from '../../services/sessao.service';
 import { Sessao } from '../../models/sessao';
 import { CampaignService } from '../../../campaigns/services/campaign';
 import { Campaign } from '../../../campaigns/models/campaign';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sessao-create',
@@ -18,9 +19,12 @@ export class SessaoCreate implements OnInit {
   private campaignService = inject(CampaignService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private authService = inject(AuthService);
 
   campanhas: Campaign[] = [];
+  allSessoes: Sessao[] = [];
   isEditMode = false;
+  isSaving = false;
 
   sessao: Sessao = {
     numeroSessao: 1,
@@ -33,7 +37,9 @@ export class SessaoCreate implements OnInit {
 
   ngOnInit() {
     this.campaignService.getAll().subscribe({
-      next: (data) => this.campanhas = data,
+      next: (data) => {
+        this.campanhas = data.filter(c => c.papel === 'Mestre');
+      },
       error: (err) => console.error('Erro ao buscar campanhas', err)
     });
 
@@ -49,21 +55,69 @@ export class SessaoCreate implements OnInit {
         },
         error: (err) => console.error('Erro ao carregar sessão para edição', err)
       });
+    } else {
+      // In create mode, fetch all sessions to calculate the next session number
+      this.sessaoService.getAll().subscribe({
+        next: (data) => this.allSessoes = data,
+        error: (err) => console.error('Erro ao carregar sessões', err)
+      });
+    }
+  }
+
+  onCampanhaChange(campanhaId: number) {
+    if (!this.isEditMode && campanhaId > 0 && this.allSessoes.length > 0) {
+      const sessoesDaCampanha = this.allSessoes.filter(s => s.campanhaId === campanhaId);
+      if (sessoesDaCampanha.length > 0) {
+        const maxNumero = Math.max(...sessoesDaCampanha.map(s => s.numeroSessao));
+        this.sessao.numeroSessao = maxNumero + 1;
+      } else {
+        this.sessao.numeroSessao = 1;
+      }
     }
   }
 
   save() {
+    if (this.isSaving) return;
+    this.isSaving = true;
+    this.processDataAgendada();
+
     if (this.isEditMode && this.sessao.sessaoId) {
       this.sessaoService.update(this.sessao.sessaoId, this.sessao).subscribe({
-        next: () => this.router.navigate(['/sessoes', this.sessao.sessaoId]),
-        error: (err) => console.error('Erro ao atualizar sessão', err)
+        next: () => {
+          this.isSaving = false;
+          this.router.navigate(['/sessoes', this.sessao.sessaoId]);
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error('Erro ao atualizar sessão', err);
+        }
       });
     } else {
-      // Create mode requires converting Date to ISO if needed by backend, but string usually binds fine.
       this.sessaoService.create(this.sessao).subscribe({
-        next: () => this.router.navigate(['/sessoes']),
-        error: (err) => console.error('Erro ao criar sessão', err)
+        next: () => {
+          this.isSaving = false;
+          this.router.navigate(['/sessoes']);
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error('Erro ao criar sessão', err);
+        }
       });
+    }
+  }
+
+  private processDataAgendada() {
+    if (this.sessao.dataSessao) {
+      const sessaoDate = new Date(this.sessao.dataSessao);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Zera a hora para comparar só o dia
+      
+      // Se a data escolhida for maior que hoje, consideramos como uma sessão futura (agendada)
+      if (sessaoDate > today) {
+        this.sessao.dataAgendada = this.sessao.dataSessao;
+      } else {
+        this.sessao.dataAgendada = undefined;
+      }
     }
   }
 }

@@ -107,10 +107,12 @@
 
 .empty-state {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
   color: var(--text-secondary);
+  text-align: center;
 }
 
 .seamless-editor {
@@ -227,6 +229,41 @@
   }
 }
 
+.btn-sm-icon {
+  font-size: 1rem;
+  padding: 2px;
+  margin-left: 5px;
+}
+
+.editor-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 10px;
+}
+
+.btn-tab-sm {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--text-secondary);
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+  }
+  
+  &.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+}
+
 .text-success { color: var(--primary-color); }
 .text-danger { color: #ff6b81; }
 .text-accent { color: var(--primary-color); }
@@ -275,5 +312,30 @@
   .label-text {
     font-size: 0.9rem;
     color: var(--text-secondary);
+  }
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    flex: 0 0 250px;
+    padding: 15px;
+  }
+  .editor-area {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .anotacoes-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    flex: none;
+    height: 250px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .editor-area {
+    flex: 1;
   }
 }

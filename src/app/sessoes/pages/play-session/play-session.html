@@ -4,9 +4,9 @@
       <h2 class="title-glow text-accent">Modo Jogar: {{ sessao.nome }}</h2>
       <p class="subtitle text-secondary">Sessão {{ sessao.numeroSessao }} | Campanha: {{ sessao.campanhaId }}</p>
     </div>
-    <div class="tabs-container">
-      <button class="btn-tab" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Tracker de Combate</button>
-      <button class="btn-tab" [class.active]="activeTab === 'anotacoes'" (click)="setTab('anotacoes')">Anotações</button>
+    <div class="tabs-container" style="display: flex; flex-wrap: wrap;">
+      <button class="btn-tab" style="margin-right: 15px; margin-bottom: 10px;" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Tracker de Combate</button>
+      <button class="btn-tab" style="margin-bottom: 10px;" [class.active]="activeTab === 'anotacoes'" (click)="setTab('anotacoes')">Anotações</button>
     </div>
   </div>
 

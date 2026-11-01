@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environments';
 
 export interface Anotacao {
     anotacaoId: number;
@@ -9,7 +10,8 @@ export interface Anotacao {
     titulo: string;
     conteudo: string;
     isPublica: boolean;
-    criadoEm: string;
+    criadoEm: Date;
+    criadoPorId: number;
 }
 
 export interface CreateAnotacaoDto {
@@ -31,7 +33,7 @@ export interface UpdateAnotacaoDto {
   providedIn: 'root'
 })
 export class AnotacaoService {
-  private apiUrl = 'https://localhost:7098/Anotacao'; // TODO: config
+  private apiUrl = environment.apiUrl + '/Anotacao';
 
   constructor(private http: HttpClient) { }
 

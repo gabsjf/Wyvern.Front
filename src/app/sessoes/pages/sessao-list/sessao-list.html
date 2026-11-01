@@ -4,7 +4,7 @@
       <h1 class="title-glow text-accent" style="margin-bottom: 0;">Sessões</h1>
       <p style="color: var(--text-secondary); margin-top: 0.5rem;">Os registros históricos das suas campanhas.</p>
     </div>
-    <button class="btn-primary" routerLink="/sessoes/create">+ Nova Sessão</button>
+    <button class="btn-primary" *ngIf="userRole === 'Mestre'" routerLink="/sessoes/create">+ Nova Sessão</button>
   </div>
 
   <div class="glass-panel" style="overflow-x: auto;">
@@ -14,7 +14,7 @@
           <th>Número</th>
           <th>Título</th>
           <th>Data</th>
-          <th>ID Campanha</th>
+          <th>Campanha</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -24,10 +24,12 @@
             <td style="font-weight: bold;">Sessão #{{ sessao.numeroSessao }}</td>
             <td style="font-weight: 500; color: var(--primary-color);">{{ sessao.nome }}</td>
             <td>{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</td>
-            <td>#{{ sessao.campanhaId }}</td>
+            <td>{{ sessao.campanha?.nome || '#' + sessao.campanhaId }}</td>
             <td>
-              <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; margin-right: 0.5rem;" [routerLink]="['/play', sessao.sessaoId]">Jogar</button>
-              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</button>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: nowrap;">
+                <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap;" [routerLink]="['/play', sessao.sessaoId]">Jogar</button>
+                <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap;" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</button>
+              </div>
             </td>
           </tr>
         } @empty {

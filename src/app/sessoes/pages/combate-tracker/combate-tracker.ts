@@ -1,6 +1,8 @@
 import { Component, OnInit, Input, SimpleChanges, OnChanges, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { catchError, Subscription } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { PersonagemService } from '../../../personagens/services/personagem.service';
 import { CombateService } from '../../services/combate.service';
 import { CampaignService } from '../../../campaigns/services/campaign';
@@ -13,6 +15,7 @@ import { CampaignService } from '../../../campaigns/services/campaign';
 })
 export class CombateTracker implements OnInit, OnChanges {
   private personagemService = inject(PersonagemService);
+  private authService = inject(AuthService);
   private combateService = inject(CombateService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -26,6 +29,11 @@ export class CombateTracker implements OnInit, OnChanges {
   combateAtivo: any = null; 
   participantesCombate: any[] = [];
   turnDeathSaveModified: boolean = false;
+  isProcessingTurn: boolean = false;
+  
+  userRole: string = 'Mestre'; // 'Mestre' ou 'Jogador'
+  userId: number = 0; // We might need this for ownership, but we don't have it easily. Let's rely on role and Personagem ownership. Wait, `PersonagemService.getAll()` returns only characters owned by the user. If they are in the list, it's theirs!
+  personagensMeusIds: number[] = [];
 
   // Quick NPC Form
   novoNpc: any = {
@@ -34,6 +42,9 @@ export class CombateTracker implements OnInit, OnChanges {
     classeArmadura: 10,
     iniciativa: 10
   };
+
+  // Death Saves Control
+  previousTurnIndex: number = -1;
 
   // Dice Roller
   diceBox: any = null;
@@ -48,13 +59,19 @@ export class CombateTracker implements OnInit, OnChanges {
     if (changes['sessaoId'] || changes['campanhaId']) {
       this.filtrarPersonagens();
       this.carregarCombateAtivo();
+      this.determinarRole();
     }
+  }
+
+  determinarRole() {
+    this.userRole = this.authService.userRole || 'Jogador';
   }
 
   carregarDadosIniciais() {
     this.personagemService.getAll().subscribe({
       next: (data) => {
         this.personagensFull = data;
+        this.personagensMeusIds = data.map(p => p.personagemId).filter((id): id is number => id !== undefined);
         this.filtrarPersonagens();
         this.cdr.detectChanges();
       },
@@ -120,16 +137,43 @@ export class CombateTracker implements OnInit, OnChanges {
     this.combateService.getActiveCombatBySessao(this.sessaoId).subscribe({
       next: (combat: any) => {
         if (combat) {
+          const needsStartConnection = this.combateAtivo?.combateId !== combat.combateId;
+          
+          if (this.previousTurnIndex !== combat.turnoAtualIndex) {
+            this.turnDeathSaveModified = false;
+            this.previousTurnIndex = combat.turnoAtualIndex;
+          }
+
           this.combateAtivo = combat;
           this.participantesCombate = combat.participantes || [];
+
+          if (needsStartConnection) {
+            this.combateService.startConnection(combat.combateId, () => {
+              this.carregarCombateAtivo();
+            });
+          }
         } else {
           this.combateAtivo = null;
           this.participantesCombate = [];
+          
+          // Connect to the session group to listen for new combats
+          this.combateService.startSessaoConnection(this.sessaoId!, () => {
+            this.carregarCombateAtivo();
+          });
         }
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error(err)
     });
+  }
+
+  ngOnDestroy() {
+    if (this.combateAtivo?.combateId) {
+      this.combateService.stopConnection(this.combateAtivo.combateId);
+    }
+    if (this.sessaoId) {
+      this.combateService.stopSessaoConnection(this.sessaoId);
+    }
   }
 
   filtrarPersonagens() {
@@ -238,7 +282,17 @@ export class CombateTracker implements OnInit, OnChanges {
       this.cdr.detectChanges();
       
       if (this.combateAtivo.combateId) {
-         this.combateService.nextTurn(this.combateAtivo.combateId).subscribe();
+         this.isProcessingTurn = true;
+         this.combateService.nextTurn(this.combateAtivo.combateId).subscribe({
+           next: () => {
+             this.isProcessingTurn = false;
+             this.cdr.detectChanges();
+           },
+           error: (err) => {
+             this.isProcessingTurn = false;
+             console.error(err);
+           }
+         });
       }
     }
   }
@@ -258,6 +312,24 @@ export class CombateTracker implements OnInit, OnChanges {
     }
     
     this.salvarParticipante(p);
+  }
+
+  isMeuPersonagem(personagemId: number): boolean {
+    return this.personagensMeusIds.includes(personagemId);
+  }
+
+  podeAgir(p: any): boolean {
+    if (this.userRole === 'Mestre') return true;
+    return this.isMeuPersonagem(p.personagemId);
+  }
+
+  obterStatusVida(p: any): { text: string, color: string } {
+    if (p.vidaAtual <= 0) return { text: p.isInimigo ? 'Abatido' : 'Caído / Inconsciente', color: '#666' };
+    const percent = p.vidaAtual / p.vidaMaxima;
+    if (percent > 0.75) return { text: 'Saudável', color: '#4caf50' }; // Verde
+    if (percent > 0.35) return { text: 'Machucado', color: '#ffeb3b' }; // Amarelo
+    if (percent > 0.15) return { text: 'Muito Machucado', color: '#ff9800' }; // Laranja
+    return { text: 'Quase Morto', color: '#f44336' }; // Vermelho
   }
 
   toggleSucessoMorte(p: any, value: number, isTurn: boolean) {
@@ -299,10 +371,13 @@ export class CombateTracker implements OnInit, OnChanges {
   }
 
   salvarParticipante(p: any) {
+    if (p.vidaAtual < 0) p.vidaAtual = 0;
     if (this.combateAtivo?.combateId) {
       this.combateService.updateParticipante(this.combateAtivo.combateId, p.participanteId, {
         vidaAtual: p.vidaAtual,
-        condicoes: p.condicoes
+        condicoes: p.condicoes,
+        sucessosMorte: p.sucessosMorte || 0,
+        falhasMorte: p.falhasMorte || 0
       }).subscribe({
         next: () => console.log('Participante salvo'),
         error: (err) => console.error(err)

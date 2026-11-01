@@ -1,9 +1,7 @@
 <div class="ficha-container animate-fade-in">
   <aside class="ficha-sidebar glass-panel">
     <div class="character-portrait-section">
-      <div class="portrait-img-placeholder title-glow">
-        <i class="icon-user"></i>
-      </div>
+
       <h2 class="text-accent character-name">{{ personagem?.nome || 'Carregando...' }}</h2>
       <p class="text-secondary character-class">{{ personagem?.personagemPlayer?.classe || 'Sem Classe' }} Nv. {{ personagem?.personagemPlayer?.nivel || 1 }}</p>
     </div>
@@ -16,10 +14,7 @@
       <button class="nav-btn" [class.active]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
     </nav>
     
-    <div class="sidebar-actions">
-       <button class="btn-primary w-100" (click)="importPdf()">Importar PDF 5.5</button>
-       <button class="btn-secondary w-100 mt-2" (click)="exportPdf()">Exportar PDF</button>
-    </div>
+
   </aside>
 
   <main class="ficha-content">

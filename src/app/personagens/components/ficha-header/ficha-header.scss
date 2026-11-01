@@ -1,9 +1,5 @@
 .header-glass-panel {
-  display: flex;
-  gap: var(--spacing-lg);
   padding: var(--spacing-lg);
-  justify-content: space-between;
-  align-items: center;
 }
 
 .stat-box {
@@ -106,5 +102,11 @@
     background: #ff4d4d;
     border-color: #ff4d4d;
     box-shadow: 0 0 5px #ff4d4d;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-glass-panel {
+    padding: var(--spacing-sm);
   }
 }

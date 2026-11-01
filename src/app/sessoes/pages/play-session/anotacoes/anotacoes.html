@@ -1,62 +1,87 @@
-
 <div class="anotacoes-container">
   <!-- Sidebar -->
   <aside class="sidebar glass-panel">
     <div class="sidebar-header flex-between mb-3">
-      <h3 class="text-accent">Pastas</h3>
+      <h3 class="text-accent"><i class="bi bi-book me-2"></i>Anotações</h3>
       <button class="btn-icon" (click)="novaPasta()" title="Nova Pasta">
-        <i class="fas fa-folder-plus">+</i>
+        <i class="bi bi-folder-plus text-primary"></i>
       </button>
     </div>
 
-    <div *ngIf="isCreatingPasta" class="mb-3 new-folder-form">
-      <input type="text" [(ngModel)]="newPastaName" class="form-control mb-2" placeholder="Nome da pasta...">
-      <div class="flex-between">
-        <label class="switch-container">
+    <div *ngIf="isCreatingPasta" class="mb-3 new-folder-form p-2 glass-panel">
+      <input type="text" [(ngModel)]="newPastaName" class="form-control mb-2 form-control-sm" placeholder="Nome da pasta...">
+      <div class="flex-between align-items-center">
+        <label class="switch-container mb-0" *ngIf="userRole === 'Mestre'">
           <input type="checkbox" [(ngModel)]="newPastaPublic">
           <span class="slider round"></span>
-          <span class="label-text">Pública</span>
+          <span class="label-text ms-2" style="font-size: 0.8rem;">Pública</span>
         </label>
+        <span *ngIf="userRole !== 'Mestre'"></span>
         <div>
-          <button class="btn-icon text-success" (click)="salvarPasta()">✓</button>
-          <button class="btn-icon text-danger" (click)="cancelarPasta()">✕</button>
+          <button class="btn-icon text-success me-1" (click)="salvarPasta()">
+            <i class="bi bi-check-lg"></i>
+          </button>
+          <button class="btn-icon text-danger" (click)="cancelarPasta()">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
       </div>
     </div>
 
     <div class="folders-list">
       <!-- Pasta Principal (Sem pasta) -->
-      <div class="folder-group">
-        <div class="folder-title">Geral</div>
-        <div class="note-items">
+      <div class="folder-group mb-3">
+        <div class="folder-title d-flex align-items-center mb-2 text-muted fw-bold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
+          <i class="bi bi-inbox me-2"></i> Geral
+        </div>
+        <div class="note-items ms-2" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 10px;">
           <div *ngFor="let a of getAnotacoesDaPasta(undefined)"
-               class="note-item flex-between"
+               class="note-item flex-between p-2 mb-1 rounded"
                [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
                (click)="selecionarAnotacao(a)">
-            <span><i class="fas fa-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;"></i> {{ a.titulo }}</span>
-            <button class="btn-icon text-danger" (click)="excluirAnotacao(a.anotacaoId!, $event)">✕</button>
+            <span class="text-truncate" style="max-width: 140px;" title="{{ a.titulo }}">
+              <i class="bi bi-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;" title="Pública"></i>
+              <i class="bi bi-lock-fill text-secondary" *ngIf="!a.isPublica" style="margin-right: 5px;" title="Privada"></i>
+              {{ a.titulo }}
+            </span>
+            <button class="btn-icon text-danger btn-sm-icon" *ngIf="podeDeletar(a)" (click)="excluirAnotacao(a.anotacaoId!, $event)" title="Excluir">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
-          <button class="btn-add-note" (click)="novaAnotacao()">+ Nova Anotação</button>
+          <button class="btn-add-note mt-1" (click)="novaAnotacao()">
+            <i class="bi bi-plus-lg me-1"></i> Nova Anotação
+          </button>
         </div>
       </div>
 
       <!-- Pastas -->
-      <div *ngFor="let p of pastas" class="folder-group">
-        <div class="folder-title flex-between">
+      <div *ngFor="let p of pastas" class="folder-group mb-3">
+        <div class="folder-title flex-between mb-2 text-muted fw-bold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
           <span>
-            <i class="fas fa-folder"></i> {{ p.nome }} <span *ngIf="p.isPublica">(Pública)</span>
+            <i class="bi bi-folder me-2"></i> {{ p.nome }} 
+            <i class="bi bi-globe ms-1 text-primary" *ngIf="p.isPublica" title="Pública"></i>
           </span>
-          <button class="btn-icon text-danger" (click)="excluirPasta(p.pastaId!, $event)">✕</button>
+          <button class="btn-icon text-danger btn-sm-icon" *ngIf="userRole === 'Mestre'" (click)="excluirPasta(p.pastaId!, $event)" title="Excluir pasta">
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
-        <div class="note-items">
+        <div class="note-items ms-2" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 10px;">
           <div *ngFor="let a of getAnotacoesDaPasta(p.pastaId)"
-               class="note-item flex-between"
+               class="note-item flex-between p-2 mb-1 rounded"
                [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
                (click)="selecionarAnotacao(a)">
-            <span><i class="fas fa-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;"></i> {{ a.titulo }}</span>
-            <button class="btn-icon text-danger" (click)="excluirAnotacao(a.anotacaoId!, $event)">✕</button>
+            <span class="text-truncate" style="max-width: 140px;" title="{{ a.titulo }}">
+              <i class="bi bi-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;" title="Pública"></i>
+              <i class="bi bi-lock-fill text-secondary" *ngIf="!a.isPublica" style="margin-right: 5px;" title="Privada"></i>
+              {{ a.titulo }}
+            </span>
+            <button class="btn-icon text-danger btn-sm-icon" *ngIf="podeDeletar(a)" (click)="excluirAnotacao(a.anotacaoId!, $event)" title="Excluir">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
-          <button class="btn-add-note" (click)="novaAnotacao(p.pastaId)">+ Nova Anotação</button>
+          <button class="btn-add-note mt-1" (click)="novaAnotacao(p.pastaId)">
+            <i class="bi bi-plus-lg me-1"></i> Nova Anotação
+          </button>
         </div>
       </div>
     </div>
@@ -64,49 +89,65 @@
 
   <!-- Editor / Viewer Area -->
   <main class="editor-area glass-panel">
-    <div *ngIf="!isEditing && !anotacaoSelecionada" class="empty-state">
-      <h3>Selecione ou crie uma anotação</h3>
+    <div *ngIf="!isEditing && !anotacaoSelecionada" class="empty-state d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+      <i class="bi bi-book-half mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
+      <h4>Selecione ou crie uma anotação</h4>
+      <p>Use o menu lateral para gerenciar suas anotações.</p>
     </div>
 
     <!-- Edit/View Mode -->
-    <div *ngIf="isEditing || anotacaoSelecionada" class="seamless-editor">
-      <div class="editor-header flex-between mb-3">
-        <div class="flex-center gap-3">
-          <input *ngIf="isEditing" type="text" [(ngModel)]="editTitulo" class="seamless-title-input" placeholder="Título da anotação">
-          <h2 *ngIf="!isEditing" class="title-glow text-accent">{{ anotacaoSelecionada?.titulo }}</h2>
+    <div *ngIf="isEditing || anotacaoSelecionada" class="seamless-editor h-100 d-flex flex-column">
+      <div class="editor-header flex-between mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div class="flex-center gap-3 w-100">
+          <input *ngIf="isEditing" type="text" [(ngModel)]="editTitulo" class="seamless-title-input flex-grow-1" placeholder="Título da anotação">
+          <h2 *ngIf="!isEditing" class="title-glow text-accent m-0 flex-grow-1">{{ anotacaoSelecionada?.titulo }}</h2>
           
-          <label *ngIf="isEditing" class="switch-container">
+          <label *ngIf="isEditing && userRole === 'Mestre'" class="switch-container mb-0 me-3">
             <input type="checkbox" [(ngModel)]="editIsPublica">
             <span class="slider round"></span>
-            <span class="label-text">Pública</span>
+            <span class="label-text ms-2">Pública</span>
           </label>
+
+          <!-- Badges view mode -->
+          <span *ngIf="!isEditing" class="badge bg-primary ms-2" [class.bg-secondary]="!anotacaoSelecionada?.isPublica">
+            {{ anotacaoSelecionada?.isPublica ? 'Pública' : 'Privada' }}
+          </span>
         </div>
         
-        <div class="actions">
+        <div class="actions ms-3 d-flex gap-2">
           <ng-container *ngIf="isEditing">
-            <button class="btn-icon" (click)="togglePreview()" title="Preview Markdown">
-              <i class="fas" [class.fa-eye]="!showPreview" [class.fa-edit]="showPreview"></i>
-            </button>
-            <button class="btn-primary btn-sm" (click)="salvarAnotacao()">Salvar</button>
+            <button class="btn-primary btn-sm px-4" (click)="salvarAnotacao()">Salvar</button>
             <button class="btn-secondary btn-sm" (click)="cancelarEdicao()">Cancelar</button>
           </ng-container>
           
-          <ng-container *ngIf="!isEditing">
-            <button class="btn-primary btn-sm" (click)="editarAnotacao()">Editar</button>
+          <ng-container *ngIf="!isEditing && podeEditar(anotacaoSelecionada!)">
+            <button class="btn-primary btn-sm px-3" (click)="editarAnotacao()">
+              <i class="bi bi-pencil-square me-1"></i> Editar
+            </button>
           </ng-container>
         </div>
+      </div>
+
+      <!-- Editor Tabs -->
+      <div class="editor-tabs mb-2" *ngIf="isEditing">
+        <button class="btn-tab-sm" [class.active]="!showPreview" (click)="showPreview = false">
+          <i class="bi bi-pencil-square me-1"></i> Escrever Markdown
+        </button>
+        <button class="btn-tab-sm" [class.active]="showPreview" (click)="togglePreview()">
+          <i class="bi bi-eye me-1"></i> Visualizar
+        </button>
       </div>
 
       <!-- Editor Textarea -->
       <textarea *ngIf="isEditing && !showPreview" 
                 [(ngModel)]="editConteudo" 
-                class="seamless-textarea" 
-                placeholder="Escreva em Markdown...">
+                class="seamless-textarea flex-grow-1" 
+                placeholder="Escreva em Markdown... Ex: # Título, **negrito**, *itálico*">
       </textarea>
       
       <!-- Markdown Preview -->
       <div *ngIf="(!isEditing || showPreview)" 
-           class="markdown-content" 
+           class="markdown-content flex-grow-1 overflow-auto pe-2" 
            [innerHTML]="previewHtml">
       </div>
     </div>

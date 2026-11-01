@@ -72,3 +72,12 @@
     }
   }
 }
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 1.5rem;
+  }
+  .auth-header h1 {
+    font-size: 2rem;
+  }
+}

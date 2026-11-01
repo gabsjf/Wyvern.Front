@@ -6,4 +6,6 @@ export interface Campaign {
     criadoEm?: string;
     ativo?: boolean;
     sessoes?: any[];
+    tokenConvite?: string;
+    papel?: string;
 }

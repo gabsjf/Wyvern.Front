@@ -10,10 +10,7 @@
     <form (ngSubmit)="save()" #sessaoForm="ngForm">
       
       <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-        <div class="form-group" style="flex: 1; min-width: 100px;">
-          <label class="form-label" for="numeroSessao">Sessão Nº</label>
-          <input type="number" id="numeroSessao" name="numeroSessao" class="form-control" [(ngModel)]="sessao.numeroSessao" required />
-        </div>
+
 
         <div class="form-group" style="flex: 3; min-width: 250px;">
           <label class="form-label" for="nome">Título da Sessão</label>
@@ -29,7 +26,7 @@
 
         <div class="form-group" style="flex: 1; min-width: 200px;">
           <label class="form-label" for="campanhaId">Campanha</label>
-          <select id="campanhaId" name="campanhaId" class="form-control" [(ngModel)]="sessao.campanhaId" required>
+          <select id="campanhaId" name="campanhaId" class="form-control" [(ngModel)]="sessao.campanhaId" (ngModelChange)="onCampanhaChange($event)" required>
             <option [ngValue]="0" disabled>Selecione uma campanha...</option>
             @for (campanha of campanhas; track campanha.campanhaId) {
               <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
@@ -44,8 +41,8 @@
       </div>
 
       <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-lg);">
-        <button type="submit" class="btn-primary" [disabled]="!sessaoForm.form.valid || sessao.campanhaId === 0">
-          {{ isEditMode ? 'Salvar Alterações' : 'Registrar Sessão' }}
+        <button type="submit" class="btn-primary" [disabled]="!sessaoForm.form.valid || sessao.campanhaId === 0 || isSaving">
+          {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar Alterações' : 'Registrar Sessão') }}
         </button>
       </div>
     </form>

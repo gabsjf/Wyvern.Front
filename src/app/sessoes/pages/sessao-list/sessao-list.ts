@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SessaoService } from '../../services/sessao.service';
 import { Sessao } from '../../models/sessao';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sessao-list',
@@ -13,7 +14,12 @@ import { Sessao } from '../../models/sessao';
 export class SessaoList implements OnInit {
   private sessaoService = inject(SessaoService);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
   sessoes: Sessao[] = [];
+
+  get userRole(): string {
+    return this.authService.userRole || 'Jogador';
+  }
 
   ngOnInit() {
     this.loadSessoes();

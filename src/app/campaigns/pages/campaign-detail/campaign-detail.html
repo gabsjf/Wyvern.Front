@@ -6,8 +6,20 @@
   } @else if (campaign) {
     <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
       <button class="btn-secondary" routerLink="/campaigns">← Voltar</button>
-      <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
+      <div *ngIf="userRole === 'Mestre'">
+        <button class="btn-primary" style="margin-right: 10px;" (click)="generateInvite()">Gerar Convite</button>
+        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
+      </div>
     </div>
+
+    @if (inviteUrl) {
+      <div class="glass-panel text-center mb-4" style="padding: 1rem; border-color: var(--accent);">
+        <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">Link de Convite Gerado:</p>
+        <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; user-select: all; font-family: monospace; color: var(--accent);">
+          {{ inviteUrl }}
+        </div>
+      </div>
+    }
 
     <div class="glass-panel" style="padding: var(--spacing-xl);">
       <h1 class="title-glow text-accent" style="font-size: 2.5rem; margin-bottom: var(--spacing-sm);">

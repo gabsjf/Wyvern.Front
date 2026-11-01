@@ -11,7 +11,7 @@
     <button type="button" class="tab-btn" [class.active]="activeTab === 'herois'" (click)="setTab('herois')">
       Heróis
     </button>
-    <button type="button" class="tab-btn" [class.active]="activeTab === 'monstros'" (click)="setTab('monstros')">
+    <button type="button" class="tab-btn" *ngIf="userRole === 'Mestre'" [class.active]="activeTab === 'monstros'" (click)="setTab('monstros')">
       Monstros & NPCs
     </button>
   </nav>
@@ -33,8 +33,10 @@
             <td>{{ personagem.descricao || '-' }}</td>
             <td>#{{ personagem.campanhaId }}</td>
             <td>
-              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/personagens', personagem.personagemId, 'edit']">Editar</button>
-              <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; margin-left: 0.5rem;" [routerLink]="['/ficha', personagem.personagemId]">Ficha Completa</button>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: nowrap;">
+                <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap;" [routerLink]="['/personagens', personagem.personagemId, 'edit']">Editar</button>
+                <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap;" [routerLink]="['/ficha', personagem.personagemId]">Ficha Completa</button>
+              </div>
             </td>
           </tr>
         } @empty {

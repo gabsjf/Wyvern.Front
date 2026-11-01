@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';imp
 import { CampaignService } from '../../services/campaign';
 import { Campaign } from '../../models/campaign';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-campaign-list',
@@ -12,7 +13,12 @@ import { RouterModule } from '@angular/router';
 export class CampaignList implements OnInit {
   private campaignService = inject(CampaignService);
    private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
   campaigns: Campaign[] = [];
+
+  get userRole(): string {
+    return this.authService.userRole || 'Jogador';
+  }
 
   ngOnInit(): void {
   this.loadCampaigns();

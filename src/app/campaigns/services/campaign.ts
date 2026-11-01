@@ -25,4 +25,10 @@ export class CampaignService {
   delete(id: number) {
     return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
   }
+  generateInvite(id: number) {
+    return this.http.post<{token: string}>(`${this.apiUrl}/${id}/generate-invite`, {});
+  }
+  join(token: string) {
+    return this.http.post<{campanhaId: number}>(`${this.apiUrl}/join/${token}`, {});
+  }
 }

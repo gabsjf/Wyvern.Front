@@ -14,6 +14,10 @@ export class Sidebar {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  get userRole(): string {
+    return this.authService.userRole || 'Jogador';
+  }
+
   toggle() {
     this.isExpanded = !this.isExpanded;
   }

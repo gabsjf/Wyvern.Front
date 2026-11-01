@@ -1,6 +1,5 @@
 .combate-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .personagem-list {
@@ -240,4 +239,26 @@
 
 .dead-card input {
   pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+  .tracker-card {
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .card-info {
+    flex: 1 1 100%;
+  }
+  
+  .card-hp {
+    flex: 1 1 50%;
+    margin: 0;
+  }
+  
+  .card-actions {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
 }

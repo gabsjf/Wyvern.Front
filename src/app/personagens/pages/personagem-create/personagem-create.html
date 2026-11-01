@@ -31,7 +31,7 @@
                 }
               </select>
             </div>
-            <div class="col">
+            <div class="col" *ngIf="userRole === 'Mestre'">
               <label class="form-label">Tipo*</label>
               <select name="tipoId" class="form-control" [(ngModel)]="personagem.tipoId" required (change)="personagem.tipoId === 1 ? setTab('basico') : null">
                 @for (tipo of tiposPersonagem; track tipo.id) {
@@ -321,7 +321,9 @@
       <!-- BARRA FLUTUANTE DE SALVAR -->
       <div class="save-bar" style="margin-top: var(--spacing-xl); display: flex; justify-content: flex-end; gap: 1rem; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
         <button type="button" class="btn-secondary" style="padding: 10px 40px; font-size: 1.2rem;" routerLink="/personagens">Cancelar</button>
-        <button type="submit" class="btn-primary" style="padding: 10px 40px; font-size: 1.2rem;" [disabled]="!personagemForm.valid">Salvar Personagem no Banco</button>
+        <button type="submit" class="btn-primary" style="padding: 10px 40px; font-size: 1.2rem;" [disabled]="!personagemForm.valid || isSaving">
+          {{ isSaving ? 'Salvando...' : 'Salvar Personagem no Banco' }}
+        </button>
       </div>
 
     </form>

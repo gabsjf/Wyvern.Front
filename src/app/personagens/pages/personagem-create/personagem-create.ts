@@ -5,6 +5,7 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PersonagemService } from '../../services/personagem.service';
 import { CampaignService } from '../../../campaigns/services/campaign';
 import { Campaign } from '../../../campaigns/models/campaign';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-personagem-create',
@@ -18,6 +19,11 @@ export class PersonagemCreate implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
+
+  get userRole(): string {
+    return this.authService.userRole || 'Jogador';
+  }
 
   campanhas: Campaign[] = [];
   periciasDisponiveis: any[] = [];
@@ -32,6 +38,7 @@ export class PersonagemCreate implements OnInit {
 
   isEditMode: boolean = false;
   personagemId: number | null = null;
+  isSaving: boolean = false;
 
   personagem: any = {
     nome: '',
@@ -130,6 +137,8 @@ export class PersonagemCreate implements OnInit {
   }
 
   save() {
+    if (this.isSaving) return;
+
     if (!this.personagem.nome || this.personagem.nome.trim() === '') {
       alert('Por favor, preencha o Nome do personagem na aba Básico antes de salvar.');
       return;
@@ -210,24 +219,30 @@ export class PersonagemCreate implements OnInit {
     }
 
     if (this.isEditMode && this.personagemId) {
+      this.isSaving = true;
       payload.personagemId = this.personagemId;
       this.personagemService.update(this.personagemId, payload).subscribe({
         next: () => {
+          this.isSaving = false;
           alert('Personagem atualizado com sucesso!');
           this.router.navigate(['/personagens']);
         },
         error: (err) => {
+          this.isSaving = false;
           console.error('Erro ao atualizar personagem', err);
           alert('Erro ao atualizar personagem. Veja o console.');
         }
       });
     } else {
+      this.isSaving = true;
       this.personagemService.create(payload).subscribe({
         next: () => {
+          this.isSaving = false;
           alert('Personagem criado com sucesso!');
           this.router.navigate(['/personagens']);
         },
         error: (err) => {
+          this.isSaving = false;
           console.error('Erro ao criar personagem', err);
           alert('Erro ao criar personagem. Veja o console.');
         }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PersonagemService } from '../../services/personagem.service';
 import { Personagem } from '../../models/personagem';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-personagem-list',
@@ -13,8 +14,13 @@ import { Personagem } from '../../models/personagem';
 export class PersonagemList implements OnInit {
   private personagemService = inject(PersonagemService);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
   personagens: Personagem[] = [];
   activeTab: string = 'herois';
+
+  get userRole(): string {
+    return this.authService.userRole || 'Jogador';
+  }
 
   get filteredPersonagens() {
     return this.personagens.filter(p => this.activeTab === 'herois' ? p.tipoId === 1 : p.tipoId !== 1);

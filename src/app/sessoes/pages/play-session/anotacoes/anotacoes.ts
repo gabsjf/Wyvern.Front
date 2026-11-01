@@ -6,6 +6,7 @@ import { PastaAnotacaoService } from '../../../services/pasta-anotacao.service';
 import { PastaAnotacao } from '../../../models/pasta-anotacao.model';
 import { marked } from 'marked';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-anotacoes',
@@ -19,6 +20,10 @@ export class Anotacoes implements OnInit, OnChanges {
   private pastaService = inject(PastaAnotacaoService);
   private cdr = inject(ChangeDetectorRef);
   private sanitizer = inject(DomSanitizer);
+  private authService = inject(AuthService);
+
+  userRole: string = 'Jogador';
+  currentUserId!: number;
 
   pastas: PastaAnotacao[] = [];
   anotacoes: Anotacao[] = [];
@@ -41,6 +46,8 @@ export class Anotacoes implements OnInit, OnChanges {
   newPastaPublic = false;
 
   ngOnInit() {
+    this.userRole = this.authService.userRole || 'Jogador';
+    this.currentUserId = this.authService.currentUserValue?.usuarioId;
     this.carregarDados();
   }
 
@@ -68,7 +75,15 @@ export class Anotacoes implements OnInit, OnChanges {
   }
 
   getAnotacoesDaPasta(pastaId?: number): Anotacao[] {
-    return this.anotacoes.filter(a => a.pastaId === pastaId);
+    return this.anotacoes.filter(a => (a.pastaId || null) === (pastaId || null));
+  }
+
+  podeEditar(a: Anotacao): boolean {
+    return a.criadoPorId === this.currentUserId;
+  }
+
+  podeDeletar(a: Anotacao): boolean {
+    return a.criadoPorId === this.currentUserId;
   }
 
   novaPasta() {

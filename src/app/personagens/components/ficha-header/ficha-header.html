@@ -1,46 +1,67 @@
-<div class="header-glass-panel glass-panel">
-  <div class="stat-box">
-    <span class="stat-label">Classe de Armadura</span>
-    <div class="shield-shape">
-       <span class="stat-value">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+<div class="header-glass-panel glass-panel" style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
+  
+  <!-- ROW 1: STATUS BÁSICOS -->
+  <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: var(--spacing-md);">
+    <div class="stat-box">
+      <span class="stat-label">Classe de Armadura</span>
+      <div class="shield-shape">
+         <span class="stat-value">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+      </div>
+    </div>
+    
+    <div class="stat-box">
+      <span class="stat-label">Iniciativa</span>
+      <div class="box-shape">
+         <span class="stat-value">{{ getIniciativaStr() }}</span>
+      </div>
+    </div>
+    
+    <div class="stat-box">
+      <span class="stat-label">Deslocamento</span>
+      <div class="box-shape">
+         <span class="stat-value">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
+      </div>
+    </div>
+
+    <div class="stat-box">
+      <span class="stat-label">Proficiência</span>
+      <div class="box-shape proficiency">
+         <span class="stat-value">{{ getProficienciaStr() }}</span>
+      </div>
     </div>
   </div>
-  
-  <div class="stat-box">
-    <span class="stat-label">Iniciativa</span>
-    <div class="box-shape">
-       <span class="stat-value">{{ getIniciativaStr() }}</span>
+
+  <!-- ROW 2: VIDA E MORTE -->
+  <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap; align-items: stretch;">
+    
+    <div class="stat-box hp-box" style="flex: 2; min-width: 200px;">
+      <div class="hp-header">
+        <span class="stat-label">Pontos de Vida</span>
+        <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
+      </div>
+      <div class="hp-content" style="height: 100%; display: flex; align-items: center; justify-content: center; padding-bottom: 20px;">
+        <span class="hp-current" style="font-size: 3rem;">{{ personagem?.personagemCombate?.vidaAtual || personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
+      </div>
     </div>
-  </div>
-  
-  <div class="stat-box">
-    <span class="stat-label">Deslocamento</span>
-    <div class="box-shape">
-       <span class="stat-value">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
-    </div>
-  </div>
-  
-  <div style="display: flex; gap: var(--spacing-md); flex: 1; justify-content: center;">
-    <!-- Dados de Vida -->
-    <div class="stat-box hp-box" style="flex: 1; max-width: 200px;">
+
+    <div class="stat-box hp-box" style="flex: 1; min-width: 150px;">
       <div class="hp-header">
         <span class="stat-label">Dados de Vida</span>
         <span class="hp-max">Max: {{ personagem?.personagemCombate?.dadoVidaMaximo || 0 }}</span>
       </div>
-      <div class="hp-content" style="display: flex; justify-content: center; align-items: baseline; gap: 5px;">
-        <span class="hp-current">{{ personagem?.personagemCombate?.dadoVidaMaximo || 'Nenhum' }}</span>
+      <div class="hp-content" style="height: 100%; display: flex; align-items: center; justify-content: center; padding-bottom: 20px;">
+        <span class="hp-current" style="font-size: 2.5rem; color: #4a90e2;">{{ personagem?.personagemCombate?.dadoVidaMaximo || 'Nenhum' }}</span>
       </div>
     </div>
 
-    <!-- Testes de Morte -->
-    <div class="stat-box hp-box" style="flex: 1; max-width: 250px; padding-top: 10px;">
-      <div class="hp-header" style="justify-content: center; margin-bottom: 5px;">
-        <span class="stat-label">Salvaguarda de Morte</span>
+    <div class="stat-box hp-box" style="flex: 1; min-width: 200px;">
+      <div class="hp-header" style="justify-content: center; margin-bottom: 10px;">
+        <span class="stat-label" style="text-align: center;">Salvaguarda de Morte</span>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: center;">
+      <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: center; justify-content: center; height: 100%; padding-bottom: 10px;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">SUCESSOS</span>
-          <div style="display: flex; gap: 5px;">
+          <div style="display: flex; gap: 8px;">
              <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 1"></div>
              <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 2"></div>
              <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 3"></div>
@@ -48,7 +69,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">FALHAS</span>
-          <div style="display: flex; gap: 5px;">
+          <div style="display: flex; gap: 8px;">
              <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 1"></div>
              <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 2"></div>
              <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 3"></div>
@@ -56,22 +77,6 @@
         </div>
       </div>
     </div>
-  </div>
-  
-  <div class="stat-box hp-box">
-    <div class="hp-header">
-      <span class="stat-label">Pontos de Vida</span>
-      <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
-    </div>
-    <div class="hp-content">
-      <span class="hp-current">{{ personagem?.personagemCombate?.vidaAtual || personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
-    </div>
-  </div>
-  
-  <div class="stat-box">
-    <span class="stat-label">Bônus de Proficiência</span>
-    <div class="box-shape proficiency">
-       <span class="stat-value">{{ getProficienciaStr() }}</span>
-    </div>
+    
   </div>
 </div>

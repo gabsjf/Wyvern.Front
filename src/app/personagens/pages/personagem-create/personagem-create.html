@@ -319,10 +319,11 @@
       </ng-container>
 
       <!-- BARRA FLUTUANTE DE SALVAR -->
-      <div class="save-bar" style="margin-top: var(--spacing-xl); display: flex; justify-content: flex-end; gap: 1rem; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
-        <button type="button" class="btn-secondary" style="padding: 10px 40px; font-size: 1.2rem;" routerLink="/personagens">Cancelar</button>
-        <button type="submit" class="btn-primary" style="padding: 10px 40px; font-size: 1.2rem;" [disabled]="!personagemForm.valid || isSaving">
-          {{ isSaving ? 'Salvando...' : 'Salvar Personagem no Banco' }}
+      <div class="save-bar">
+        <a class="btn-secondary" routerLink="/personagens">Cancelar</a>
+        <!-- Sem [disabled] pelo formulário: ao clicar com algo faltando, um aviso diz o que preencher -->
+        <button type="submit" class="btn-primary" [disabled]="isSaving">
+          {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar alterações' : 'Salvar personagem') }}
         </button>
       </div>
 

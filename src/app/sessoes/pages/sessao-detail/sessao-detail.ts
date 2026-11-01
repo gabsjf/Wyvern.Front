@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SessaoService } from '../../services/sessao.service';
 import { Sessao } from '../../models/sessao';
+import { ConfirmService } from '../../../shared/ui/confirm/confirm.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-sessao-detail',
@@ -15,10 +17,11 @@ export class SessaoDetail implements OnInit {
   private router = inject(Router);
   private sessaoService = inject(SessaoService);
   private cdr = inject(ChangeDetectorRef);
+  private confirm = inject(ConfirmService);
+  private toast = inject(ToastService);
 
   sessao: Sessao | null = null;
   isLoading = true;
-  showDeleteModal = false;
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -41,25 +44,27 @@ export class SessaoDetail implements OnInit {
     }
   }
 
-  deleteSessao() {
-    this.showDeleteModal = true;
-  }
+  async deleteSessao() {
+    if (!this.sessao?.sessaoId) return;
+    const id = this.sessao.sessaoId;
 
-  cancelDelete() {
-    this.showDeleteModal = false;
-  }
+    const confirmado = await this.confirm.confirmar({
+      titulo: 'Excluir sessão',
+      mensagem: `A sessão ${this.sessao.numeroSessao} (“${this.sessao.nome}”) e suas notas serão excluídas. Esta ação não pode ser desfeita.`,
+      confirmar: 'Excluir sessão',
+      perigo: true,
+    });
+    if (!confirmado) return;
 
-  confirmDelete() {
-    if (this.sessao?.sessaoId) {
-      this.sessaoService.delete(this.sessao.sessaoId).subscribe({
-        next: () => {
-          this.router.navigate(['/sessoes']);
-        },
-        error: (err) => {
-          console.error('Erro ao deletar sessão', err);
-          this.showDeleteModal = false;
-        }
-      });
-    }
+    this.sessaoService.delete(id).subscribe({
+      next: () => {
+        this.toast.ok('Sessão excluída.');
+        this.router.navigate(['/sessoes']);
+      },
+      error: (err) => {
+        console.error('Erro ao deletar sessão', err);
+        this.toast.erro('Não foi possível excluir a sessão. Tente novamente.');
+      }
+    });
   }
 }

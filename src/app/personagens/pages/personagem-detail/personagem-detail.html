@@ -1,67 +1,56 @@
 <div class="container animate-fade-in">
   @if (isLoading) {
-    <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-secondary);">
-      Invocando pergaminhos do personagem...
-    </div>
+    <p class="estado" role="status">Carregando o personagem...</p>
   } @else if (personagem) {
-    <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
-      <button class="btn-secondary" routerLink="/personagens">← Voltar</button>
-      <button class="btn-primary" style="background: color-mix(in srgb, var(--danger) 20%, transparent); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger);" (click)="deletePersonagem()">Deletar Personagem</button>
-    </div>
+    <a class="voltar" routerLink="/personagens">← Personagens</a>
 
-    <div class="glass-panel" style="padding: var(--spacing-xl);">
-      <h1 class="title-glow text-accent" style="font-size: 2.5rem; margin-bottom: var(--spacing-xs);">
-        {{ personagem.nome }}
-      </h1>
-      <p style="color: var(--text-muted); font-style: italic; margin-bottom: var(--spacing-md); font-size: 1.1rem;">
-        {{ personagem.descricao || 'Nenhuma história definida para este herói ainda.' }}
-      </p>
-      
-      <div style="display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-lg); flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
-        <div style="flex: 1; min-width: 200px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Campanha</h3>
-          <p style="font-size: 1.2rem; font-weight: 500;">#{{ personagem.campanhaId }}</p>
-        </div>
-        
-        <div style="flex: 1; min-width: 200px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Tipo</h3>
-          <p style="font-size: 1.2rem; font-weight: 500; color: var(--accent-color);">
-            {{ getTipoName(personagem.tipoId) }}
-          </p>
-        </div>
-        
-        <div style="flex: 1; min-width: 200px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Status</h3>
-          <p style="font-size: 1.2rem; font-weight: 500;">
-            {{ personagem.ativo ? 'Vivo / Ativo' : 'Morto / Inativo' }}
-          </p>
-        </div>
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">{{ getTipoName(personagem.tipoId) }} · {{ nomeDaCampanha }}</p>
+        <h1>{{ personagem.nome }}</h1>
+        <p class="sub">
+          @if (personagem.personagemPlayer?.classe) {
+            {{ personagem.personagemPlayer.raca }} {{ personagem.personagemPlayer.classe }} nível <span class="num">{{ personagem.personagemPlayer.nivel }}</span>
+          } @else {
+            {{ personagem.descricao || 'Sem descrição.' }}
+          }
+        </p>
       </div>
-      
-      <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--tint-1);">
-        <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Atributos & Estatísticas</h3>
-        <p style="color: var(--text-muted); font-style: italic;">(Em breve... As estatísticas de combate e habilidades aparecerão aqui.)</p>
+
+      <div class="acoes">
+        <a class="btn-primary" [routerLink]="['/ficha', personagem.personagemId]">Abrir ficha</a>
+        <a class="btn-secondary" [routerLink]="['/personagens', personagem.personagemId, 'edit']">Editar</a>
+        <button type="button" class="btn-danger" (click)="deletePersonagem()">Excluir</button>
       </div>
-    </div>
+    </header>
+
+    @if (personagem.personagemCombate) {
+      <section class="panel" aria-labelledby="tit-resumo">
+        <div class="panel-head">
+          <h2 id="tit-resumo">Resumo</h2>
+        </div>
+        <dl class="resumo">
+          <div><dt>CA</dt><dd class="num">{{ personagem.personagemCombate.classeArmadura }}</dd></div>
+          <div><dt>PV</dt><dd class="num">{{ personagem.personagemCombate.vidaAtual ?? personagem.personagemCombate.vidaMaxima }} / {{ personagem.personagemCombate.vidaMaxima }}</dd></div>
+          <div><dt>Deslocamento</dt><dd class="num">{{ personagem.personagemCombate.deslocamento || '—' }}</dd></div>
+          <div><dt>Proficiência</dt><dd class="num">+{{ personagem.personagemCombate.proficienciaBonus }}</dd></div>
+        </dl>
+      </section>
+    }
+
+    @if (personagem.descricao && personagem.personagemPlayer?.classe) {
+      <section class="panel" aria-labelledby="tit-desc">
+        <div class="panel-head">
+          <h2 id="tit-desc">Descrição</h2>
+        </div>
+        <p class="descricao">{{ personagem.descricao }}</p>
+      </section>
+    }
   } @else {
-    <div style="text-align: center; padding: var(--spacing-xl);">
-      <h2 style="color: var(--danger); margin-bottom: var(--spacing-md);">Personagem não encontrado ou foi para o além.</h2>
-      <button class="btn-primary" routerLink="/personagens">Voltar para a Taverna</button>
+    <div class="estado nao-encontrada">
+      <h2>Personagem não encontrado</h2>
+      <p>Ele pode ter sido excluído, ou você não tem mais acesso à campanha dele.</p>
+      <a class="btn-primary" routerLink="/personagens">Voltar aos personagens</a>
     </div>
   }
 </div>
-
-@if (showDeleteModal) {
-  <div class="modal-overlay">
-    <div class="modal-content glass-panel animate-fade-in">
-      <h2 style="color: var(--danger); margin-bottom: var(--spacing-md);">Confirmar Exclusão</h2>
-      <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
-        Tem certeza que deseja apagar permanentemente <strong>{{ personagem?.nome }}</strong>? Esta ação não pode ser desfeita e ele será perdido no limbo para sempre.
-      </p>
-      <div class="flex-between" style="justify-content: flex-end; gap: 1rem;">
-        <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
-        <button class="btn-primary" style="background: color-mix(in srgb, var(--danger) 80%, transparent);" (click)="confirmDelete()">Sim, Deletar</button>
-      </div>
-    </div>
-  </div>
-}

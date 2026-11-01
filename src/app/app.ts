@@ -4,10 +4,12 @@ import { Sidebar } from './core/layout/sidebar/sidebar';
 import { AuthService } from './core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { App as CapacitorApp } from '@capacitor/app';
+import { ToastContainer } from './shared/ui/toast/toast-container';
+import { ConfirmDialog } from './shared/ui/confirm/confirm-dialog';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, Sidebar],
+  imports: [CommonModule, RouterOutlet, Sidebar, ToastContainer, ConfirmDialog],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

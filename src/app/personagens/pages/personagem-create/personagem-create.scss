@@ -1,4 +1,4 @@
-/* Layout da página */
+/* Página */
 .ficha-container {
   padding: 0;
   width: 100%;
@@ -6,12 +6,10 @@
 
 .ficha-content {
   padding: var(--spacing-xl);
-  overflow-y: auto;
-  height: 100%;
 }
 
 .ficha-main-area {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
@@ -19,126 +17,118 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-}
+  gap: var(--spacing-md);
+  text-align: center;
 
-.top-nav-tabs {
-  display: flex;
-  gap: 1rem;
-  background: rgba(0,0,0,0.3);
-  padding: 0.5rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-}
+  h2 { margin: 0; }
 
-.tab-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-secondary);
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: var(--tint-1);
-    color: var(--text-primary);
-  }
-  
-  &.active {
-    background: rgba(var(--primary-color-rgb), 0.15);
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.2);
+  /* abas do formulário (o estilo base vem do styles.scss); rolam na horizontal se não couberem */
+  .top-nav-tabs {
+    max-width: 100%;
+    justify-content: flex-start;
   }
 }
 
-/* Remover spinners de inputs type number */
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
-}
-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-/* Checkboxes customizados estilo premium */
+/* Checkboxes no padrão do tema */
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.6rem;
+  min-height: 44px;
   cursor: pointer;
-  
-  input[type="checkbox"] {
+
+  input[type='checkbox'] {
     appearance: none;
-    background-color: rgba(0,0,0,0.3);
     margin: 0;
-    font: inherit;
-    color: currentColor;
-    width: 1.15em;
-    height: 1.15em;
-    border: 1px solid var(--border-color);
-    border-radius: 0.15em;
+    width: 1.3em;
+    height: 1.3em;
     display: grid;
     place-content: center;
-    transition: all 0.2s ease-in-out;
-    
+    background: var(--surface-2);
+    border: 1px solid var(--muted);
+    border-radius: var(--radius-sm);
+
     &::before {
-      content: "";
-      width: 0.65em;
-      height: 0.65em;
+      content: '';
+      width: 0.7em;
+      height: 0.7em;
+      background: var(--hi);
       transform: scale(0);
-      transition: 120ms transform ease-in-out;
-      box-shadow: inset 1em 1em var(--primary-color);
-      background-color: var(--primary-color);
-      transform-origin: center;
+      transition: transform 120ms ease-in-out;
       clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
     }
-    
+
     &:checked {
-      border-color: var(--primary-color);
+      border-color: var(--hi);
     }
-    
+
     &:checked::before {
       transform: scale(1);
     }
   }
 }
 
+/* Perícias */
 .pericias-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 15px;
-  padding: 10px 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
 }
 
 .pericia-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border-color);
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  
+
   &:hover {
-    background: rgba(var(--primary-color-rgb), 0.1);
-    border-color: var(--primary-color);
+    border-color: var(--hi);
   }
 
   span {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    transition: all 0.2s;
+    color: var(--muted);
+    font-size: 0.95rem;
   }
 
-  input[type="checkbox"]:checked + span {
-    color: var(--primary-color);
+  input[type='checkbox']:checked + span {
+    color: var(--hi);
     font-weight: 600;
   }
 }
 
+/* Barra de salvar: fica visível ao rolar; no celular sobe para acima da barra de navegação */
+.save-bar {
+  position: sticky;
+  bottom: var(--spacing-md);
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 900px) {
+  .save-bar {
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 0.5rem);
+
+    > * {
+      flex: 1;
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .ficha-content {
+    padding: var(--spacing-md);
+  }
+}

@@ -1,0 +1,144 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.voltar {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.page-head {
+  margin-bottom: 0;
+
+  .sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+  }
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.estado {
+  color: var(--muted);
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.nao-encontrada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+
+  h2 { color: var(--danger); margin: 0; }
+  p { margin: 0 0 var(--spacing-sm); }
+}
+
+.mensagem {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ---- convite ---- */
+.convite-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.convite-ajuda {
+  margin: 0;
+  color: var(--muted);
+}
+
+.convite-link {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--hi);
+  font-size: 0.9rem;
+  word-break: break-all;
+  user-select: all;
+}
+
+.convite-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+/* ---- membros ---- */
+.membros-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+}
+
+.membros {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.membro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+  padding: 0.65rem 0.9rem;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.membro-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.membro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.btn-sm {
+  min-height: 40px;
+  padding: 0.25rem 0.9rem;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 720px) {
+  .membro-acoes {
+    width: 100%;
+
+    > button {
+      flex: 1;
+    }
+  }
+
+  .acoes > button {
+    flex: 1;
+  }
+}

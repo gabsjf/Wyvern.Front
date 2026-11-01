@@ -6,6 +6,7 @@ import { PersonagemService } from '../../services/personagem.service';
 import { CampaignService } from '../../../campaigns/services/campaign';
 import { Campaign } from '../../../campaigns/models/campaign';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-personagem-create',
@@ -20,6 +21,7 @@ export class PersonagemCreate implements OnInit {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private toast = inject(ToastService);
 
   // Só o Mestre da campanha escolhida define o tipo (Jogador/NPC/Monstro); o servidor também impõe isso
   get ehMestreNaCampanha(): boolean {
@@ -141,26 +143,37 @@ export class PersonagemCreate implements OnInit {
     if (this.isSaving) return;
 
     if (!this.personagem.nome || this.personagem.nome.trim() === '') {
-      alert('Por favor, preencha o Nome do personagem na aba Básico antes de salvar.');
+      this.activeTab = 'basico';
+      this.toast.erro('Dê um nome ao personagem na aba Básico antes de salvar.');
       return;
     }
-    if (this.personagem.campanhaId === 0) {
-      alert('Por favor, selecione uma Campanha na aba Básico antes de salvar.');
+    if (!this.personagem.campanhaId) {
+      this.activeTab = 'basico';
+      this.toast.erro('Escolha a campanha do personagem na aba Básico antes de salvar.');
       return;
     }
 
     this.personagem.periciasIds = this.selectedPericiasIds;
 
-    if (this.personagem.personagemConjuracao) {
-      for (let i = 1; i <= 9; i++) {
-        if (this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'] > 0) {
-          this.personagem.personagemConjuracao['slotsNivel' + i + 'Atual'] = this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'];
+    // Ao CRIAR, o personagem começa com vida cheia e todos os espaços de magia.
+    // Ao EDITAR, vida atual e espaços gastos são preservados (antes, salvar a edição curava o personagem
+    // e recarregava as magias).
+    if (!this.isEditMode) {
+      if (this.personagem.personagemConjuracao) {
+        for (let i = 1; i <= 9; i++) {
+          if (this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'] > 0) {
+            this.personagem.personagemConjuracao['slotsNivel' + i + 'Atual'] = this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'];
+          }
         }
       }
-    }
-    
-    if (this.personagem.personagemCombate) {
-       this.personagem.personagemCombate.vidaAtual = this.personagem.personagemCombate.vidaMaxima;
+
+      if (this.personagem.personagemCombate) {
+        this.personagem.personagemCombate.vidaAtual = this.personagem.personagemCombate.vidaMaxima;
+      }
+    } else if (this.personagem.personagemCombate) {
+      // Se o máximo baixou abaixo da vida atual, a vida atual acompanha o novo máximo.
+      const { vidaAtual, vidaMaxima } = this.personagem.personagemCombate;
+      if (vidaAtual > vidaMaxima) this.personagem.personagemCombate.vidaAtual = vidaMaxima;
     }
 
     if (this.personagem.personagemAcoesPadrao) {
@@ -183,8 +196,13 @@ export class PersonagemCreate implements OnInit {
       if (!this.personagem.personagemAtaques) this.personagem.personagemAtaques = [];
       if (!this.personagem.personagemMagias) this.personagem.personagemMagias = [];
       
+      // Só espelha ações que ainda não existem nas abas (comparando pelo nome): sem isso, cada salvamento de
+      // uma edição duplicava todos os ataques e magias.
+      const jaTemAtaque = (nome: string) => this.personagem.personagemAtaques.some((a: any) => a.nome === nome);
+      const jaTemMagia = (nome: string) => this.personagem.personagemMagias.some((m: any) => m.nome === nome);
+
       this.personagem.personagemAcoesPadrao.forEach((acao: any) => {
-        if (acao.tipoAcao === 'Ataque') {
+        if (acao.tipoAcao === 'Ataque' && !jaTemAtaque(acao.nome)) {
           this.personagem.personagemAtaques.push({
             nome: acao.nome,
             alcance: acao.alcance || '',
@@ -195,7 +213,7 @@ export class PersonagemCreate implements OnInit {
             atributoBase: acao.atributoBase || 'Forca',
             proficiente: acao.proficiente || false
           });
-        } else if (acao.tipoAcao === 'Magia') {
+        } else if (acao.tipoAcao === 'Magia' && !jaTemMagia(acao.nome)) {
           this.personagem.personagemMagias.push({
             nome: acao.nome,
             descricao: acao.descricao || '',
@@ -225,13 +243,14 @@ export class PersonagemCreate implements OnInit {
       this.personagemService.update(this.personagemId, payload).subscribe({
         next: () => {
           this.isSaving = false;
-          alert('Personagem atualizado com sucesso!');
+          this.toast.ok('Personagem atualizado.');
           this.router.navigate(['/personagens']);
         },
         error: (err) => {
           this.isSaving = false;
           console.error('Erro ao atualizar personagem', err);
-          alert('Erro ao atualizar personagem. Veja o console.');
+          this.toast.erro('Não foi possível salvar as alterações. Confira os dados e tente de novo.');
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -239,13 +258,14 @@ export class PersonagemCreate implements OnInit {
       this.personagemService.create(payload).subscribe({
         next: () => {
           this.isSaving = false;
-          alert('Personagem criado com sucesso!');
+          this.toast.ok('Personagem criado.');
           this.router.navigate(['/personagens']);
         },
         error: (err) => {
           this.isSaving = false;
           console.error('Erro ao criar personagem', err);
-          alert('Erro ao criar personagem. Veja o console.');
+          this.toast.erro('Não foi possível criar o personagem. Confira os dados e tente de novo.');
+          this.cdr.detectChanges();
         }
       });
     }

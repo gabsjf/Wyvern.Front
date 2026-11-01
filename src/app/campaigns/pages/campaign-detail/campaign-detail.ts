@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CampaignService } from '../../services/campaign';
 import { Campaign, Membro } from '../../models/campaign';
+import { ConfirmService } from '../../../shared/ui/confirm/confirm.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-campaign-detail',
@@ -16,6 +18,8 @@ export class CampaignDetail implements OnInit {
   private router = inject(Router);
   private campaignService = inject(CampaignService);
   private cdr = inject(ChangeDetectorRef);
+  private confirm = inject(ConfirmService);
+  private toast = inject(ToastService);
 
   campaign: Campaign | null = null;
   isLoading = true;
@@ -47,28 +51,28 @@ export class CampaignDetail implements OnInit {
     }
   }
 
-  showDeleteModal = false;
+  async deleteCampaign() {
+    if (!this.campaign?.campanhaId) return;
+    const id = this.campaign.campanhaId;
 
-  deleteCampaign() {
-    this.showDeleteModal = true;
-  }
+    const confirmado = await this.confirm.confirmar({
+      titulo: 'Excluir campanha',
+      mensagem: `“${this.campaign.nome}” sairá da lista de todos os membros. Esta ação não pode ser desfeita.`,
+      confirmar: 'Excluir campanha',
+      perigo: true,
+    });
+    if (!confirmado) return;
 
-  cancelDelete() {
-    this.showDeleteModal = false;
-  }
-
-  confirmDelete() {
-    if (this.campaign?.campanhaId) {
-      this.campaignService.delete(this.campaign.campanhaId).subscribe({
-        next: () => {
-          this.router.navigate(['/campaigns']);
-        },
-        error: (err) => {
-          console.error('Erro ao deletar campanha', err);
-          this.showDeleteModal = false;
-        }
-      });
-    }
+    this.campaignService.delete(id).subscribe({
+      next: () => {
+        this.toast.ok('Campanha excluída.');
+        this.router.navigate(['/campaigns']);
+      },
+      error: (err) => {
+        console.error('Erro ao deletar campanha', err);
+        this.toast.erro('Não foi possível excluir a campanha. Tente novamente.');
+      }
+    });
   }
 
   // ----- Convite -----
@@ -108,15 +112,15 @@ export class CampaignDetail implements OnInit {
     });
   }
 
-  renewInvite() {
-    if (confirm('Gerar um novo link? O link anterior deixará de funcionar para quem ainda não entrou.')) {
+  async renewInvite() {
+    if (await this.confirm.confirmar({ titulo: 'Gerar novo link', mensagem: 'O link anterior deixará de funcionar para quem ainda não entrou.', confirmar: 'Gerar novo link' })) {
       this.generateInvite(true);
     }
   }
 
-  revokeInvite() {
+  async revokeInvite() {
     if (!this.campaign?.campanhaId || this.inviteBusy) return;
-    if (!confirm('Desativar o link de convite? Ninguém mais conseguirá entrar por ele.')) return;
+    if (!(await this.confirm.confirmar({ titulo: 'Desativar convite', mensagem: 'Ninguém mais conseguirá entrar na campanha por este link.', confirmar: 'Desativar', perigo: true }))) return;
 
     this.inviteBusy = true;
     this.campaignService.revokeInvite(this.campaign.campanhaId).subscribe({
@@ -175,9 +179,9 @@ export class CampaignDetail implements OnInit {
     return err.error?.detail || (typeof err.error === 'string' && err.error) || padrao;
   }
 
-  mudarPapel(membro: Membro, papel: 'Mestre' | 'Jogador') {
+  async mudarPapel(membro: Membro, papel: 'Mestre' | 'Jogador') {
     if (!this.campaign?.campanhaId || this.membrosBusy) return;
-    if (papel === 'Jogador' && !confirm(`Rebaixar ${membro.nome} para Jogador?`)) return;
+    if (papel === 'Jogador' && !(await this.confirm.confirmar({ titulo: 'Rebaixar a Jogador', mensagem: `${membro.nome} deixará de poder gerenciar esta campanha.`, confirmar: 'Rebaixar' }))) return;
 
     this.membrosBusy = true;
     this.campaignService.setPapel(this.campaign.campanhaId, membro.usuarioId, papel).subscribe({
@@ -191,9 +195,9 @@ export class CampaignDetail implements OnInit {
     });
   }
 
-  remover(membro: Membro) {
+  async remover(membro: Membro) {
     if (!this.campaign?.campanhaId || this.membrosBusy) return;
-    if (!confirm(`Remover ${membro.nome} da campanha?`)) return;
+    if (!(await this.confirm.confirmar({ titulo: 'Remover da campanha', mensagem: `${membro.nome} perderá o acesso à campanha.`, confirmar: 'Remover', perigo: true }))) return;
 
     this.membrosBusy = true;
     this.campaignService.removeMembro(this.campaign.campanhaId, membro.usuarioId).subscribe({
@@ -205,10 +209,10 @@ export class CampaignDetail implements OnInit {
     });
   }
 
-  sair() {
+  async sair() {
     const eu = this.voce;
     if (!this.campaign?.campanhaId || !eu || this.membrosBusy) return;
-    if (!confirm('Sair desta campanha? Você perde o acesso a ela e aos personagens que criou nela.')) return;
+    if (!(await this.confirm.confirmar({ titulo: 'Sair da campanha', mensagem: 'Você perde o acesso à campanha e aos personagens que criou nela.', confirmar: 'Sair', perigo: true }))) return;
 
     this.membrosBusy = true;
     this.campaignService.removeMembro(this.campaign.campanhaId, eu.usuarioId).subscribe({

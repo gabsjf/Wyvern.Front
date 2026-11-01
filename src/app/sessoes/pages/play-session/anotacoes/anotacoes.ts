@@ -7,6 +7,8 @@ import { PastaAnotacao } from '../../../models/pasta-anotacao.model';
 import { marked } from 'marked';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PapelService } from '../../../../campaigns/services/papel.service';
+import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { ConfirmService } from '../../../../shared/ui/confirm/confirm.service';
 
 @Component({
   selector: 'app-anotacoes',
@@ -21,6 +23,8 @@ export class Anotacoes implements OnInit, OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
   private papelService = inject(PapelService);
+  private toast = inject(ToastService);
+  private confirm = inject(ConfirmService);
 
   userRole: string = 'Jogador';
   currentUserId!: number;
@@ -176,7 +180,7 @@ export class Anotacoes implements OnInit, OnChanges {
 
   salvarAnotacao() {
     if (!this.editTitulo.trim()) {
-      alert('O título da anotação é obrigatório.');
+      this.toast.erro('Dê um título à anotação antes de salvar.');
       return;
     }
 
@@ -216,9 +220,9 @@ export class Anotacoes implements OnInit, OnChanges {
     }
   }
 
-  excluirAnotacao(id: number, event: Event) {
+  async excluirAnotacao(id: number, event: Event) {
     event.stopPropagation();
-    if (confirm('Tem certeza que deseja excluir esta anotação?')) {
+    if (await this.confirm.confirmar({ titulo: 'Excluir anotação', mensagem: 'Esta anotação será excluída e não poderá ser recuperada.', confirmar: 'Excluir', perigo: true })) {
       this.anotacaoService.delete(id).subscribe({
         next: () => {
           this.anotacoes = this.anotacoes.filter(a => a.anotacaoId !== id);
@@ -232,9 +236,9 @@ export class Anotacoes implements OnInit, OnChanges {
     }
   }
 
-  excluirPasta(id: number, event: Event) {
+  async excluirPasta(id: number, event: Event) {
     event.stopPropagation();
-    if (confirm('Tem certeza que deseja excluir esta pasta e TODAS as anotações nela?')) {
+    if (await this.confirm.confirmar({ titulo: 'Excluir pasta', mensagem: 'A pasta e TODAS as anotações dentro dela serão excluídas e não poderão ser recuperadas.', confirmar: 'Excluir pasta', perigo: true })) {
       this.pastaService.deletePasta(id).subscribe({
         next: () => {
           this.pastas = this.pastas.filter(p => p.pastaId !== id);

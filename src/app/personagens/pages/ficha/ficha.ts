@@ -8,6 +8,7 @@ import { ItemService, Item } from '../../../core/services/item.service';
 import { MagiaService, Magia } from '../../../core/services/magia.service';
 import { PersonagemService } from '../../services/personagem.service';
 import { CampaignService } from '../../../campaigns/services/campaign';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Campaign } from '../../../campaigns/models/campaign';
 import { FormsModule } from '@angular/forms';
 
@@ -61,6 +62,7 @@ export class FichaComponent implements OnInit {
     private magiaService: MagiaService,
     private personagemService: PersonagemService,
     private campaignService: CampaignService,
+    private toast: ToastService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -183,7 +185,7 @@ export class FichaComponent implements OnInit {
 
   confirmarImportPdf() {
     if (!this.pendingImportFile || !this.importCampanhaId) {
-      alert('Selecione a campanha para a qual o personagem será importado.');
+      this.toast.erro('Selecione a campanha para a qual o personagem será importado.');
       return;
     }
 
@@ -193,14 +195,15 @@ export class FichaComponent implements OnInit {
         this.importing = false;
         this.showImportModal = false;
         this.pendingImportFile = null;
-        alert('Ficha importada com sucesso!');
+        this.toast.ok('Ficha importada com sucesso!');
         this.router.navigate(['/ficha', data.personagemId]);
       },
       error: (err) => {
         this.importing = false;
         this.cdr.detectChanges();
         console.error(err);
-        alert('Erro ao importar PDF: ' + (err?.error ?? err?.message ?? 'Erro desconhecido'));
+        const motivo = typeof err?.error === 'string' ? err.error : (err?.error?.detail ?? err?.message ?? 'erro desconhecido');
+        this.toast.erro('Não foi possível importar o PDF: ' + motivo);
       }
     });
   }
@@ -212,7 +215,7 @@ export class FichaComponent implements OnInit {
 
   exportPdf() {
     if (!this.personagem || !this.personagem.personagemId) {
-      alert('Nenhum personagem carregado para exportar!');
+      this.toast.erro('Abra uma ficha antes de exportar.');
       return;
     }
 
@@ -227,7 +230,7 @@ export class FichaComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('Erro ao exportar PDF.');
+        this.toast.erro('Não foi possível exportar o PDF. Tente de novo.');
       }
     });
   }

@@ -1,6 +1,9 @@
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 <div class="app-container" [class.no-sidebar]="!authService.isLoggedIn()">
-  <app-sidebar *ngIf="authService.isLoggedIn()"></app-sidebar>
-  <main class="main-content">
+  @if (authService.isLoggedIn()) {
+    <app-sidebar></app-sidebar>
+  }
+  <main id="conteudo" class="main-content" tabindex="-1">
     <router-outlet></router-outlet>
   </main>
 </div>

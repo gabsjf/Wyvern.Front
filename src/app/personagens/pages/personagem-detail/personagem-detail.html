@@ -6,7 +6,7 @@
   } @else if (personagem) {
     <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
       <button class="btn-secondary" routerLink="/personagens">← Voltar</button>
-      <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deletePersonagem()">Deletar Personagem</button>
+      <button class="btn-primary" style="background: color-mix(in srgb, var(--danger) 20%, transparent); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger);" (click)="deletePersonagem()">Deletar Personagem</button>
     </div>
 
     <div class="glass-panel" style="padding: var(--spacing-xl);">
@@ -38,14 +38,14 @@
         </div>
       </div>
       
-      <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid rgba(255,255,255,0.05);">
+      <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--tint-1);">
         <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Atributos & Estatísticas</h3>
         <p style="color: var(--text-muted); font-style: italic;">(Em breve... As estatísticas de combate e habilidades aparecerão aqui.)</p>
       </div>
     </div>
   } @else {
     <div style="text-align: center; padding: var(--spacing-xl);">
-      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Personagem não encontrado ou foi para o além.</h2>
+      <h2 style="color: var(--danger); margin-bottom: var(--spacing-md);">Personagem não encontrado ou foi para o além.</h2>
       <button class="btn-primary" routerLink="/personagens">Voltar para a Taverna</button>
     </div>
   }
@@ -54,13 +54,13 @@
 @if (showDeleteModal) {
   <div class="modal-overlay">
     <div class="modal-content glass-panel animate-fade-in">
-      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Confirmar Exclusão</h2>
+      <h2 style="color: var(--danger); margin-bottom: var(--spacing-md);">Confirmar Exclusão</h2>
       <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
         Tem certeza que deseja apagar permanentemente <strong>{{ personagem?.nome }}</strong>? Esta ação não pode ser desfeita e ele será perdido no limbo para sempre.
       </p>
       <div class="flex-between" style="justify-content: flex-end; gap: 1rem;">
         <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
-        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.8);" (click)="confirmDelete()">Sim, Deletar</button>
+        <button class="btn-primary" style="background: color-mix(in srgb, var(--danger) 80%, transparent);" (click)="confirmDelete()">Sim, Deletar</button>
       </div>
     </div>
   </div>

@@ -98,7 +98,7 @@
             <div class="col"><label class="form-label">Deslocamento (Ex: 9m)</label><input type="text" name="desloc" class="form-control" [(ngModel)]="personagem.personagemCombate.deslocamento" /></div>
           </div>
 
-          <hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;" />
+          <hr style="border-color: var(--tint-2); margin: 2rem 0;" />
 
           <!-- Atributos base e Salvaguardas -->
           <div class="form-group row" style="display: flex; gap: 10px;">
@@ -135,7 +135,7 @@
           </div>
 
           <ng-container *ngIf="personagem.tipoId !== 1">
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;" />
+            <hr style="border-color: var(--tint-2); margin: 2rem 0;" />
             <div class="form-group row">
               <div class="col"><label class="form-label">Vulnerabilidades a Dano</label><input type="text" name="vulnerabilidades" class="form-control" [(ngModel)]="personagem.personagemNpc.vulnerabilidades" /></div>
               <div class="col"><label class="form-label">Resistências a Dano</label><input type="text" name="resistencias" class="form-control" [(ngModel)]="personagem.personagemNpc.resistencias" /></div>
@@ -226,7 +226,7 @@
               <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoPadrao()">+ Ação</button>
             </div>
             @for (acao of personagem.personagemAcoesPadrao; track $index) {
-              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
                 <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoPadrao($index)" title="Remover Ação">&times;</button>
                 <div class="form-group row">
                   <div class="col-2"><input type="text" name="acaoNome{{$index}}" class="form-control" [(ngModel)]="acao.nome" placeholder="Nome (Ex: Garra)" /></div>
@@ -269,7 +269,7 @@
               <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoBonus()">+ Ação Bônus</button>
             </div>
             @for (bonus of personagem.personagemAcoesBonus; track $index) {
-              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
                 <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoBonus($index)" title="Remover Ação Bônus">&times;</button>
                 <div class="form-group row">
                   <div class="col-3"><input type="text" name="bonusNome{{$index}}" class="form-control" [(ngModel)]="bonus.nome" placeholder="Nome" /></div>
@@ -286,7 +286,7 @@
               <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addReacao()">+ Reação</button>
             </div>
             @for (reacao of personagem.personagemReacoes; track $index) {
-              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
                 <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeReacao($index)" title="Remover Reação">&times;</button>
                 <div class="form-group row">
                   <div class="col-3"><input type="text" name="reacaoNome{{$index}}" class="form-control" [(ngModel)]="reacao.nome" placeholder="Nome" /></div>
@@ -304,7 +304,7 @@
               <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoLendaria()">+ Ação Lendária</button>
             </div>
             @for (lendaria of personagem.personagemAcoesLendarias; track $index) {
-              <div class="action-card mt-2 p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px; position: relative; padding-right: 40px !important;">
+              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
                 <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoLendaria($index)" title="Remover Ação Lendária">&times;</button>
                 <div class="form-group row">
                   <div class="col-3"><input type="text" name="lendariaNome{{$index}}" class="form-control" [(ngModel)]="lendaria.nome" placeholder="Nome" /></div>

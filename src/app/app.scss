@@ -1,20 +1,24 @@
 .app-container {
   display: flex;
   min-height: 100vh;
-  padding: 0 1rem;
-}
-.main-content {
-  flex: 1;
-  padding: 1rem;
-  width: 0; /* allows flex children to shrink */
 }
 
-@media (max-width: 1024px) {
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.main-content:focus {
+  outline: none;
+}
+
+@media (max-width: 900px) {
   .app-container {
-    padding: 0;
+    flex-direction: column;
   }
-  .main-content {
-    padding: 3rem 0.5rem 1rem 0.5rem; /* added top padding to avoid overlapping with hamburger menu */
-    width: 100%;
+
+  /* espaço para a barra inferior (60px) e a área segura do aparelho */
+  .app-container:not(.no-sidebar) .main-content {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 }

@@ -6,13 +6,18 @@
       <p class="text-secondary character-class">{{ personagem?.personagemPlayer?.classe || 'Sem Classe' }} Nv. {{ personagem?.personagemPlayer?.nivel || 1 }}</p>
     </div>
     
-    <nav class="ficha-nav">
-      <button class="nav-btn" [class.active]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos e Perícias</button>
-      <button class="nav-btn" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
-      <button class="nav-btn" [class.active]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
-      <button class="nav-btn" [class.active]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
-      <button class="nav-btn" [class.active]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
+    <nav class="ficha-nav" role="tablist" aria-label="Seções da ficha">
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'atributos'" [attr.aria-selected]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'magias'" [attr.aria-selected]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'inventario'" [attr.aria-selected]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'caracteristicas'" [attr.aria-selected]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
     </nav>
+
+    <div class="sidebar-actions">
+      <button type="button" class="btn-secondary w-100" (click)="importPdf()">Importar PDF 5.5</button>
+      <button type="button" class="btn-secondary w-100" (click)="exportPdf()">Exportar PDF</button>
+    </div>
     
 
   </aside>
@@ -54,11 +59,11 @@
       <!-- ABA: COMBATE -->
       <ng-container *ngIf="activeTab === 'combate'">
         <div class="weapons-panel glass-panel">
-          <div class="flex-between" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; padding-bottom: 10px;">
-            <h3 class="panel-title text-accent title-glow" style="border: none; margin: 0; padding: 0;">Ataques e Armas</h3>
-            <button class="btn-primary" (click)="showAtaqueModal = true">+ Adicionar</button>
+          <div class="panel-head" style="padding-left: 0; padding-right: 0; margin-bottom: var(--spacing-md);">
+            <h3 class="panel-title" style="margin: 0;">Ataques e armas</h3>
+            <button type="button" class="btn-primary" (click)="showAtaqueModal = true">+ Adicionar</button>
           </div>
-          <table class="premium-table">
+          <table class="premium-table table-stack">
             <thead>
               <tr>
                 <th>Ataque</th>
@@ -66,20 +71,20 @@
                 <th>Acerto</th>
                 <th>Dano / Tipo</th>
                 <th>Propriedades</th>
-                <th></th>
+                <th><span class="visually-hidden">Ações</span></th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let ataque of personagem?.personagemAtaques">
-                <td><strong>{{ ataque.nome }}</strong></td>
-                <td>{{ ataque.alcance || '--' }}</td>
-                <td><span class="badge-acerto">{{ getBonusAtaque(ataque) }}</span></td>
-                <td>{{ getDanoAtaque(ataque) }} {{ ataque.tipoDano }}</td>
-                <td class="text-secondary">{{ ataque.propriedades || '--' }}</td>
-                <td><button class="btn-icon-danger" (click)="removerAtaque(ataque.personagemAtaqueId)" title="Remover">&times;</button></td>
+                <td data-label="Ataque"><strong>{{ ataque.nome }}</strong></td>
+                <td data-label="Alcance">{{ ataque.alcance || '--' }}</td>
+                <td data-label="Acerto"><span class="badge-acerto">{{ getBonusAtaque(ataque) }}</span></td>
+                <td data-label="Dano">{{ getDanoAtaque(ataque) }} {{ ataque.tipoDano }}</td>
+                <td data-label="Propriedades" class="text-secondary">{{ ataque.propriedades || '--' }}</td>
+                <td><button type="button" class="btn-icon-danger" (click)="removerAtaque(ataque.personagemAtaqueId)" [attr.aria-label]="'Remover ' + ataque.nome" title="Remover">&times;</button></td>
               </tr>
               <tr *ngIf="!personagem?.personagemAtaques || personagem.personagemAtaques.length === 0">
-                <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum ataque cadastrado.</td>
+                <td colspan="6" style="text-align: center; color: var(--muted); padding: 20px;">Nenhum ataque cadastrado. Use “Adicionar” para criar o primeiro.</td>
               </tr>
             </tbody>
           </table>

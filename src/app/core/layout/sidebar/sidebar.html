@@ -1,18 +1,48 @@
-<nav class="sidebar glass-panel" [class.collapsed]="!isExpanded">
-  <button type="button" class="toggle-btn" (click)="toggle()">
-    <span *ngIf="isExpanded">◀</span>
-    <span *ngIf="!isExpanded">▶</span>
-  </button>
-  <div class="sidebar-header" *ngIf="isExpanded">
-    <h2 class="title-glow text-accent">Wyvern</h2>
+<!-- Celular: barra de topo com marca, tema e sair -->
+<header class="mobile-bar">
+  <a class="brand" routerLink="/dashboard" aria-label="Wyvern, ir para o painel">Wyvern</a>
+  <div class="mobile-actions">
+    <button type="button" class="icon-btn" (click)="alternarTema()"
+            [attr.aria-label]="temaAtual === 'escuro' ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'">
+      <i class="bi" [class.bi-sun]="temaAtual === 'escuro'" [class.bi-moon-stars]="temaAtual === 'claro'" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="icon-btn" (click)="logout()" aria-label="Sair da conta">
+      <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+    </button>
   </div>
-  <ul class="nav-links">
-    <li><a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"><i class="bi bi-house-door icon"></i><span class="label" *ngIf="isExpanded">Dashboard</span></a></li>
-    <li><a routerLink="/campaigns" routerLinkActive="active"><i class="bi bi-journal-bookmark icon"></i><span class="label" *ngIf="isExpanded">Campanhas</span></a></li>
-    <li><a routerLink="/personagens" routerLinkActive="active"><i class="bi bi-person-lines-fill icon"></i><span class="label" *ngIf="isExpanded">Personagens</span></a></li>
-    <li><a routerLink="/sessoes" routerLinkActive="active"><i class="bi bi-calendar-event icon"></i><span class="label" *ngIf="isExpanded">Sessões</span></a></li>
+</header>
+
+<!-- Desktop: trilho lateral -->
+<nav class="rail" aria-label="Principal">
+  <a class="brand" routerLink="/dashboard" aria-label="Wyvern, ir para o painel">Wyvern</a>
+  <ul class="links">
+    @for (d of destinos; track d.rota) {
+      <li>
+        <a [routerLink]="d.rota" routerLinkActive="active" ariaCurrentWhenActive="page">
+          <i class="bi {{ d.icone }}" aria-hidden="true"></i>
+          <span>{{ d.rotulo }}</span>
+        </a>
+      </li>
+    }
   </ul>
-  <div class="sidebar-footer" *ngIf="isExpanded" style="margin-top: auto; padding: 1rem;">
-    <button class="btn-secondary" style="width: 100%;" (click)="logout()">Sair</button>
+  <div class="rail-foot">
+    <button type="button" class="rail-btn" (click)="alternarTema()">
+      <i class="bi" [class.bi-sun]="temaAtual === 'escuro'" [class.bi-moon-stars]="temaAtual === 'claro'" aria-hidden="true"></i>
+      <span>{{ temaAtual === 'escuro' ? 'Tema claro' : 'Tema escuro' }}</span>
+    </button>
+    <button type="button" class="rail-btn" (click)="logout()">
+      <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+      <span>Sair</span>
+    </button>
   </div>
+</nav>
+
+<!-- Celular: barra inferior -->
+<nav class="bottom-nav" aria-label="Principal">
+  @for (d of destinos; track d.rota) {
+    <a [routerLink]="d.rota" routerLinkActive="active" ariaCurrentWhenActive="page">
+      <i class="bi {{ d.icone }}" aria-hidden="true"></i>
+      <span>{{ d.rotulo }}</span>
+    </a>
+  }
 </nav>

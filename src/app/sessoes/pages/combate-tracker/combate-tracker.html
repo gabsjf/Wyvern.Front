@@ -1,226 +1,238 @@
-<div class="combate-container animate-fade-in" style="position: relative; min-height: 80vh;">
-  <!-- DICE BOX LAYER -->
-  <div id="dice-box" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></div>
-  
-  <!-- DICE ROLLER UI is moved to the bottom -->
+<div class="combate-container animate-fade-in">
+  <!-- Camada dos dados 3D: cobre a tela inteira e não captura toques -->
+  <div id="dice-box" class="dice-layer" aria-hidden="true"></div>
 
-  <!-- CONFIGURAÇÃO DE COMBATE -->
-  <ng-container *ngIf="!combateAtivo && userRole === 'Mestre'">
-    <div class="glass-panel preparation-panel">
-      <h2 class="title-glow text-accent mb-4">Preparar Combate</h2>
-      
-      <div class="prep-combat-grid">
-        <!-- Seleção de Campanha -->
-        <div class="prep-column">
-          <h4 class="mb-3">Disponíveis</h4>
-          <div class="personagem-list scroller mb-4" style="max-height: 200px;">
+  <!-- ===== MESTRE: PREPARAR COMBATE ===== -->
+  @if (!combateAtivo && userRole === 'Mestre') {
+    <section class="panel preparacao" aria-labelledby="tit-preparar">
+      <div class="panel-head">
+        <h2 id="tit-preparar">Preparar combate</h2>
+      </div>
+
+      <div class="prep-grid">
+        <div class="prep-col">
+          <h3>Disponíveis</h3>
+          <ul class="lista-disponiveis" aria-label="Personagens disponíveis">
             @for (p of personagens; track p.personagemId) {
-              <div class="list-item" (click)="adicionarParticipante(p)">
-                <span>{{ p.nome }}</span>
-                <span class="badge" [class.badge-inimigo]="p.tipoId !== 1">{{ p.tipoId === 1 ? 'Herói' : 'Inimigo' }}</span>
-              </div>
+              <li>
+                <button type="button" class="item-disponivel" (click)="adicionarParticipante(p)"
+                        [attr.aria-label]="'Adicionar ' + p.nome + ' ao combate'">
+                  <span class="nome">{{ p.nome }}</span>
+                  <span class="chip" [class.chip-hi]="p.tipoId === 1" [class.chip-danger]="p.tipoId !== 1">{{ p.tipoId === 1 ? 'Herói' : 'Inimigo' }}</span>
+                </button>
+              </li>
             }
             @if (personagens.length === 0) {
-              <div class="text-center text-secondary" style="padding: 10px; font-size: 0.85rem;">
-                Nenhum personagem encontrado nesta campanha.
-              </div>
+              <li class="vazio">Nenhum personagem nesta campanha ainda.</li>
             }
-          </div>
-          
-          <!-- QUICK NPC FORM -->
-          <div class="quick-npc-panel glass-panel" style="padding: 15px; margin-top: 15px; border-radius: 8px;">
-            <h5 class="mb-2 text-accent">Adicionar NPC Rápido</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-              <input type="text" class="form-control" placeholder="Nome" [(ngModel)]="novoNpc.nome" style="grid-column: span 2;" />
-              <input type="number" class="form-control" placeholder="Iniciativa" [(ngModel)]="novoNpc.iniciativa" title="Iniciativa" />
-              <input type="number" class="form-control" placeholder="Vida" [(ngModel)]="novoNpc.vidaMaxima" title="Vida Máxima" />
-              <input type="number" class="form-control" placeholder="CA" [(ngModel)]="novoNpc.classeArmadura" title="Classe de Armadura" style="grid-column: span 2;" />
+          </ul>
+
+          <fieldset class="npc-rapido">
+            <legend>NPC rápido</legend>
+            <div class="form-group">
+              <label class="form-label" for="npc-nome">Nome</label>
+              <input id="npc-nome" type="text" class="form-control" placeholder="Ex.: Goblin arqueiro" [(ngModel)]="novoNpc.nome" />
             </div>
-            <button class="btn-secondary w-100" style="margin-top: 10px;" (click)="adicionarNpcRapido()">Adicionar</button>
-          </div>
+            <div class="npc-numeros">
+              <div class="form-group">
+                <label class="form-label" for="npc-ini">Iniciativa</label>
+                <input id="npc-ini" type="number" class="form-control num" [(ngModel)]="novoNpc.iniciativa" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="npc-pv">PV</label>
+                <input id="npc-pv" type="number" class="form-control num" [(ngModel)]="novoNpc.vidaMaxima" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="npc-ca">CA</label>
+                <input id="npc-ca" type="number" class="form-control num" [(ngModel)]="novoNpc.classeArmadura" />
+              </div>
+            </div>
+            <button type="button" class="btn-secondary w-100" (click)="adicionarNpcRapido()">Adicionar NPC</button>
+          </fieldset>
         </div>
 
-        <!-- Participantes Selecionados -->
-        <div class="prep-column">
-          <div class="flex-between" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h4 style="margin: 0;">Participantes</h4>
-            <button class="btn-secondary btn-sm" style="margin-left: 15px;" (click)="rolarIniciativaMonstros()">Rolar Iniciativa Inimigos</button>
-          </div>
-          
-          <div class="scroller">
-            <table class="premium-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Iniciativa</th>
-                  <th>HP</th>
-                  <th>CA</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (sel of participantesSelecionados; track $index) {
-                  <tr>
-                    <td>{{ sel.nome }}</td>
-                    <td>
-                      <input type="number" min="0" class="form-control text-center" style="width: 70px;" [(ngModel)]="sel.iniciativa" />
-                    </td>
-                    <td>
-                      <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
-                        <input type="number" min="0" class="form-control text-center" style="width: 70px;" [(ngModel)]="sel.vidaAtual" />
-                        / {{ sel.vidaMaxima }}
-                      </div>
-                    </td>
-                    <td class="text-center">{{ sel.classeArmadura }}</td>
-                    <td class="text-center">
-                      <button class="btn-danger btn-sm" (click)="removerParticipanteSelecionado($index)">X</button>
-                    </td>
-                  </tr>
-                }
-                @if (participantesSelecionados.length === 0) {
-                  <tr>
-                    <td colspan="5" class="text-center text-secondary py-4" style="padding: 2rem;">Nenhum participante adicionado. Selecione na lista ao lado.</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        <div class="prep-col">
+          <div class="prep-topo">
+            <h3>Participantes</h3>
+            <button type="button" class="btn-secondary" (click)="rolarIniciativaMonstros()">Rolar iniciativa dos inimigos</button>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
-            <button class="btn-primary py-2 px-5 font-weight-bold" [disabled]="participantesSelecionados.length === 0" (click)="iniciarCombate()">
-              Iniciar Combate
+          <table class="premium-table table-stack">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Iniciativa</th>
+                <th>PV</th>
+                <th>CA</th>
+                <th><span class="visually-hidden">Remover</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sel of participantesSelecionados; track $index) {
+                <tr>
+                  <td data-label="Nome"><strong>{{ sel.nome }}</strong></td>
+                  <td data-label="Iniciativa">
+                    <input type="number" min="0" class="form-control num campo-curto" [(ngModel)]="sel.iniciativa"
+                           [attr.aria-label]="'Iniciativa de ' + sel.nome" />
+                  </td>
+                  <td data-label="PV">
+                    <span class="pv-edit">
+                      <input type="number" min="0" class="form-control num campo-curto" [(ngModel)]="sel.vidaAtual"
+                             [attr.aria-label]="'PV atual de ' + sel.nome" />
+                      <span class="num">/ {{ sel.vidaMaxima }}</span>
+                    </span>
+                  </td>
+                  <td data-label="CA" class="num">{{ sel.classeArmadura }}</td>
+                  <td>
+                    <button type="button" class="btn-danger btn-sm" (click)="removerParticipanteSelecionado($index)"
+                            [attr.aria-label]="'Remover ' + sel.nome">Remover</button>
+                  </td>
+                </tr>
+              }
+              @if (participantesSelecionados.length === 0) {
+                <tr>
+                  <td colspan="5" class="vazio">Nenhum participante ainda. Toque em um personagem da lista para adicioná-lo.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="prep-acoes">
+            <button type="button" class="btn-primary" [disabled]="participantesSelecionados.length === 0" (click)="iniciarCombate()">
+              Iniciar combate
             </button>
           </div>
         </div>
       </div>
-    </div>
-  </ng-container>
+    </section>
+  }
 
-  <!-- TELA DE ESPERA PARA JOGADORES -->
-  <ng-container *ngIf="!combateAtivo && userRole === 'Jogador'">
-    <div class="glass-panel text-center" style="padding: 4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
-      <h2 class="title-glow text-accent mb-4">Combate não iniciado</h2>
-      <p style="color: var(--text-secondary); font-size: 1.2rem;">Aguarde o Mestre preparar a arena e iniciar o combate...</p>
-      <div class="spinner" style="margin-top: 2rem; width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear;"></div>
-    </div>
-  </ng-container>
+  <!-- ===== JOGADOR: AGUARDANDO ===== -->
+  @if (!combateAtivo && userRole === 'Jogador') {
+    <section class="panel espera" role="status">
+      <h2>Combate não iniciado</h2>
+      <p>Aguarde o Mestre preparar o combate. Esta tela atualiza sozinha.</p>
+    </section>
+  }
 
-  <!-- COMBATE EM ANDAMENTO -->
-  <ng-container *ngIf="combateAtivo">
-    <div class="combate-header flex-between mb-3">
+  <!-- ===== COMBATE EM ANDAMENTO ===== -->
+  @if (combateAtivo) {
+    <header class="combate-topo">
       <div>
-        <h2 class="title-glow text-accent" style="margin-bottom: 0;">Combate em Andamento</h2>
-        <p style="color: var(--text-secondary); margin-top: 0.2rem;">Rodada: {{ combateAtivo.rodadaAtual }}</p>
+        <p class="eyebrow">Rodada</p>
+        <h2 class="rodada"><span class="num">{{ combateAtivo.rodadaAtual }}</span></h2>
       </div>
-      <div style="display: flex; gap: 1rem;">
-        <button class="btn-secondary" *ngIf="userRole === 'Mestre'" (click)="encerrarCombate()">Encerrar Combate</button>
-        <button class="btn-primary" *ngIf="userRole === 'Mestre'" [disabled]="isProcessingTurn" (click)="proximoTurno()">
-          {{ isProcessingTurn ? 'Aguarde...' : 'Próximo Turno ➔' }}
-        </button>
-      </div>
-    </div>
-
-    <div class="tracker-list">
-      @for (p of participantesCombate; track $index) {
-        <div class="tracker-card" 
-             [class.active-turn]="$index === combateAtivo.turnoAtualIndex" 
-             [class.inimigo-card]="p.isInimigo" 
-             [class.dead-card]="(p.isInimigo && p.vidaAtual <= 0) || (!p.isInimigo && p.falhasMorte >= 3)"
-             style="flex-wrap: wrap;">
-          <div class="turn-indicator" *ngIf="$index === combateAtivo.turnoAtualIndex">▶</div>
-          
-          <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
-            <div class="card-info">
-              <h3 style="margin: 0;">{{ p.nomeNPC }}</h3>
-              <div class="stats">
-                <span *ngIf="userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId)"><strong>CA:</strong> {{ p.classeArmadura }}</span>
-                <span><strong>Iniciativa:</strong> {{ p.iniciativa }}</span>
-              </div>
-            </div>
-            
-            <div class="card-hp">
-              <ng-container *ngIf="userRole === 'Mestre' || isMeuPersonagem(p.personagemId); else hideHp">
-                <div class="hp-bar-container">
-                  <div class="hp-bar" [style.width.%]="(p.vidaAtual / p.vidaMaxima) * 100" [class.low-hp]="(p.vidaAtual / p.vidaMaxima) < 0.3"></div>
-                </div>
-                <div class="text-center" style="margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 5px;">
-                  <input type="number" min="0" class="form-control text-center" style="width: 60px; padding: 2px;" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" /> / {{ p.vidaMaxima }} HP
-                </div>
-              </ng-container>
-              <ng-template #hideHp>
-                <div *ngIf="userRole === 'Mestre' || !p.isInimigo; else hideStatus" class="text-center" style="font-weight: bold; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                  Status: <span [style.color]="obterStatusVida(p).color">{{ obterStatusVida(p).text }}</span>
-                </div>
-                <ng-template #hideStatus>
-                  <div class="text-center" style="font-weight: bold; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; color: #999;">
-                    Status Desconhecido
-                  </div>
-                </ng-template>
-              </ng-template>
-            </div>
-
-            <div class="card-actions" *ngIf="userRole === 'Mestre' || isMeuPersonagem(p.personagemId)">
-              <input type="number" min="0" #danoInput class="form-control" style="width: 60px;" placeholder="Qtd" />
-              <button class="btn-danger" (click)="aplicarDano(p, danoInput.value, false)">Dano</button>
-              <button class="btn-success" (click)="aplicarDano(p, danoInput.value, true)">Cura</button>
-            </div>
-          </div>
-
-          <!-- Condições Input -->
-          <div class="effects-row" *ngIf="userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId)" style="width: 100%; margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-            <label style="font-size: 0.85rem; color: var(--text-secondary);">Efeitos:</label>
-            <input *ngIf="userRole === 'Mestre' || isMeuPersonagem(p.personagemId); else hideCond" type="text" class="form-control" style="flex: 1; font-size: 0.85rem; padding: 4px 10px;" placeholder="Ex: Agarrado, Envenenado..." [(ngModel)]="p.condicoes" (blur)="salvarParticipante(p)" />
-            <ng-template #hideCond>
-               <span style="flex: 1; font-size: 0.85rem; padding: 4px 10px;">{{ p.condicoes || 'Nenhum' }}</span>
-            </ng-template>
-          </div>
-
-          <!-- Death Saving Throws -->
-          <div class="death-saves-panel" *ngIf="p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3" style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; gap: 30px;">
-            
-            <div class="text-center w-100 mb-2" *ngIf="$index !== combateAtivo.turnoAtualIndex" style="color: var(--text-secondary); font-size: 0.8rem; position: absolute; margin-top: -15px;">
-              Aguarde o turno deste herói para rolar as salvaguardas.
-            </div>
-
-            <div class="death-saves-group" [class.disabled-group]="$index !== combateAtivo.turnoAtualIndex || (!isMeuPersonagem(p.personagemId) && userRole !== 'Mestre')">
-              <span class="text-success" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Sucessos</span>
-              <div class="circles">
-                <div class="circle success-circle" [class.filled]="p.sucessosMorte >= 1" (click)="toggleSucessoMorte(p, 1, $index === combateAtivo.turnoAtualIndex && (isMeuPersonagem(p.personagemId) || userRole === 'Mestre'))"></div>
-                <div class="circle success-circle" [class.filled]="p.sucessosMorte >= 2" (click)="toggleSucessoMorte(p, 2, $index === combateAtivo.turnoAtualIndex && (isMeuPersonagem(p.personagemId) || userRole === 'Mestre'))"></div>
-                <div class="circle success-circle" [class.filled]="p.sucessosMorte >= 3" (click)="toggleSucessoMorte(p, 3, $index === combateAtivo.turnoAtualIndex && (isMeuPersonagem(p.personagemId) || userRole === 'Mestre'))"></div>
-              </div>
-            </div>
-            
-            <div class="death-saves-group" [class.disabled-group]="$index !== combateAtivo.turnoAtualIndex || (!isMeuPersonagem(p.personagemId) && userRole !== 'Mestre')">
-              <span class="text-danger" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Falhas</span>
-              <div class="circles">
-                <div class="circle danger-circle" [class.filled]="p.falhasMorte >= 1" (click)="toggleFalhaMorte(p, 1, $index === combateAtivo.turnoAtualIndex && (isMeuPersonagem(p.personagemId) || userRole === 'Mestre'))"></div>
-                <div class="circle danger-circle" [class.filled]="p.falhasMorte >= 2" (click)="toggleFalhaMorte(p, 2, $index === combateAtivo.turnoAtualIndex && (isMeuPersonagem(p.personagemId) || userRole === 'Mestre'))"></div>
-                <div class="circle danger-circle" [class.filled]="p.falhasMorte >= 3" (click)="toggleFalhaMorte(p, 3, $index === combateAtivo.turnoAtualIndex && (isMeuPersonagem(p.personagemId) || userRole === 'Mestre'))"></div>
-              </div>
-            </div>
-          </div>
-          
-          <div *ngIf="p.falhasMorte >= 3 && !p.isInimigo" style="width: 100%; text-align: center; color: #d63031; font-weight: bold; margin-top: 15px;">
-            ESTADO: MORTO
-          </div>
-          <div *ngIf="p.vidaAtual <= 0 && p.isInimigo" style="width: 100%; text-align: center; color: #d63031; font-weight: bold; margin-top: 15px;">
-            ABATIDO
-          </div>
+      @if (userRole === 'Mestre') {
+        <div class="combate-acoes">
+          <button type="button" class="btn-secondary" (click)="encerrarCombate()">Encerrar combate</button>
+          <button type="button" class="btn-primary" [disabled]="isProcessingTurn" (click)="proximoTurno()">
+            {{ isProcessingTurn ? 'Aguarde...' : 'Próximo turno' }}
+          </button>
         </div>
       }
-    </div>
-  </ng-container>
+    </header>
 
-  <!-- DICE ROLLER UI -->
-  <div style="display: flex; justify-content: flex-end; margin-top: 30px; padding-bottom: 30px;">
-    <div class="dice-ui glass-panel" style="display: flex; gap: 15px; align-items: center; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-      <span style="font-weight: bold; color: var(--text-secondary); white-space: nowrap;">Rolador de Dados</span>
-      <input type="text" class="form-control" [(ngModel)]="diceFormula" placeholder="Ex: 1d20+5" style="width: 150px;" (keyup.enter)="rolarDados()" />
-      <button class="btn-primary" style="padding: 0.5rem 2rem;" (click)="rolarDados()">Rolar</button>
-      <div style="min-width: 120px; text-align: right;">
-        <strong *ngIf="diceResult" style="color: #6464ff; font-size: 1.2rem;">{{ diceResult }}</strong>
-      </div>
+    <ol class="tracker-list" aria-label="Ordem de iniciativa">
+      @for (p of participantesCombate; track $index) {
+        @let ehTurno = $index === combateAtivo.turnoAtualIndex;
+        @let morto = (p.isInimigo && p.vidaAtual <= 0) || (!p.isInimigo && p.falhasMorte >= 3);
+        @let controla = userRole === 'Mestre' || isMeuPersonagem(p.personagemId);
+        @let veDetalhes = userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId);
+        @let pct = p.vidaMaxima > 0 ? (p.vidaAtual / p.vidaMaxima) * 100 : 0;
+        <li class="tracker-card" [class.active-turn]="ehTurno" [class.inimigo]="p.isInimigo" [class.dead]="morto"
+            [attr.aria-current]="ehTurno ? 'step' : null">
+          <div class="linha-principal">
+            <div class="ini num" title="Iniciativa">{{ p.iniciativa }}</div>
+
+            <div class="quem">
+              <h3>{{ p.nomeNPC }}</h3>
+              <p class="meta">
+                @if (p.isInimigo) { <span class="chip chip-danger">Inimigo</span> } @else { <span class="chip chip-hi">Herói</span> }
+                @if (ehTurno) { <span class="chip chip-hi">Turno atual</span> }
+                @if (morto) { <span class="chip chip-danger">{{ p.isInimigo ? 'Abatido' : 'Morto' }}</span> }
+              </p>
+            </div>
+
+            @if (veDetalhes) {
+              <div class="ca num" title="Classe de armadura"><small>CA</small>{{ p.classeArmadura }}</div>
+            }
+
+            <div class="vida">
+              @if (controla) {
+                <div class="vida-nums">
+                  <label class="visually-hidden" [for]="'pv-' + $index">PV de {{ p.nomeNPC }}</label>
+                  <input [id]="'pv-' + $index" type="number" min="0" class="form-control num pv-input" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" />
+                  <span class="num">/ {{ p.vidaMaxima }} PV</span>
+                </div>
+                <div class="bar" role="img" [attr.aria-label]="'Vida em ' + (pct | number:'1.0-0') + '%'">
+                  <i [style.width.%]="pct" [class.low]="pct < 30"></i>
+                </div>
+              } @else if (!p.isInimigo) {
+                <span class="chip" [class.chip-ok]="obterStatusVida(p).tone === 'ok'" [class.chip-hi]="obterStatusVida(p).tone === 'hi'" [class.chip-danger]="obterStatusVida(p).tone === 'danger'">{{ obterStatusVida(p).text }}</span>
+              } @else {
+                <span class="chip">Estado desconhecido</span>
+              }
+            </div>
+          </div>
+
+          @if (controla) {
+            <div class="dano-cura">
+              <label class="visually-hidden" [for]="'dano-' + $index">Quantidade de dano ou cura para {{ p.nomeNPC }}</label>
+              <input [id]="'dano-' + $index" type="number" min="0" #danoInput class="form-control num qtd" placeholder="Qtd" />
+              <button type="button" class="btn-danger" (click)="aplicarDano(p, danoInput.value, false)">Dano</button>
+              <button type="button" class="btn-secondary btn-cura" (click)="aplicarDano(p, danoInput.value, true)">Cura</button>
+            </div>
+          }
+
+          @if (veDetalhes) {
+            <div class="efeitos">
+              <label class="efeitos-rotulo" [for]="'ef-' + $index">Efeitos</label>
+              @if (controla) {
+                <input [id]="'ef-' + $index" type="text" class="form-control" placeholder="Ex.: Agarrado, Envenenado" [(ngModel)]="p.condicoes" (blur)="salvarParticipante(p)" />
+              } @else {
+                <span class="efeitos-texto" [id]="'ef-' + $index">{{ p.condicoes || 'Nenhum' }}</span>
+              }
+            </div>
+          }
+
+          @if (p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3) {
+            @let podeRolar = ehTurno && controla;
+            <div class="salvaguardas" role="group" [attr.aria-label]="'Salvaguardas de morte de ' + p.nomeNPC">
+              @if (!ehTurno) {
+                <p class="aviso">As salvaguardas são marcadas no turno deste herói.</p>
+              }
+              <div class="grupo" [class.travado]="!podeRolar">
+                <span class="rotulo ok">Sucessos</span>
+                <span class="bolas">
+                  @for (n of [1, 2, 3]; track n) {
+                    <button type="button" class="bola ok" [class.on]="p.sucessosMorte >= n" [attr.aria-pressed]="p.sucessosMorte >= n"
+                            [attr.aria-label]="'Sucesso ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleSucessoMorte(p, n, podeRolar)"></button>
+                  }
+                </span>
+              </div>
+              <div class="grupo" [class.travado]="!podeRolar">
+                <span class="rotulo ruim">Falhas</span>
+                <span class="bolas">
+                  @for (n of [1, 2, 3]; track n) {
+                    <button type="button" class="bola ruim" [class.on]="p.falhasMorte >= n" [attr.aria-pressed]="p.falhasMorte >= n"
+                            [attr.aria-label]="'Falha ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleFalhaMorte(p, n, podeRolar)"></button>
+                  }
+                </span>
+              </div>
+            </div>
+          }
+        </li>
+      }
+    </ol>
+  }
+
+  <!-- ===== ROLADOR DE DADOS ===== -->
+  <section class="dice-ui panel" aria-label="Rolador de dados">
+    <label class="dice-rotulo" for="formula-dados">Rolador de dados</label>
+    <div class="dice-linha">
+      <input id="formula-dados" type="text" class="form-control num" [(ngModel)]="diceFormula" placeholder="Ex.: 1d20+5" (keyup.enter)="rolarDados()" />
+      <button type="button" class="btn-primary" (click)="rolarDados()">Rolar</button>
     </div>
-  </div>
+    <p class="dice-resultado num" role="status" aria-live="polite">{{ diceResult }}</p>
+  </section>
 </div>

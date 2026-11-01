@@ -1,82 +1,64 @@
-<div class="header-glass-panel glass-panel" style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
-  
-  <!-- ROW 1: STATUS BÁSICOS -->
-  <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: var(--spacing-md);">
-    <div class="stat-box">
-      <span class="stat-label">Classe de Armadura</span>
-      <div class="shield-shape">
-         <span class="stat-value">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
-      </div>
+<section class="ficha-header panel" aria-label="Resumo do personagem">
+  <!-- Linha 1: números que mais se consulta na mesa -->
+  <div class="stat-strip">
+    <div class="stat">
+      <span class="stat-label">CA</span>
+      <span class="stat-value num">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+      <span class="stat-caption">Classe de armadura</span>
     </div>
-    
-    <div class="stat-box">
-      <span class="stat-label">Iniciativa</span>
-      <div class="box-shape">
-         <span class="stat-value">{{ getIniciativaStr() }}</span>
-      </div>
+    <div class="stat">
+      <span class="stat-label">Inic.</span>
+      <span class="stat-value num">{{ getIniciativaStr() }}</span>
+      <span class="stat-caption">Iniciativa</span>
     </div>
-    
-    <div class="stat-box">
-      <span class="stat-label">Deslocamento</span>
-      <div class="box-shape">
-         <span class="stat-value">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
-      </div>
+    <div class="stat">
+      <span class="stat-label">Desl.</span>
+      <span class="stat-value num">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
+      <span class="stat-caption">Deslocamento</span>
     </div>
-
-    <div class="stat-box">
-      <span class="stat-label">Proficiência</span>
-      <div class="box-shape proficiency">
-         <span class="stat-value">{{ getProficienciaStr() }}</span>
-      </div>
+    <div class="stat stat-hi">
+      <span class="stat-label">Prof.</span>
+      <span class="stat-value num">{{ getProficienciaStr() }}</span>
+      <span class="stat-caption">Proficiência</span>
     </div>
   </div>
 
-  <!-- ROW 2: VIDA E MORTE -->
-  <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap; align-items: stretch;">
-    
-    <div class="stat-box hp-box" style="flex: 2; min-width: 200px;">
-      <div class="hp-header">
-        <span class="stat-label">Pontos de Vida</span>
-        <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
+  <!-- Linha 2: vida e salvaguarda de morte -->
+  <div class="vital">
+    <div class="vital-card hp" [class.low]="vidaBaixa">
+      <div class="vital-head">
+        <span class="stat-label">Pontos de vida</span>
+        <span class="hp-max num">máx. {{ vidaMaxima }}</span>
       </div>
-      <div class="hp-content" style="height: 100%; display: flex; align-items: center; justify-content: center; padding-bottom: 20px;">
-        <span class="hp-current" style="font-size: 3rem;">{{ personagem?.personagemCombate?.vidaAtual || personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
-      </div>
-    </div>
-
-    <div class="stat-box hp-box" style="flex: 1; min-width: 150px;">
-      <div class="hp-header">
-        <span class="stat-label">Dados de Vida</span>
-        <span class="hp-max">Max: {{ personagem?.personagemCombate?.dadoVidaMaximo || 0 }}</span>
-      </div>
-      <div class="hp-content" style="height: 100%; display: flex; align-items: center; justify-content: center; padding-bottom: 20px;">
-        <span class="hp-current" style="font-size: 2.5rem; color: #4a90e2;">{{ personagem?.personagemCombate?.dadoVidaMaximo || 'Nenhum' }}</span>
+      <div class="hp-now num" aria-live="polite">{{ vidaAtual }}</div>
+      <div class="bar" role="img" [attr.aria-label]="'Vida em ' + vidaPct + '%'">
+        <i [style.width.%]="vidaPct"></i>
       </div>
     </div>
 
-    <div class="stat-box hp-box" style="flex: 1; min-width: 200px;">
-      <div class="hp-header" style="justify-content: center; margin-bottom: 10px;">
-        <span class="stat-label" style="text-align: center;">Salvaguarda de Morte</span>
+    <div class="vital-card">
+      <div class="vital-head">
+        <span class="stat-label">Dados de vida</span>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: center; justify-content: center; height: 100%; padding-bottom: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">SUCESSOS</span>
-          <div style="display: flex; gap: 8px;">
-             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 1"></div>
-             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 2"></div>
-             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 3"></div>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">FALHAS</span>
-          <div style="display: flex; gap: 8px;">
-             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 1"></div>
-             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 2"></div>
-             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 3"></div>
-          </div>
-        </div>
+      <div class="hd-now num">{{ dadoVida }}</div>
+    </div>
+
+    <div class="vital-card saves">
+      <div class="vital-head">
+        <span class="stat-label">Salvaguarda de morte</span>
+      </div>
+      <div class="save-row">
+        <span class="save-lbl">Sucessos</span>
+        <span class="dots" [attr.aria-label]="sucessosMorte + ' de 3 sucessos'">
+          <i [class.on]="sucessosMorte >= 1"></i><i [class.on]="sucessosMorte >= 2"></i><i [class.on]="sucessosMorte >= 3"></i>
+        </span>
+      </div>
+      <div class="save-row">
+        <span class="save-lbl">Falhas</span>
+        <span class="dots fail" [attr.aria-label]="falhasMorte + ' de 3 falhas'">
+          <i [class.on]="falhasMorte >= 1"></i><i [class.on]="falhasMorte >= 2"></i><i [class.on]="falhasMorte >= 3"></i>
+        </span>
       </div>
     </div>
-    
   </div>
-</div>
+</section>

@@ -1,21 +1,33 @@
-<div class="play-session-container animate-fade-in" *ngIf="sessao">
-  <div class="glass-panel header-panel">
-    <div>
-      <h2 class="title-glow text-accent">Modo Jogar: {{ sessao.nome }}</h2>
-      <p class="subtitle text-secondary">Sessão {{ sessao.numeroSessao }} | Campanha: {{ sessao.campanhaId }}</p>
-    </div>
-    <div class="tabs-container" style="display: flex; flex-wrap: wrap;">
-      <button class="btn-tab" style="margin-right: 15px; margin-bottom: 10px;" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Tracker de Combate</button>
-      <button class="btn-tab" style="margin-bottom: 10px;" [class.active]="activeTab === 'anotacoes'" (click)="setTab('anotacoes')">Anotações</button>
-    </div>
-  </div>
+@if (sessao) {
+  <div class="container play-session animate-fade-in">
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">Modo jogar · Sessão {{ sessao.numeroSessao }}</p>
+        <h1>{{ sessao.nome }}</h1>
+        <p class="sub">{{ sessao.campanha?.nome || 'Campanha' }}</p>
+      </div>
+    </header>
 
-  <div class="content-panel">
-    <div *ngIf="activeTab === 'combate'">
-      <app-combate-tracker [sessaoId]="sessaoId" [campanhaId]="sessao.campanhaId"></app-combate-tracker>
+    <div class="top-nav-tabs" role="tablist" aria-label="Ferramentas da sessão">
+      <button type="button" role="tab" class="tab-btn" id="aba-combate" aria-controls="painel-sessao"
+              [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'"
+              (click)="setTab('combate')">Combate</button>
+      <button type="button" role="tab" class="tab-btn" id="aba-anotacoes" aria-controls="painel-sessao"
+              [class.active]="activeTab === 'anotacoes'" [attr.aria-selected]="activeTab === 'anotacoes'"
+              (click)="setTab('anotacoes')">Anotações</button>
     </div>
-    <div *ngIf="activeTab === 'anotacoes'">
-      <app-anotacoes [campanhaId]="sessao.campanhaId"></app-anotacoes>
+
+    <div class="content-panel" id="painel-sessao" role="tabpanel"
+         [attr.aria-labelledby]="activeTab === 'combate' ? 'aba-combate' : 'aba-anotacoes'">
+      @if (activeTab === 'combate') {
+        <app-combate-tracker [sessaoId]="sessaoId" [campanhaId]="sessao.campanhaId"></app-combate-tracker>
+      } @else {
+        <app-anotacoes [campanhaId]="sessao.campanhaId"></app-anotacoes>
+      }
     </div>
   </div>
-</div>
+} @else {
+  <div class="container">
+    <p class="text-muted" role="status">Carregando a sessão...</p>
+  </div>
+}

@@ -333,13 +333,14 @@ export class CombateTracker implements OnInit, OnChanges {
     return this.isMeuPersonagem(p.personagemId);
   }
 
-  obterStatusVida(p: any): { text: string, color: string } {
-    if (p.vidaAtual <= 0) return { text: p.isInimigo ? 'Abatido' : 'Caído / Inconsciente', color: '#666' };
+  // Para quem não controla o personagem: só um estado qualitativo da vida, sem números.
+  obterStatusVida(p: any): { text: string, tone: 'ok' | 'hi' | 'danger' | 'muted' } {
+    if (p.vidaAtual <= 0) return { text: p.isInimigo ? 'Abatido' : 'Caído / inconsciente', tone: 'muted' };
     const percent = p.vidaAtual / p.vidaMaxima;
-    if (percent > 0.75) return { text: 'Saudável', color: '#4caf50' }; // Verde
-    if (percent > 0.35) return { text: 'Machucado', color: '#ffeb3b' }; // Amarelo
-    if (percent > 0.15) return { text: 'Muito Machucado', color: '#ff9800' }; // Laranja
-    return { text: 'Quase Morto', color: '#f44336' }; // Vermelho
+    if (percent > 0.75) return { text: 'Saudável', tone: 'ok' };
+    if (percent > 0.35) return { text: 'Machucado', tone: 'hi' };
+    if (percent > 0.15) return { text: 'Muito machucado', tone: 'danger' };
+    return { text: 'Quase morto', tone: 'danger' };
   }
 
   toggleSucessoMorte(p: any, value: number, isTurn: boolean) {

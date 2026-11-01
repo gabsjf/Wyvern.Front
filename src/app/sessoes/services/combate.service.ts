@@ -10,6 +10,7 @@ import * as signalR from '@microsoft/signalr';
 export class CombateService {
   private apiUrl = `${environment.apiUrl}/combate`;
   private hubConnection: signalR.HubConnection | undefined;
+  private iniciando: Promise<void> | undefined;
 
   constructor(private http: HttpClient) {}
 
@@ -17,13 +18,19 @@ export class CombateService {
     const hubUrl = environment.apiUrl.replace('/api', '') + '/combathub';
     if (!this.hubConnection) {
       this.hubConnection = new signalR.HubConnectionBuilder()
-        .withUrl(hubUrl)
+        // O hub exige login: o WebSocket não envia o header Authorization, então o token vai na query (?access_token=)
+        .withUrl(hubUrl, { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
         .withAutomaticReconnect()
         .build();
     }
 
-    if (this.hubConnection.state === signalR.HubConnectionState.Disconnected) {
-      await this.hubConnection.start();
+    // Dois componentes podem pedir a conexão ao mesmo tempo: todos esperam a mesma promessa de início,
+    // senão o segundo tenta enviar enquanto a conexão ainda está abrindo.
+    if (this.hubConnection.state === signalR.HubConnectionState.Disconnected && !this.iniciando) {
+      this.iniciando = this.hubConnection.start().finally(() => (this.iniciando = undefined));
+    }
+    if (this.iniciando) {
+      await this.iniciando;
     }
   }
 

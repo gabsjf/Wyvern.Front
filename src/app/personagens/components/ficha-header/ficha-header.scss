@@ -1,112 +1,181 @@
-.header-glass-panel {
-  padding: var(--spacing-lg);
+.ficha-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
 }
 
-.stat-box {
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+/* ---- CA / Iniciativa / Deslocamento / Proficiência ---- */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.stat {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.15rem;
+  padding: 0.6rem 0.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+.stat-caption {
+  display: none;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.stat-hi .stat-value {
+  color: var(--hi);
+}
+
+/* ---- Vida ---- */
+.vital {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.4fr;
   gap: var(--spacing-sm);
-  
-  .stat-label {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
+}
+
+.vital-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.vital-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.hp-max {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.hp-now {
+  font-size: 2.6rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.hd-now {
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--fg);
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--tint-2);
+  overflow: hidden;
+
+  i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--ok);
+    transition: width 0.3s ease;
   }
 }
 
-.box-shape, .shield-shape {
-  background: rgba(0, 0, 0, 0.4);
-  border: 2px solid var(--border-color);
+.hp.low {
+  border-color: var(--danger);
+
+  .hp-now {
+    color: var(--danger);
+  }
+
+  .bar i {
+    background: var(--danger);
+  }
+}
+
+/* ---- Salvaguarda de morte ---- */
+.save-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-  
-  .stat-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.box-shape {
-  width: 70px;
-  height: 70px;
-  border-radius: var(--radius-sm);
-  
-  &.proficiency {
-    border-color: var(--primary-color);
-    .stat-value { color: var(--primary-color); }
-  }
+.save-lbl {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
-.shield-shape {
-  width: 70px;
-  height: 80px;
-  border-radius: 5px 5px 35px 35px;
-  border-color: #f1c40f; /* Gold accent for AC */
-  
-  .stat-value { color: #f1c40f; }
-}
+.dots {
+  display: inline-flex;
+  gap: 6px;
 
-.hp-box {
-  flex-grow: 1;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  align-items: flex-start;
-  
-  .hp-header {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: var(--spacing-sm);
-    
-    .hp-max {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
+  i {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--ok);
+
+    &.on {
+      background: var(--ok);
     }
   }
-  
-  .hp-content {
-    width: 100%;
-    text-align: center;
-    
-    .hp-current {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      text-shadow: 0 0 10px var(--glow-color);
+
+  &.fail i {
+    border-color: var(--danger);
+
+    &.on {
+      background: var(--danger);
     }
   }
 }
 
-.ds-circle {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--border-color);
-  background: transparent;
-  
-  &.filled {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px var(--primary-color);
-  }
-
-  &.danger.filled {
-    background: #ff4d4d;
-    border-color: #ff4d4d;
-    box-shadow: 0 0 5px #ff4d4d;
+@media (min-width: 721px) {
+  .stat-caption {
+    display: block;
   }
 }
 
-@media (max-width: 600px) {
-  .header-glass-panel {
-    padding: var(--spacing-sm);
+@media (max-width: 720px) {
+  .vital {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .vital-card.hp {
+    grid-column: 1 / -1;
+  }
+
+  .vital-card.saves {
+    grid-column: auto;
   }
 }

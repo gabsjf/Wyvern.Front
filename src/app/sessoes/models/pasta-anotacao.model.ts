@@ -4,4 +4,6 @@ export interface PastaAnotacao {
     nome: string;
     isPublica: boolean;
     criadoEm?: Date;
+    // Autor da pasta; ausente em pastas antigas (só o Mestre as altera)
+    criadoPorId?: number | null;
 }

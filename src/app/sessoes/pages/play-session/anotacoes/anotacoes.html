@@ -1,155 +1,147 @@
-<div class="anotacoes-container">
-  <!-- Sidebar -->
-  <aside class="sidebar glass-panel">
-    <div class="sidebar-header flex-between mb-3">
-      <h3 class="text-accent"><i class="bi bi-book me-2"></i>Anotações</h3>
-      <button class="btn-icon" (click)="novaPasta()" title="Nova Pasta">
-        <i class="bi bi-folder-plus text-primary"></i>
+<div class="anotacoes" [class.tem-selecao]="isEditing || anotacaoSelecionada">
+  <!-- ===== Lista (pastas e notas) ===== -->
+  <aside class="lista panel" aria-label="Pastas e anotações">
+    <div class="panel-head">
+      <h2>Anotações</h2>
+      <button type="button" class="btn-secondary btn-sm" (click)="novaPasta()">
+        <i class="bi bi-folder-plus" aria-hidden="true"></i> Nova pasta
       </button>
     </div>
 
-    <div *ngIf="isCreatingPasta" class="mb-3 new-folder-form p-2 glass-panel">
-      <input type="text" [(ngModel)]="newPastaName" class="form-control mb-2 form-control-sm" placeholder="Nome da pasta...">
-      <div class="flex-between align-items-center">
-        <label class="switch-container mb-0" *ngIf="userRole === 'Mestre'">
-          <input type="checkbox" [(ngModel)]="newPastaPublic">
-          <span class="slider round"></span>
-          <span class="label-text ms-2" style="font-size: 0.8rem;">Pública</span>
-        </label>
-        <span *ngIf="userRole !== 'Mestre'"></span>
-        <div>
-          <button class="btn-icon text-success me-1" (click)="salvarPasta()">
-            <i class="bi bi-check-lg"></i>
-          </button>
-          <button class="btn-icon text-danger" (click)="cancelarPasta()">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="folders-list">
-      <!-- Pasta Principal (Sem pasta) -->
-      <div class="folder-group mb-3">
-        <div class="folder-title d-flex align-items-center mb-2 text-muted fw-bold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
-          <i class="bi bi-inbox me-2"></i> Geral
-        </div>
-        <div class="note-items ms-2" style="border-left: 1px solid var(--tint-2); padding-left: 10px;">
-          <div *ngFor="let a of getAnotacoesDaPasta(undefined)"
-               class="note-item flex-between p-2 mb-1 rounded"
-               [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
-               (click)="selecionarAnotacao(a)">
-            <span class="text-truncate" style="max-width: 140px;" title="{{ a.titulo }}">
-              <i class="bi bi-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;" title="Pública"></i>
-              <i class="bi bi-lock-fill text-secondary" *ngIf="!a.isPublica" style="margin-right: 5px;" title="Privada"></i>
-              {{ a.titulo }}
-            </span>
-            <button class="btn-icon text-danger btn-sm-icon" *ngIf="podeDeletar(a)" (click)="excluirAnotacao(a.anotacaoId!, $event)" title="Excluir">
-              <i class="bi bi-trash"></i>
-            </button>
+    <div class="lista-corpo">
+      @if (isCreatingPasta) {
+        <form class="nova-pasta" (submit)="$event.preventDefault(); salvarPasta()">
+          <label class="form-label" for="nome-pasta">Nome da pasta</label>
+          <input id="nome-pasta" type="text" name="nomePasta" class="form-control" [(ngModel)]="newPastaName" placeholder="Ex.: Sessão 12" autocomplete="off">
+          @if (userRole === 'Mestre') {
+            <label class="check">
+              <input type="checkbox" name="pastaPublica" [(ngModel)]="newPastaPublic">
+              <span>Visível para os jogadores</span>
+            </label>
+          }
+          <div class="acoes-linha">
+            <button type="submit" class="btn-primary btn-sm" [disabled]="!newPastaName.trim()">Criar pasta</button>
+            <button type="button" class="btn-secondary btn-sm" (click)="cancelarPasta()">Cancelar</button>
           </div>
-          <button class="btn-add-note mt-1" (click)="novaAnotacao()">
-            <i class="bi bi-plus-lg me-1"></i> Nova Anotação
-          </button>
-        </div>
-      </div>
+        </form>
+      }
+
+      <!-- Notas sem pasta -->
+      <section class="grupo" aria-labelledby="grupo-geral">
+        <h3 id="grupo-geral" class="grupo-titulo"><i class="bi bi-inbox" aria-hidden="true"></i> Geral</h3>
+        <ul class="notas">
+          @for (a of getAnotacoesDaPasta(undefined); track a.anotacaoId) {
+            <li class="nota" [class.ativa]="anotacaoSelecionada?.anotacaoId === a.anotacaoId">
+              <button type="button" class="nota-abrir" (click)="selecionarAnotacao(a)" [attr.aria-current]="anotacaoSelecionada?.anotacaoId === a.anotacaoId ? 'true' : null">
+                <i class="bi" [class.bi-eye]="a.isPublica" [class.bi-lock-fill]="!a.isPublica" aria-hidden="true"></i>
+                <span class="nota-titulo">{{ a.titulo }}</span>
+                <span class="visually-hidden">{{ a.isPublica ? '(pública)' : '(privada)' }}</span>
+              </button>
+              @if (podeDeletar(a)) {
+                <button type="button" class="btn-icone perigo" (click)="excluirAnotacao(a.anotacaoId!, $event)" [attr.aria-label]="'Excluir ' + a.titulo">
+                  <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>
+              }
+            </li>
+          }
+        </ul>
+        <button type="button" class="adicionar" (click)="novaAnotacao()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nova anotação</button>
+      </section>
 
       <!-- Pastas -->
-      <div *ngFor="let p of pastas" class="folder-group mb-3">
-        <div class="folder-title flex-between mb-2 text-muted fw-bold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
-          <span>
-            <i class="bi bi-folder me-2"></i> {{ p.nome }} 
-            <i class="bi bi-globe ms-1 text-primary" *ngIf="p.isPublica" title="Pública"></i>
-          </span>
-          <button class="btn-icon text-danger btn-sm-icon" *ngIf="userRole === 'Mestre'" (click)="excluirPasta(p.pastaId!, $event)" title="Excluir pasta">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-        <div class="note-items ms-2" style="border-left: 1px solid var(--tint-2); padding-left: 10px;">
-          <div *ngFor="let a of getAnotacoesDaPasta(p.pastaId)"
-               class="note-item flex-between p-2 mb-1 rounded"
-               [class.active]="anotacaoSelecionada?.anotacaoId === a.anotacaoId"
-               (click)="selecionarAnotacao(a)">
-            <span class="text-truncate" style="max-width: 140px;" title="{{ a.titulo }}">
-              <i class="bi bi-eye text-primary" *ngIf="a.isPublica" style="margin-right: 5px;" title="Pública"></i>
-              <i class="bi bi-lock-fill text-secondary" *ngIf="!a.isPublica" style="margin-right: 5px;" title="Privada"></i>
-              {{ a.titulo }}
-            </span>
-            <button class="btn-icon text-danger btn-sm-icon" *ngIf="podeDeletar(a)" (click)="excluirAnotacao(a.anotacaoId!, $event)" title="Excluir">
-              <i class="bi bi-trash"></i>
-            </button>
+      @for (p of pastas; track p.pastaId) {
+        <section class="grupo" [attr.aria-labelledby]="'pasta-' + p.pastaId">
+          <div class="grupo-cabeca">
+            <h3 [id]="'pasta-' + p.pastaId" class="grupo-titulo">
+              <i class="bi bi-folder" aria-hidden="true"></i> {{ p.nome }}
+              @if (p.isPublica) { <span class="chip chip-hi">Pública</span> }
+            </h3>
+            @if (podeExcluirPasta(p)) {
+              <button type="button" class="btn-icone perigo" (click)="excluirPasta(p.pastaId!, $event)" [attr.aria-label]="'Excluir a pasta ' + p.nome">
+                <i class="bi bi-trash" aria-hidden="true"></i>
+              </button>
+            }
           </div>
-          <button class="btn-add-note mt-1" (click)="novaAnotacao(p.pastaId)">
-            <i class="bi bi-plus-lg me-1"></i> Nova Anotação
-          </button>
-        </div>
-      </div>
+          <ul class="notas">
+            @for (a of getAnotacoesDaPasta(p.pastaId); track a.anotacaoId) {
+              <li class="nota" [class.ativa]="anotacaoSelecionada?.anotacaoId === a.anotacaoId">
+                <button type="button" class="nota-abrir" (click)="selecionarAnotacao(a)" [attr.aria-current]="anotacaoSelecionada?.anotacaoId === a.anotacaoId ? 'true' : null">
+                  <i class="bi" [class.bi-eye]="a.isPublica" [class.bi-lock-fill]="!a.isPublica" aria-hidden="true"></i>
+                  <span class="nota-titulo">{{ a.titulo }}</span>
+                  <span class="visually-hidden">{{ a.isPublica ? '(pública)' : '(privada)' }}</span>
+                </button>
+                @if (podeDeletar(a)) {
+                  <button type="button" class="btn-icone perigo" (click)="excluirAnotacao(a.anotacaoId!, $event)" [attr.aria-label]="'Excluir ' + a.titulo">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+          <button type="button" class="adicionar" (click)="novaAnotacao(p.pastaId)"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nova anotação</button>
+        </section>
+      }
     </div>
   </aside>
 
-  <!-- Editor / Viewer Area -->
-  <main class="editor-area glass-panel">
-    <div *ngIf="!isEditing && !anotacaoSelecionada" class="empty-state d-flex flex-column align-items-center justify-content-center h-100 text-muted">
-      <i class="bi bi-book-half mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
-      <h4>Selecione ou crie uma anotação</h4>
-      <p>Use o menu lateral para gerenciar suas anotações.</p>
-    </div>
-
-    <!-- Edit/View Mode -->
-    <div *ngIf="isEditing || anotacaoSelecionada" class="seamless-editor h-100 d-flex flex-column">
-      <div class="editor-header flex-between mb-3 pb-3" style="border-bottom: 1px solid var(--tint-2);">
-        <div class="flex-center gap-3 w-100">
-          <input *ngIf="isEditing" type="text" [(ngModel)]="editTitulo" class="seamless-title-input flex-grow-1" placeholder="Título da anotação">
-          <h2 *ngIf="!isEditing" class="title-glow text-accent m-0 flex-grow-1">{{ anotacaoSelecionada?.titulo }}</h2>
-          
-          <label *ngIf="isEditing && userRole === 'Mestre'" class="switch-container mb-0 me-3">
-            <input type="checkbox" [(ngModel)]="editIsPublica">
-            <span class="slider round"></span>
-            <span class="label-text ms-2">Pública</span>
-          </label>
-
-          <!-- Badges view mode -->
-          <span *ngIf="!isEditing" class="badge bg-primary ms-2" [class.bg-secondary]="!anotacaoSelecionada?.isPublica">
-            {{ anotacaoSelecionada?.isPublica ? 'Pública' : 'Privada' }}
-          </span>
-        </div>
-        
-        <div class="actions ms-3 d-flex gap-2">
-          <ng-container *ngIf="isEditing">
-            <button class="btn-primary btn-sm px-4" (click)="salvarAnotacao()">Salvar</button>
-            <button class="btn-secondary btn-sm" (click)="cancelarEdicao()">Cancelar</button>
-          </ng-container>
-          
-          <ng-container *ngIf="!isEditing && podeEditar(anotacaoSelecionada!)">
-            <button class="btn-primary btn-sm px-3" (click)="editarAnotacao()">
-              <i class="bi bi-pencil-square me-1"></i> Editar
-            </button>
-          </ng-container>
-        </div>
+  <!-- ===== Leitura / edição ===== -->
+  <section class="editor panel" aria-label="Anotação">
+    @if (!isEditing && !anotacaoSelecionada) {
+      <div class="vazio">
+        <i class="bi bi-book-half" aria-hidden="true"></i>
+        <h3>Selecione ou crie uma anotação</h3>
+        <p>Use a lista para abrir uma nota existente, ou crie uma nova.</p>
       </div>
-
-      <!-- Editor Tabs -->
-      <div class="editor-tabs mb-2" *ngIf="isEditing">
-        <button class="btn-tab-sm" [class.active]="!showPreview" (click)="showPreview = false">
-          <i class="bi bi-pencil-square me-1"></i> Escrever Markdown
+    } @else {
+      <div class="editor-topo">
+        <button type="button" class="voltar btn-secondary btn-sm" (click)="voltarParaLista()">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i> Anotações
         </button>
-        <button class="btn-tab-sm" [class.active]="showPreview" (click)="togglePreview()">
-          <i class="bi bi-eye me-1"></i> Visualizar
-        </button>
+
+        <div class="titulo-area">
+          @if (isEditing) {
+            <label class="visually-hidden" for="titulo-nota">Título da anotação</label>
+            <input id="titulo-nota" type="text" [(ngModel)]="editTitulo" class="titulo-input" placeholder="Título da anotação" autocomplete="off">
+          } @else {
+            <h2 class="titulo-leitura">{{ anotacaoSelecionada?.titulo }}</h2>
+          }
+        </div>
+
+        <div class="editor-acoes">
+          @if (isEditing) {
+            @if (userRole === 'Mestre') {
+              <label class="check">
+                <input type="checkbox" [(ngModel)]="editIsPublica">
+                <span>Visível para os jogadores</span>
+              </label>
+            }
+            <button type="button" class="btn-primary btn-sm" (click)="salvarAnotacao()">Salvar</button>
+            <button type="button" class="btn-secondary btn-sm" (click)="cancelarEdicao()">Cancelar</button>
+          } @else {
+            <span class="chip" [class.chip-hi]="anotacaoSelecionada?.isPublica">{{ anotacaoSelecionada?.isPublica ? 'Pública' : 'Privada' }}</span>
+            @if (podeEditar(anotacaoSelecionada!)) {
+              <button type="button" class="btn-primary btn-sm" (click)="editarAnotacao()">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+              </button>
+            }
+          }
+        </div>
       </div>
 
-      <!-- Editor Textarea -->
-      <textarea *ngIf="isEditing && !showPreview" 
-                [(ngModel)]="editConteudo" 
-                class="seamless-textarea flex-grow-1" 
-                placeholder="Escreva em Markdown... Ex: # Título, **negrito**, *itálico*">
-      </textarea>
-      
-      <!-- Markdown Preview -->
-      <div *ngIf="(!isEditing || showPreview)" 
-           class="markdown-content flex-grow-1 overflow-auto pe-2" 
-           [innerHTML]="previewHtml">
-      </div>
-    </div>
-  </main>
+      @if (isEditing) {
+        <div class="modos" role="tablist" aria-label="Modo do editor">
+          <button type="button" role="tab" class="modo" [class.ativo]="!showPreview" [attr.aria-selected]="!showPreview" (click)="showPreview = false">Escrever</button>
+          <button type="button" role="tab" class="modo" [class.ativo]="showPreview" [attr.aria-selected]="showPreview" (click)="togglePreview()">Visualizar</button>
+        </div>
+      }
+
+      @if (isEditing && !showPreview) {
+        <label class="visually-hidden" for="conteudo-nota">Conteúdo da anotação em Markdown</label>
+        <textarea id="conteudo-nota" [(ngModel)]="editConteudo" class="texto-md"
+                  placeholder="Escreva em Markdown. Ex.: ## Título, **negrito**, *itálico*, - lista"></textarea>
+      } @else {
+        <div class="markdown-content" [innerHTML]="previewHtml"></div>
+      }
+    }
+  </section>
 </div>

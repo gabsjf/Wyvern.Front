@@ -167,6 +167,18 @@ export class Anotacoes implements OnInit, OnChanges {
     }
   }
 
+  // Mestre exclui qualquer pasta; o autor, a própria (o servidor confere de novo)
+  podeExcluirPasta(p: PastaAnotacao): boolean {
+    return this.userRole === 'Mestre' || (p.criadoPorId != null && p.criadoPorId === this.currentUserId);
+  }
+
+  // No celular, lista e nota se alternam: este botão volta para a lista
+  voltarParaLista() {
+    this.isEditing = false;
+    this.anotacaoSelecionada = null;
+    this.cdr.detectChanges();
+  }
+
   togglePreview() {
     this.showPreview = !this.showPreview;
     if (this.showPreview) {

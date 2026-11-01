@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PersonagemService } from '../../services/personagem.service';
 import { Personagem } from '../../models/personagem';
-import { AuthService } from '../../../core/services/auth.service';
+import { PapelService } from '../../../campaigns/services/papel.service';
 
 @Component({
   selector: 'app-personagem-list',
@@ -14,13 +14,12 @@ import { AuthService } from '../../../core/services/auth.service';
 export class PersonagemList implements OnInit {
   private personagemService = inject(PersonagemService);
   private cdr = inject(ChangeDetectorRef);
-  private authService = inject(AuthService);
+  private papelService = inject(PapelService);
   personagens: Personagem[] = [];
   activeTab: string = 'herois';
+  // A aba de NPCs/monstros só aparece para quem é Mestre de alguma campanha
+  ehMestreEmAlguma = false;
 
-  get userRole(): string {
-    return this.authService.userRole || 'Jogador';
-  }
 
   get filteredPersonagens() {
     return this.personagens.filter(p => this.activeTab === 'herois' ? p.tipoId === 1 : p.tipoId !== 1);
@@ -32,6 +31,13 @@ export class PersonagemList implements OnInit {
 
   ngOnInit() {
     this.loadPersonagens();
+    this.papelService.ehMestreEmAlguma().subscribe({
+      next: (ehMestre) => {
+        this.ehMestreEmAlguma = ehMestre;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Erro ao buscar campanhas', err)
+    });
   }
 
   loadPersonagens() {

@@ -6,15 +6,24 @@
   } @else if (campaign) {
     <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
       <button class="btn-secondary" routerLink="/campaigns">← Voltar</button>
-      <div *ngIf="userRole === 'Mestre'">
-        <button class="btn-primary" style="margin-right: 10px;" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
-        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
-      </div>
+      @if (ehMestre) {
+        <div>
+          <button class="btn-primary" style="margin-right: 10px;" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
+          <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
+        </div>
+      } @else {
+        <button class="btn-secondary" [disabled]="membrosBusy" (click)="sair()">Sair da campanha</button>
+      }
     </div>
 
     @if (inviteUrl) {
       <div class="glass-panel text-center mb-4" style="padding: 1rem; border-color: var(--accent);">
-        <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">Link de convite (o mesmo link serve para todos os jogadores):</p>
+        <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+          Link de convite (o mesmo link serve para todos os jogadores)
+          @if (inviteExpiraEm) {
+            — válido até {{ inviteExpiraEm | date:'dd/MM/yyyy HH:mm' }}
+          }
+        </p>
         <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; user-select: all; font-family: monospace; color: var(--accent); word-break: break-all;">
           {{ inviteUrl }}
         </div>
@@ -41,8 +50,8 @@
         </div>
         
         <div style="flex: 1; min-width: 250px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Mestre (ID)</h3>
-          <p style="font-size: 1.2rem; font-weight: 500;">{{ campaign.mestreId }}</p>
+          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Criada por</h3>
+          <p style="font-size: 1.2rem; font-weight: 500;">{{ campaign.mestreNome || '—' }}</p>
         </div>
         
         <div style="flex: 1; min-width: 250px;">
@@ -55,7 +64,39 @@
       
       <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid rgba(255,255,255,0.05);">
         <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Membros & Aventureiros</h3>
-        <p style="color: var(--text-muted); font-style: italic;">(Em breve... os personagens vinculados a esta campanha aparecerão aqui.)</p>
+
+        @if (membrosMessage) {
+          <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">{{ membrosMessage }}</p>
+        }
+
+        @if (membros.length === 0) {
+          <p style="color: var(--text-muted); font-style: italic;">Carregando membros...</p>
+        } @else {
+          <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+            @for (m of membros; track m.usuarioId) {
+              <li style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.6rem 0.9rem; background: rgba(0,0,0,0.25); border-radius: 8px;">
+                <span>
+                  <strong>{{ m.nome }}</strong>
+                  @if (m.ehVoce) { <span style="color: var(--text-secondary);"> (você)</span> }
+                  <span style="margin-left: 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);">{{ m.papel }}</span>
+                  @if (m.ehCriador) { <span style="margin-left: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">criador</span> }
+                </span>
+                @if (ehMestre) {
+                  <span style="display: flex; gap: 8px;">
+                    @if (m.papel === 'Jogador') {
+                      <button class="btn-secondary" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Mestre')">Promover a Mestre</button>
+                    } @else {
+                      <button class="btn-secondary" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Jogador')">Rebaixar a Jogador</button>
+                    }
+                    @if (!m.ehVoce) {
+                      <button class="btn-secondary" [disabled]="membrosBusy" (click)="remover(m)">Remover</button>
+                    }
+                  </span>
+                }
+              </li>
+            }
+          </ul>
+        }
       </div>
     </div>
   } @else {

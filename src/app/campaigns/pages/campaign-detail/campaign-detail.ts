@@ -1,9 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CampaignService } from '../../services/campaign';
-import { Campaign } from '../../models/campaign';
-import { AuthService } from '../../../core/services/auth.service';
+import { Campaign, Membro } from '../../models/campaign';
 
 @Component({
   selector: 'app-campaign-detail',
@@ -16,13 +16,13 @@ export class CampaignDetail implements OnInit {
   private router = inject(Router);
   private campaignService = inject(CampaignService);
   private cdr = inject(ChangeDetectorRef);
-  private authService = inject(AuthService);
 
   campaign: Campaign | null = null;
   isLoading = true;
 
-  get userRole(): string {
-    return this.authService.userRole || 'Jogador';
+  // O papel é por campanha: vem da API junto com a campanha (o servidor valida toda ação de qualquer jeito).
+  get ehMestre(): boolean {
+    return this.campaign?.papel === 'Mestre';
   }
 
   ngOnInit() {
@@ -32,6 +32,7 @@ export class CampaignDetail implements OnInit {
         next: (data) => {
           this.campaign = data;
           this.isLoading = false;
+          this.loadMembros();
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -70,7 +71,9 @@ export class CampaignDetail implements OnInit {
     }
   }
 
+  // ----- Convite -----
   inviteUrl: string | null = null;
+  inviteExpiraEm: string | null = null;
   inviteMessage = '';
   inviteBusy = false;
 
@@ -84,7 +87,7 @@ export class CampaignDetail implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Mostra o link atual (cria um se ainda não existir); clicar de novo não muda o link.
+  // Mostra o link atual (cria um se ainda não existir ou se expirou); clicar de novo não muda o link.
   generateInvite(renovar = false) {
     if (!this.campaign?.campanhaId || this.inviteBusy) return;
 
@@ -93,6 +96,8 @@ export class CampaignDetail implements OnInit {
       next: (res) => {
         this.inviteBusy = false;
         this.inviteUrl = this.buildInviteUrl(res.token);
+        // A API manda a data em UTC sem sufixo "Z"
+        this.inviteExpiraEm = res.expiraEm ? (res.expiraEm.endsWith('Z') ? res.expiraEm : res.expiraEm + 'Z') : null;
         this.showInviteMessage(renovar ? 'Novo link gerado. O link anterior deixou de funcionar.' : '');
       },
       error: (err) => {
@@ -118,6 +123,7 @@ export class CampaignDetail implements OnInit {
       next: () => {
         this.inviteBusy = false;
         this.inviteUrl = null;
+        this.inviteExpiraEm = null;
         this.showInviteMessage('Link de convite desativado.');
       },
       error: (err) => {
@@ -136,5 +142,88 @@ export class CampaignDetail implements OnInit {
     } catch {
       this.showInviteMessage('Não foi possível copiar automaticamente. Selecione o link e copie.');
     }
+  }
+
+  // ----- Membros -----
+  membros: Membro[] = [];
+  membrosMessage = '';
+  membrosBusy = false;
+
+  get voce(): Membro | undefined {
+    return this.membros.find(m => m.ehVoce);
+  }
+
+  loadMembros() {
+    if (!this.campaign?.campanhaId) return;
+    this.campaignService.getMembros(this.campaign.campanhaId).subscribe({
+      next: (lista) => {
+        this.membros = lista;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Erro ao buscar membros', err)
+    });
+  }
+
+  private showMembrosMessage(message: string) {
+    this.membrosMessage = message;
+    this.membrosBusy = false;
+    this.cdr.detectChanges();
+  }
+
+  // Mensagem do servidor (ex.: "a campanha precisa de pelo menos um Mestre") ou uma genérica
+  private erroDe(err: HttpErrorResponse, padrao: string): string {
+    return err.error?.detail || (typeof err.error === 'string' && err.error) || padrao;
+  }
+
+  mudarPapel(membro: Membro, papel: 'Mestre' | 'Jogador') {
+    if (!this.campaign?.campanhaId || this.membrosBusy) return;
+    if (papel === 'Jogador' && !confirm(`Rebaixar ${membro.nome} para Jogador?`)) return;
+
+    this.membrosBusy = true;
+    this.campaignService.setPapel(this.campaign.campanhaId, membro.usuarioId, papel).subscribe({
+      next: () => {
+        this.showMembrosMessage(`${membro.nome} agora é ${papel}.`);
+        this.loadMembros();
+        // Se o Mestre se rebaixou, a própria tela precisa refletir o novo papel
+        if (membro.ehVoce) this.recarregarCampanha();
+      },
+      error: (err) => this.showMembrosMessage(this.erroDe(err, 'Não foi possível alterar o papel.'))
+    });
+  }
+
+  remover(membro: Membro) {
+    if (!this.campaign?.campanhaId || this.membrosBusy) return;
+    if (!confirm(`Remover ${membro.nome} da campanha?`)) return;
+
+    this.membrosBusy = true;
+    this.campaignService.removeMembro(this.campaign.campanhaId, membro.usuarioId).subscribe({
+      next: () => {
+        this.showMembrosMessage(`${membro.nome} foi removido.`);
+        this.loadMembros();
+      },
+      error: (err) => this.showMembrosMessage(this.erroDe(err, 'Não foi possível remover o membro.'))
+    });
+  }
+
+  sair() {
+    const eu = this.voce;
+    if (!this.campaign?.campanhaId || !eu || this.membrosBusy) return;
+    if (!confirm('Sair desta campanha? Você perde o acesso a ela e aos personagens que criou nela.')) return;
+
+    this.membrosBusy = true;
+    this.campaignService.removeMembro(this.campaign.campanhaId, eu.usuarioId).subscribe({
+      next: () => this.router.navigate(['/campaigns']),
+      error: (err) => this.showMembrosMessage(this.erroDe(err, 'Não foi possível sair da campanha.'))
+    });
+  }
+
+  private recarregarCampanha() {
+    if (!this.campaign?.campanhaId) return;
+    this.campaignService.getById(this.campaign.campanhaId).subscribe({
+      next: (data) => {
+        this.campaign = data;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

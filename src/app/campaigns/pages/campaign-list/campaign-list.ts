@@ -16,9 +16,6 @@ export class CampaignList implements OnInit {
   private authService = inject(AuthService);
   campaigns: Campaign[] = [];
 
-  get userRole(): string {
-    return this.authService.userRole || 'Jogador';
-  }
 
   ngOnInit(): void {
   this.loadCampaigns();

@@ -6,6 +6,7 @@ import { PastaAnotacaoService } from '../../../services/pasta-anotacao.service';
 import { PastaAnotacao } from '../../../models/pasta-anotacao.model';
 import { marked } from 'marked';
 import { AuthService } from '../../../../core/services/auth.service';
+import { PapelService } from '../../../../campaigns/services/papel.service';
 
 @Component({
   selector: 'app-anotacoes',
@@ -19,6 +20,7 @@ export class Anotacoes implements OnInit, OnChanges {
   private pastaService = inject(PastaAnotacaoService);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private papelService = inject(PapelService);
 
   userRole: string = 'Jogador';
   currentUserId!: number;
@@ -45,15 +47,28 @@ export class Anotacoes implements OnInit, OnChanges {
   newPastaPublic = false;
 
   ngOnInit() {
-    this.userRole = this.authService.userRole || 'Jogador';
     this.currentUserId = this.authService.currentUserValue?.usuarioId;
+    this.carregarPapel();
     this.carregarDados();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['campanhaId'] && !changes['campanhaId'].firstChange) {
+      this.carregarPapel();
       this.carregarDados();
     }
+  }
+
+  // Papel do usuário NESTA campanha; começa restrito ('Jogador') até a API responder
+  private carregarPapel() {
+    if (!this.campanhaId) return;
+    this.papelService.papelNaCampanha(this.campanhaId).subscribe({
+      next: (papel) => {
+        this.userRole = papel ?? 'Jogador';
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Erro ao descobrir o papel na campanha', err)
+    });
   }
 
   carregarDados() {

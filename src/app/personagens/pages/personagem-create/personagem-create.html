@@ -31,7 +31,7 @@
                 }
               </select>
             </div>
-            <div class="col" *ngIf="userRole === 'Mestre'">
+            <div class="col" *ngIf="ehMestreNaCampanha">
               <label class="form-label">Tipo*</label>
               <select name="tipoId" class="form-control" [(ngModel)]="personagem.tipoId" required (change)="personagem.tipoId === 1 ? setTab('basico') : null">
                 @for (tipo of tiposPersonagem; track tipo.id) {

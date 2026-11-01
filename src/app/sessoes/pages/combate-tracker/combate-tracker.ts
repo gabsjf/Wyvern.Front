@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PersonagemService } from '../../../personagens/services/personagem.service';
 import { CombateService } from '../../services/combate.service';
 import { CampaignService } from '../../../campaigns/services/campaign';
+import { PapelService } from '../../../campaigns/services/papel.service';
 
 @Component({
   selector: 'app-combate-tracker',
@@ -16,6 +17,7 @@ import { CampaignService } from '../../../campaigns/services/campaign';
 export class CombateTracker implements OnInit, OnChanges {
   private personagemService = inject(PersonagemService);
   private authService = inject(AuthService);
+  private papelService = inject(PapelService);
   private combateService = inject(CombateService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -31,7 +33,7 @@ export class CombateTracker implements OnInit, OnChanges {
   turnDeathSaveModified: boolean = false;
   isProcessingTurn: boolean = false;
   
-  userRole: string = 'Mestre'; // 'Mestre' ou 'Jogador'
+  userRole: string = 'Jogador'; // papel nesta campanha: 'Mestre' ou 'Jogador' (começa restrito até a API responder)
   userId: number = 0; // We might need this for ownership, but we don't have it easily. Let's rely on role and Personagem ownership. Wait, `PersonagemService.getAll()` returns only characters owned by the user. If they are in the list, it's theirs!
   personagensMeusIds: number[] = [];
 
@@ -63,8 +65,16 @@ export class CombateTracker implements OnInit, OnChanges {
     }
   }
 
+  // Papel do usuário NESTA campanha (Mestre numa mesa pode ser Jogador em outra)
   determinarRole() {
-    this.userRole = this.authService.userRole || 'Jogador';
+    if (!this.campanhaId) return;
+    this.papelService.papelNaCampanha(this.campanhaId).subscribe({
+      next: (papel) => {
+        this.userRole = papel ?? 'Jogador';
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Erro ao descobrir o papel na campanha', err)
+    });
   }
 
   carregarDadosIniciais() {

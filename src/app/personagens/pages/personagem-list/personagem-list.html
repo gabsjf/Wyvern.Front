@@ -11,7 +11,7 @@
     <button type="button" class="tab-btn" [class.active]="activeTab === 'herois'" (click)="setTab('herois')">
       Heróis
     </button>
-    <button type="button" class="tab-btn" *ngIf="userRole === 'Mestre'" [class.active]="activeTab === 'monstros'" (click)="setTab('monstros')">
+    <button type="button" class="tab-btn" *ngIf="ehMestreEmAlguma" [class.active]="activeTab === 'monstros'" (click)="setTab('monstros')">
       Monstros & NPCs
     </button>
   </nav>

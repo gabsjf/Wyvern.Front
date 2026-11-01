@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SessaoService } from '../../services/sessao.service';
 import { Sessao } from '../../models/sessao';
-import { AuthService } from '../../../core/services/auth.service';
+import { PapelService } from '../../../campaigns/services/papel.service';
 
 @Component({
   selector: 'app-sessao-list',
@@ -14,15 +14,20 @@ import { AuthService } from '../../../core/services/auth.service';
 export class SessaoList implements OnInit {
   private sessaoService = inject(SessaoService);
   private cdr = inject(ChangeDetectorRef);
-  private authService = inject(AuthService);
+  private papelService = inject(PapelService);
   sessoes: Sessao[] = [];
-
-  get userRole(): string {
-    return this.authService.userRole || 'Jogador';
-  }
+  // Só quem é Mestre de alguma campanha pode criar sessões (o servidor valida por campanha)
+  podeCriarSessao = false;
 
   ngOnInit() {
     this.loadSessoes();
+    this.papelService.ehMestreEmAlguma().subscribe({
+      next: (ehMestre) => {
+        this.podeCriarSessao = ehMestre;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Erro ao buscar campanhas', err)
+    });
   }
 
   loadSessoes() {

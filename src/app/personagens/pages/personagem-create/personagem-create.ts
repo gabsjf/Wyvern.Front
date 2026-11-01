@@ -21,8 +21,9 @@ export class PersonagemCreate implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
 
-  get userRole(): string {
-    return this.authService.userRole || 'Jogador';
+  // Só o Mestre da campanha escolhida define o tipo (Jogador/NPC/Monstro); o servidor também impõe isso
+  get ehMestreNaCampanha(): boolean {
+    return this.campanhas.find(c => c.campanhaId === this.personagem.campanhaId)?.papel === 'Mestre';
   }
 
   campanhas: Campaign[] = [];

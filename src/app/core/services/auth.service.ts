@@ -12,19 +12,13 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('token');
-    const papel = localStorage.getItem('papel');
     const usuarioIdStr = localStorage.getItem('usuarioId');
     if (token) {
       this.currentUserSubject.next({ 
-        token, 
-        papel, 
+        token,
         usuarioId: usuarioIdStr ? parseInt(usuarioIdStr, 10) : undefined 
       });
     }
-  }
-
-  public get userRole(): string | null {
-    return localStorage.getItem('papel');
   }
 
   public get currentUserValue(): any {
@@ -36,7 +30,6 @@ export class AuthService {
       tap(response => {
         if (response && response.token) {
           localStorage.setItem('token', response.token);
-          if (response.papel) localStorage.setItem('papel', response.papel);
           if (response.usuarioId) localStorage.setItem('usuarioId', response.usuarioId.toString());
           this.currentUserSubject.next(response);
         }
@@ -49,7 +42,6 @@ export class AuthService {
       tap(response => {
         if (response && response.token) {
           localStorage.setItem('token', response.token);
-          if (response.papel) localStorage.setItem('papel', response.papel);
           if (response.usuarioId) localStorage.setItem('usuarioId', response.usuarioId.toString());
           this.currentUserSubject.next(response);
         }

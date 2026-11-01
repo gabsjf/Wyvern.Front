@@ -1,17 +1,19 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CampaignService } from '../../services/campaign';
 
 @Component({
   selector: 'app-invite',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './invite.html'
 })
 export class InviteComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private campaignService = inject(CampaignService);
+  private cdr = inject(ChangeDetectorRef);
 
   status: 'loading' | 'success' | 'error' = 'loading';
   message: string = 'Iniciando o ritual de invocação...';
@@ -19,24 +21,45 @@ export class InviteComponent implements OnInit {
   ngOnInit() {
     const token = this.route.snapshot.paramMap.get('token');
     if (!token) {
-      this.status = 'error';
-      this.message = 'Selo de invocação (Token) inválido ou ausente.';
+      this.fail('Selo de invocação (Token) inválido ou ausente.');
       return;
     }
 
     this.campaignService.join(token).subscribe({
-      next: (res) => {
+      next: () => {
         this.status = 'success';
         this.message = 'Ritual concluído! Você agora faz parte desta campanha.';
-        setTimeout(() => {
-          this.router.navigate(['/campaigns']);
-        }, 2000);
+        this.cdr.detectChanges();
+        setTimeout(() => this.router.navigate(['/campaigns']), 2000);
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error(err);
-        this.status = 'error';
-        this.message = 'A magia falhou. Talvez o selo de invocação esteja expirado ou você já faça parte desta campanha.';
+        this.fail(this.messageFor(err));
       }
     });
+  }
+
+  private fail(message: string) {
+    this.status = 'error';
+    this.message = message;
+    this.cdr.detectChanges();
+  }
+
+  // Cada causa tem uma mensagem própria, em vez de um texto genérico para qualquer erro.
+  private messageFor(err: HttpErrorResponse): string {
+    switch (err.status) {
+      case 0:
+        return 'Não foi possível falar com o servidor. Verifique sua conexão e tente de novo.';
+      case 404:
+        return 'Este convite não é mais válido. Peça ao Mestre um novo link.';
+      case 400:
+        return typeof err.error === 'string' && err.error
+          ? err.error
+          : 'Não foi possível usar este convite.';
+      case 429:
+        return 'Muitas tentativas seguidas. Aguarde um minuto e tente de novo.';
+      default:
+        return 'Algo deu errado ao entrar na campanha. Tente novamente em instantes.';
+    }
   }
 }

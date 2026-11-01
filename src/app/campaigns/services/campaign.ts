@@ -25,8 +25,12 @@ export class CampaignService {
   delete(id: number) {
     return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
   }
-  generateInvite(id: number) {
-    return this.http.post<{token: string}>(`${this.apiUrl}/${id}/generate-invite`, {});
+  // Sem "renovar" devolve sempre o mesmo link; renovar=true troca o token e invalida o link anterior.
+  generateInvite(id: number, renovar = false) {
+    return this.http.post<{token: string}>(`${this.apiUrl}/${id}/generate-invite`, {}, { params: renovar ? { renovar: true } : {} });
+  }
+  revokeInvite(id: number) {
+    return this.http.delete(`${this.apiUrl}/${id}/invite`);
   }
   join(token: string) {
     return this.http.post<{campanhaId: number}>(`${this.apiUrl}/join/${token}`, {});

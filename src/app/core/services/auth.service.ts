@@ -68,7 +68,25 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  // Logado = existe token e ele ainda não expirou (o servidor continua sendo quem valida de verdade).
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return false;
+    }
+    return true;
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const { exp } = JSON.parse(atob(payload));
+      return typeof exp === 'number' && exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
   }
 }

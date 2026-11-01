@@ -5,7 +5,6 @@ import { AnotacaoService, Anotacao, CreateAnotacaoDto, UpdateAnotacaoDto } from 
 import { PastaAnotacaoService } from '../../../services/pasta-anotacao.service';
 import { PastaAnotacao } from '../../../models/pasta-anotacao.model';
 import { marked } from 'marked';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
@@ -19,7 +18,6 @@ export class Anotacoes implements OnInit, OnChanges {
   private anotacaoService = inject(AnotacaoService);
   private pastaService = inject(PastaAnotacaoService);
   private cdr = inject(ChangeDetectorRef);
-  private sanitizer = inject(DomSanitizer);
   private authService = inject(AuthService);
 
   userRole: string = 'Jogador';
@@ -37,7 +35,8 @@ export class Anotacoes implements OnInit, OnChanges {
   editTitulo = '';
   editConteudo = '';
   editIsPublica = false;
-  previewHtml: SafeHtml = '';
+  // Texto vindo de outros usuários: o Angular sanitiza ao atribuir via [innerHTML] (sem bypass).
+  previewHtml = '';
   showPreview = false; // Toggle between write/preview in seamless mode
 
   // Folder Edit
@@ -157,8 +156,7 @@ export class Anotacoes implements OnInit, OnChanges {
   }
 
   async updatePreview(content: string) {
-    const rawHtml = await marked.parse(content);
-    this.previewHtml = this.sanitizer.bypassSecurityTrustHtml(rawHtml);
+    this.previewHtml = await marked.parse(content);
   }
 
   salvarAnotacao() {

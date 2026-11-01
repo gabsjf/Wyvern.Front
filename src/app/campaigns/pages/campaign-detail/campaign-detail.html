@@ -7,18 +7,26 @@
     <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
       <button class="btn-secondary" routerLink="/campaigns">← Voltar</button>
       <div *ngIf="userRole === 'Mestre'">
-        <button class="btn-primary" style="margin-right: 10px;" (click)="generateInvite()">Gerar Convite</button>
+        <button class="btn-primary" style="margin-right: 10px;" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
         <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
       </div>
     </div>
 
     @if (inviteUrl) {
       <div class="glass-panel text-center mb-4" style="padding: 1rem; border-color: var(--accent);">
-        <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">Link de Convite Gerado:</p>
-        <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; user-select: all; font-family: monospace; color: var(--accent);">
+        <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">Link de convite (o mesmo link serve para todos os jogadores):</p>
+        <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; user-select: all; font-family: monospace; color: var(--accent); word-break: break-all;">
           {{ inviteUrl }}
         </div>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 0.75rem;">
+          <button class="btn-primary" (click)="copyInvite()">Copiar link</button>
+          <button class="btn-secondary" [disabled]="inviteBusy" (click)="renewInvite()">Gerar novo link</button>
+          <button class="btn-secondary" [disabled]="inviteBusy" (click)="revokeInvite()">Desativar link</button>
+        </div>
       </div>
+    }
+    @if (inviteMessage) {
+      <p style="text-align: center; color: var(--text-secondary); margin-bottom: var(--spacing-md);">{{ inviteMessage }}</p>
     }
 
     <div class="glass-panel" style="padding: var(--spacing-xl);">

@@ -68,7 +68,7 @@ export class MesaService {
   private async conectar(campanhaId: number): Promise<void> {
     try {
       if (!this.conexao) {
-        const url = environment.apiUrl.replace('/api', '') + '/mesahub';
+        const url = environment.apiUrl.replace(/\/api$/, '') + '/mesahub';
         this.conexao = new signalR.HubConnectionBuilder()
           .withUrl(url, { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
           .withAutomaticReconnect()

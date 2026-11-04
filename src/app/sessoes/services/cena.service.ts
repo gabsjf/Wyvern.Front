@@ -213,7 +213,7 @@ export class CenaService {
 
     const conexao = new signalR.HubConnectionBuilder()
       // O WebSocket não envia o header Authorization: o token vai na query (?access_token=)
-      .withUrl(environment.apiUrl.replace('/api', '') + '/cenahub', { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
+      .withUrl(environment.apiUrl.replace(/\/api$/, '') + '/cenahub', { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
       .withAutomaticReconnect()
       .build();
     this.conexao = conexao;

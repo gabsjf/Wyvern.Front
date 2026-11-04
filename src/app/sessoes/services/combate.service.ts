@@ -15,7 +15,7 @@ export class CombateService {
   constructor(private http: HttpClient) {}
 
   private async ensureConnection(): Promise<void> {
-    const hubUrl = environment.apiUrl.replace('/api', '') + '/combathub';
+    const hubUrl = environment.apiUrl.replace(/\/api$/, '') + '/combathub';
     if (!this.hubConnection) {
       this.hubConnection = new signalR.HubConnectionBuilder()
         // O hub exige login: o WebSocket não envia o header Authorization, então o token vai na query (?access_token=)

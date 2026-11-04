@@ -1,7 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -11,13 +11,15 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
+export class Login implements OnInit {
   loginForm: FormGroup;
   loading = false;
   errorMessage = '';
+  returnUrl: string = '/campaigns';
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
   constructor() {
@@ -25,6 +27,10 @@ export class Login {
       email: ['', [Validators.required, Validators.email]],
       senha: ['', Validators.required]
     });
+  }
+
+  ngOnInit() {
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/campaigns';
   }
 
   onSubmit() {
@@ -37,7 +43,7 @@ export class Login {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        this.router.navigate(['/campaigns']);
+        this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Erro ao realizar login';

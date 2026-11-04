@@ -1,0 +1,890 @@
+:host { display: block; height: 100%; }
+
+/* linhas da grade: uma escura e uma clara, lado a lado, para aparecer sobre qualquer imagem (clara ou escura) */
+$linha-escura: color-mix(in srgb, black 55%, transparent);
+$linha-clara: color-mix(in srgb, white 45%, transparent);
+
+.mapa {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.palco-moldura {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.palco {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none; // o gesto é nosso: um dedo leva o mapa, dois dão zoom
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  background:
+    radial-gradient(circle at 1px 1px, var(--tint-2) 1px, transparent 0) 0 0 / 24px 24px,
+    var(--surface-2);
+
+  &:active { cursor: grabbing; }
+  &.regua { cursor: crosshair; }
+}
+
+// ---------- o mundo: imagem, grade e tokens, na escala do mapa ----------
+.mundo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+  box-shadow: 0 0 0 1px var(--line), 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.imagem {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.grade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --espessura: max(1px, calc(1.5px / var(--zoom, 1)));
+  background-image:
+    linear-gradient(to right, #{$linha-escura} var(--espessura), transparent 0),
+    linear-gradient(to bottom, #{$linha-escura} var(--espessura), transparent 0),
+    linear-gradient(to right, #{$linha-clara} var(--espessura), transparent 0),
+    linear-gradient(to bottom, #{$linha-clara} var(--espessura), transparent 0);
+  background-size: var(--celula) var(--celula);
+  background-position: 0 0, 0 0, var(--espessura) var(--espessura), var(--espessura) var(--espessura);
+}
+
+// ---------- cores dos tokens ----------
+.cor-ouro { --tk: var(--hi); }
+.cor-carmim { --tk: var(--accent); }
+.cor-verde { --tk: var(--ok); }
+.cor-azul { --tk: hsl(207 58% 50%); }
+.cor-violeta { --tk: hsl(275 42% 56%); }
+.cor-laranja { --tk: hsl(24 82% 52%); }
+.cor-cinza { --tk: hsl(30 6% 50%); }
+.cor-branco { --tk: hsl(40 22% 92%); }
+// ---------- token ----------
+.token.cor-branco { --tk-fundo: hsl(40 22% 92%); --tk-texto: hsl(30 18% 14%); }
+.token {
+  --tk-fundo: color-mix(in srgb, var(--tk) 68%, black);
+  --tk-texto: white;
+  position: absolute;
+  box-sizing: border-box;
+  container-type: size;
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+  z-index: 2;
+  transition: left 0.14s ease-out, top 0.14s ease-out;
+
+  &.movivel { cursor: grab; }
+  &.arrastando { cursor: grabbing; transition: none; z-index: 50; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45)); }
+  &.oculto { opacity: 0.55; }
+  &.selecionado, &:hover, &:focus-visible { z-index: 40; }
+}
+
+.disco {
+  position: absolute;
+  inset: 5%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: max(2px, 5cqmin) solid var(--tk);
+  background: var(--tk-fundo);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 0 1px color-mix(in srgb, black 35%, transparent);
+}
+
+.iniciais {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34cqmin;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--tk-texto);
+  text-shadow: 0 1px 2px color-mix(in srgb, black 45%, transparent);
+  pointer-events: none;
+}
+
+.token.inimigo .disco {
+  outline: max(2px, 3cqmin) dashed var(--danger);
+  outline-offset: max(2px, 2cqmin);
+}
+
+.token.abatido .disco { filter: grayscale(1) brightness(0.7); }
+.token.abatido .iniciais { text-decoration: line-through; }
+
+.token.selecionado .disco {
+  box-shadow: 0 0 0 max(2px, 2.5cqmin) var(--bg), 0 0 0 max(4px, 5cqmin) var(--fg), 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+.token:focus-visible .disco {
+  box-shadow: 0 0 0 max(2px, 2.5cqmin) var(--bg), 0 0 0 max(4px, 5cqmin) var(--hi);
+}
+
+// o turno atual: anel dourado que pulsa
+.token.turno::after {
+  content: '';
+  position: absolute;
+  inset: -3%;
+  border-radius: 50%;
+  border: max(3px, 4cqmin) solid var(--hi);
+  box-shadow: 0 0 18px 2px color-mix(in srgb, var(--hi) 70%, transparent);
+  pointer-events: none;
+  animation: pulso 1.8s ease-in-out infinite;
+}
+
+@keyframes pulso {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token { transition: none; }
+  .token.turno::after { animation: none; }
+}
+
+.vida {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 9%;
+  height: max(4px, 9cqmin);
+  border-radius: 99px;
+  background: color-mix(in srgb, black 62%, transparent);
+  border: 1px solid color-mix(in srgb, black 40%, transparent);
+  overflow: hidden;
+  pointer-events: none;
+}
+.vida-barra { display: block; height: 100%; background: var(--ok); transition: width 0.25s; }
+.vida-barra.baixa { background: var(--danger); }
+
+.condicoes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  pointer-events: none;
+}
+.condicao {
+  display: grid;
+  place-items: center;
+  width: max(14px, 20cqmin);
+  height: max(14px, 20cqmin);
+  border-radius: 50%;
+  background: var(--hi);
+  color: var(--hi-fg);
+  font: 700 max(9px, 12cqmin) / 1 var(--font-body);
+  border: 1px solid var(--bg);
+}
+
+.marca-oculto {
+  position: absolute;
+  left: 2%;
+  top: 2%;
+  font-size: max(12px, 20cqmin);
+  color: white;
+  text-shadow: 0 1px 3px black;
+  pointer-events: none;
+}
+
+// o nome mantém o tamanho na tela, qualquer que seja o zoom
+.rotulo {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: calc(3px / var(--zoom, 1));
+  transform: translateX(-50%) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: top center;
+  padding: 1px 8px;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font: 600 0.85rem/1.4 var(--font-body);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.token:hover .rotulo, .token:focus-visible .rotulo, .token.selecionado .rotulo, .token.turno .rotulo { opacity: 1; }
+
+// ---------- régua ----------
+.regua-linha {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 60;
+
+  line {
+    stroke: var(--hi);
+    stroke-width: calc(3px / var(--zoom, 1));
+    stroke-dasharray: calc(10px / var(--zoom, 1)) calc(6px / var(--zoom, 1));
+    filter: drop-shadow(0 0 2px black);
+  }
+  circle { fill: var(--hi); stroke: var(--bg); stroke-width: calc(2px / var(--zoom, 1)); r: calc(6px / var(--zoom, 1)); }
+}
+
+.regua-medida {
+  position: absolute;
+  z-index: 61;
+  transform: translate(-50%, -140%) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: center bottom;
+  padding: 0.2rem 0.7rem;
+  background: var(--bg);
+  border: 1px solid var(--hi);
+  color: var(--fg);
+  font: 600 1.4rem/1.1 var(--font-display);
+  white-space: nowrap;
+  pointer-events: none;
+
+  small { display: block; color: var(--muted); font: 500 0.75rem var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; }
+}
+
+// ---------- avisos no palco ----------
+.aviso-palco {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  pointer-events: none;
+
+  &.vazio { pointer-events: auto; }
+  .eyebrow { margin: 0; color: var(--hi); letter-spacing: 0.16em; }
+  h2 { margin: 0; color: var(--fg); font-size: clamp(2rem, 4vw, 3.2rem); }
+  p { max-width: 46ch; margin: 0; }
+  button { pointer-events: auto; margin-top: 0.5rem; }
+}
+
+// ---------- barra de ferramentas ----------
+.barra {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.barra-grupo {
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+
+  &.fim { margin-left: auto; }
+}
+
+.barra-titulo, .barra-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 0.7rem;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+  font: 600 1rem var(--font-display);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+
+  i { font-size: 1.15rem; }
+}
+.barra-titulo { cursor: default; }
+.barra-btn:hover { background: var(--tint-2); }
+.barra-btn.ativo { background: var(--hi); color: var(--hi-fg); }
+.barra-btn:focus-visible { outline: 2px solid var(--hi); outline-offset: -3px; }
+.barra-btn + .barra-btn { border-left: 1px solid var(--line); }
+.nome-cena { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offline { padding: 0 0.7rem; color: var(--danger); font-size: 1.2rem; }
+
+.selo-jogo {
+  padding: 0.05rem 0.45rem;
+  background: color-mix(in srgb, var(--hi) 22%, transparent);
+  border: 1px solid var(--hi);
+  color: var(--hi);
+  font: 700 0.7rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+// ---------- menu de cenas ----------
+.menu-cenas {
+  position: absolute;
+  top: 4.2rem;
+  left: 0.75rem;
+  z-index: 35;
+  width: min(380px, calc(100% - 1.5rem));
+  max-height: calc(100% - 5rem);
+  overflow: auto;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+
+  .eyebrow { margin: 0; color: var(--hi); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.25rem 0.25rem 0.6rem;
+    border-left: 3px solid transparent;
+    &.atual { border-left-color: var(--hi); background: var(--tint-1); }
+  }
+  .cena-nome { flex: 1; text-align: left; background: none; border: 0; padding: 0.4rem 0; color: var(--fg); font: 600 1rem var(--font-body); cursor: pointer; }
+  .nova { justify-self: start; }
+}
+
+.grade-form {
+  display: grid;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+  .eyebrow { margin: 0; }
+  label { display: grid; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+  button { justify-self: start; }
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 0.25rem 0.4rem;
+  color: var(--hi);
+  font: 600 0.85rem var(--font-body);
+  cursor: pointer;
+  &:hover { text-decoration: underline; }
+  &.perigo { color: var(--danger); }
+}
+
+// ---------- painel lateral ----------
+.painel {
+  flex: 0 0 clamp(300px, 22vw, 440px);
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+}
+.mapa:not(.com-painel) .painel { display: none; }
+
+// no 3D o palco 2D continua vivo por baixo (a névoa e o enquadramento dependem dele), só fica invisível e sem toque
+.modo-3d .palco { visibility: hidden; pointer-events: none; }
+.modo-3d .so-2d { display: none; }
+
+.painel-bloco {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  h3 { margin: 0; font-size: 1.35rem; }
+  label { display: grid; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+  .dica { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .contagem { color: var(--muted); font-size: 1.1rem; }
+}
+.painel-bloco.lista { flex: 1 1 auto; align-content: start; }
+
+.marcador { display: flex !important; align-items: center; gap: 0.5rem; color: var(--fg) !important; font-size: 0.95rem !important; }
+
+.detalhe-linha { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0; }
+.vida-texto { margin: 0; font: 500 1.1rem var(--font-display); color: var(--muted); strong { font-size: 2rem; color: var(--fg); } }
+.detalhe-condicoes { margin: 0; color: var(--hi); font-weight: 600; }
+
+.campo { display: grid; gap: 0.35rem; }
+.campo-rotulo { font-size: 0.85rem; color: var(--muted); }
+
+.segmentos {
+  display: flex;
+  border: 1px solid var(--line);
+  button {
+    flex: 1;
+    height: 38px;
+    background: transparent;
+    border: 0;
+    color: var(--fg);
+    font: 600 0.95rem var(--font-display);
+    cursor: pointer;
+    & + button { border-left: 1px solid var(--line); }
+    &:hover { background: var(--tint-2); }
+    &.ativo { background: var(--hi); color: var(--hi-fg); }
+  }
+}
+
+.cores { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.amostra {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid var(--tk);
+  background: color-mix(in srgb, var(--tk) 68%, black);
+  cursor: pointer;
+  &.cor-branco { background: var(--tk); }
+  &.ativo { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 3px; }
+}
+
+.lista ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.linha {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.3rem 0.6rem;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  color: var(--fg);
+  font: 500 1rem var(--font-body);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { background: var(--tint-2); }
+  &.selecionada { background: var(--tint-2); border-left-color: var(--fg); }
+  &.turno { border-left-color: var(--hi); background: color-mix(in srgb, var(--hi) 12%, transparent); }
+  &.abatida .linha-nome { text-decoration: line-through; color: var(--muted); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -2px; }
+}
+.linha-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linha-pv { font: 600 1.05rem var(--font-display); color: var(--muted); &.baixa { color: var(--danger); } }
+.ponto {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--tk);
+  background: color-mix(in srgb, var(--tk) 68%, black);
+  &.cor-branco { background: var(--tk); }
+  &.inimigo { outline: 2px dashed var(--danger); outline-offset: 2px; }
+}
+
+// ---------- nova cena ----------
+.fundo-modal { position: fixed; inset: 0; z-index: 900; background: color-mix(in srgb, black 60%, transparent); }
+
+.modal-cena {
+  position: fixed;
+  z-index: 901;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .eyebrow { margin: 0; color: var(--hi); }
+  h2 { margin: 0; font-size: 2.2rem; }
+  footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
+  label { display: grid; gap: 0.3rem; font-size: 0.85rem; color: var(--muted); }
+  .dica { margin: 0; color: var(--muted); font-size: 0.9rem; }
+}
+
+.arquivo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  padding: 1rem;
+  border: 2px dashed var(--line);
+  background: var(--tint-1);
+  cursor: pointer;
+  overflow: hidden;
+
+  &:hover { border-color: var(--hi); }
+  &:has(input:focus-visible) { outline: 2px solid var(--hi); outline-offset: 2px; }
+  &.com-imagem { border-style: solid; padding: 0.5rem; }
+  input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+}
+.arquivo-vazio {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  color: var(--muted);
+  i { font-size: 2.4rem; color: var(--hi); }
+  strong { color: var(--fg); font: 600 1.25rem var(--font-display); }
+}
+.previa {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  img { display: block; width: 100%; height: 100%; }
+}
+.previa-grade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, #{$linha-escura} 1.5px, transparent 0),
+    linear-gradient(to bottom, #{$linha-escura} 1.5px, transparent 0),
+    linear-gradient(to right, #{$linha-clara} 1.5px, transparent 0),
+    linear-gradient(to bottom, #{$linha-clara} 1.5px, transparent 0);
+  background-position: 0 0, 0 0, 1.5px 1.5px, 1.5px 1.5px;
+}
+
+.calibragem { display: grid; gap: 0.75rem; }
+.calibre { display: flex; align-items: center; gap: 0.75rem; input[type='range'] { flex: 1; } input[type='number'] { width: 6rem; } }
+
+// ---------- telas estreitas: o mapa em cima, o painel embaixo ----------
+@media (max-width: 900px) {
+  :host { height: auto; }
+  .mapa { flex-direction: column; height: auto; }
+  .palco-moldura { flex: none; height: clamp(360px, calc(100dvh - 9rem), 720px); }
+  .painel { flex: none; overflow: visible; border-left: 0; border-top: 1px solid var(--line); }
+  .so-largo { display: none; }
+  .barra-btn, .barra-titulo { height: 46px; min-width: 46px; }
+  .nome-cena { max-width: 8rem; }
+}
+
+@media (max-width: 480px) {
+  .barra { top: 0.5rem; left: 0.5rem; right: 0.5rem; }
+}
+
+// ---------- névoa de guerra ----------
+.neblina {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.neblina.do-mestre { opacity: 0.6; } // o Mestre enxerga o mapa por baixo da névoa; os jogadores, não
+
+.contorno-neblina {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--hi) 22%, transparent);
+  border: calc(2px / var(--zoom, 1)) dashed var(--hi);
+
+  &.cobrindo { background: color-mix(in srgb, black 40%, transparent); border-color: var(--fg); }
+}
+
+// ---------- modelo de área de magia ----------
+.area-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 59;
+  pointer-events: none;
+
+  circle, polygon {
+    fill: color-mix(in srgb, var(--accent) 32%, transparent);
+    stroke: var(--accent-hover);
+    stroke-width: calc(3px / var(--zoom, 1));
+    stroke-linejoin: round;
+  }
+}
+
+.opcoes-area {
+  .barra-btn.largo { font-size: 0.95rem; }
+  .pes select { height: 42px; border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--fg); font: 600 0.95rem var(--font-display); padding: 0 0.5rem; }
+}
+
+.par-botoes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+// ---------- alcance do deslocamento ----------
+.alcance {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.custo-arrasto {
+  position: absolute;
+  z-index: 62;
+  transform: translate(-50%, -190%) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: center bottom;
+  padding: 0.15rem 0.6rem;
+  background: var(--bg);
+  border: 1px solid hsl(207 70% 60%);
+  color: var(--fg);
+  font: 600 1.15rem/1.1 var(--font-display);
+  white-space: nowrap;
+  pointer-events: none;
+
+  small { margin-left: 0.3rem; color: var(--muted); font: 500 0.75rem var(--font-body); letter-spacing: 0.04em; }
+  &.fora { border-color: var(--danger); color: var(--danger); }
+}
+.token.fora-de-alcance .disco { filter: grayscale(0.6) brightness(0.8); outline: max(3px, 4cqmin) solid var(--danger); outline-offset: max(2px, 2cqmin); }
+
+.deslocamento { display: grid; gap: 0.35rem; .campo-rotulo { margin: 0; } .desloc-valor { margin: 0; font: 500 1.15rem var(--font-display); strong { font-size: 1.6rem; } } }
+.barra-movimento {
+  height: 8px;
+  background: var(--tint-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  span { display: block; height: 100%; background: hsl(207 70% 55%); transition: width 0.2s; }
+}
+
+// ---------- marcadores ----------
+.ponto-interesse {
+  position: absolute;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  cursor: pointer;
+  outline: none;
+
+  &.arrastando { cursor: grabbing; z-index: 50; }
+  &.escondido .pi-pino { opacity: 0.6; border-style: dashed; }
+  &:hover, &.selecionado, &:focus-visible { z-index: 41; }
+}
+// o ícone mantém o tamanho na tela, qualquer que seja o zoom
+.pi-pino {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--hi);
+  color: var(--hi);
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.ponto-interesse.selecionado .pi-pino, .ponto-interesse:focus-visible .pi-pino { background: var(--hi); color: var(--hi-fg); }
+.pi-rotulo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, 0) translateY(calc(22px / var(--zoom, 1))) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: top center;
+  padding: 1px 8px;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font: 600 0.8rem/1.4 var(--font-body);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.ponto-interesse:hover .pi-rotulo, .ponto-interesse.selecionado .pi-rotulo, .ponto-interesse:focus-visible .pi-rotulo { opacity: 1; }
+
+.icones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.icone-btn {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-size: 1.1rem;
+  cursor: pointer;
+  &:hover { background: var(--tint-2); }
+  &.ativo { background: var(--hi); color: var(--hi-fg); border-color: var(--hi); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+}
+.nota-marcador { margin: 0; white-space: pre-wrap; color: var(--fg); }
+.painel-bloco textarea { resize: vertical; min-height: 5rem; }
+
+// ---------- desenho livre ----------
+.tracos-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  .traco {
+    fill: none;
+    stroke: var(--tk, var(--hi));
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 1.5px black);
+  }
+}
+.opcoes-desenho {
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+  .cores-barra { display: inline-flex; gap: 0.3rem; align-items: center; }
+  .espessuras { display: inline-flex; gap: 0.25rem; margin-left: 0.4rem; }
+  .barra-btn { padding: 0 0.5rem; }
+}
+.amostra.pequena { width: 22px; height: 22px; border-width: 2px; }
+.espessura {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  span { display: block; width: 18px; background: var(--fg); border-radius: 99px; }
+  &.ativo { border-color: var(--hi); background: var(--tint-2); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 1px; }
+}
+
+// ---------- janela e régua dos outros ----------
+.paredes-svg .janela { stroke: hsl(200 70% 62%); stroke-dasharray: calc(14px / var(--zoom, 1)) calc(5px / var(--zoom, 1)); }
+.paredes-svg .em-curso.janela { stroke: hsl(200 70% 62%); }
+
+.regua-linha.de-outro {
+  line { stroke: var(--accent-hover); }
+  circle { fill: var(--accent-hover); }
+}
+.regua-medida.de-outro { border-color: var(--accent-hover); }
+
+// ---------- condições editáveis ----------
+.condicoes-edicao { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chip-btn {
+  padding: 0.2rem 0.6rem;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font: 600 0.8rem var(--font-body);
+  cursor: pointer;
+  &:hover { background: var(--tint-2); }
+  &.ativo { background: var(--hi); border-color: var(--hi); color: var(--hi-fg); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 1px; }
+}
+
+// ---------- retrato do token ----------
+.retrato {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+.retrato-acoes { display: flex; align-items: center; gap: 0.75rem; }
+.arquivo-botao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  &:has(input:focus-visible) { outline: 2px solid var(--hi); outline-offset: 2px; }
+}
+
+// ---------- paredes e portas ----------
+.paredes-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2; // acima da névoa, abaixo dos tokens (que vêm depois no DOM)
+  pointer-events: none;
+
+  line {
+    stroke-linecap: round;
+    stroke-width: calc(5px / var(--zoom, 1));
+    filter: drop-shadow(0 0 2px black);
+  }
+  .parede { stroke: var(--danger); }
+  .porta { stroke: var(--hi); }
+  .porta.aberta { stroke-dasharray: calc(4px / var(--zoom, 1)) calc(10px / var(--zoom, 1)); opacity: 0.8; }
+  .em-curso { stroke: var(--fg); stroke-dasharray: calc(8px / var(--zoom, 1)) calc(6px / var(--zoom, 1)); }
+  .em-curso.porta { stroke: var(--hi); }
+}
+
+.menu-cenas li.grupo {
+  display: block;
+  padding: 0.5rem 0.25rem 0.1rem;
+  border-left: 0;
+  color: var(--muted);
+  font: 700 0.7rem var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+// ---------- ping ----------
+.ping {
+  position: absolute;
+  z-index: 70;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.ping-ponto {
+  position: absolute;
+  width: calc(14px / var(--zoom, 1));
+  height: calc(14px / var(--zoom, 1));
+  margin: calc(-7px / var(--zoom, 1));
+  border-radius: 50%;
+  background: var(--hi);
+  box-shadow: 0 0 0 calc(2px / var(--zoom, 1)) var(--bg);
+}
+.ping-anel {
+  position: absolute;
+  width: calc(120px / var(--zoom, 1));
+  height: calc(120px / var(--zoom, 1));
+  margin: calc(-60px / var(--zoom, 1));
+  border-radius: 50%;
+  border: calc(4px / var(--zoom, 1)) solid var(--hi);
+  opacity: 0;
+  animation: ping-anel 1.4s ease-out 2 both;
+
+  &.atraso { animation-delay: 0.45s; }
+}
+.ping-nome {
+  position: absolute;
+  top: calc(14px / var(--zoom, 1));
+  left: 0;
+  transform: translateX(-50%) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: top center;
+  padding: 1px 8px;
+  white-space: nowrap;
+  background: var(--bg);
+  border: 1px solid var(--hi);
+  color: var(--fg);
+  font: 600 0.85rem/1.4 var(--font-body);
+}
+
+@keyframes ping-anel {
+  from { transform: scale(0.15); opacity: 0.95; }
+  to { transform: scale(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ping-anel { animation: none; opacity: 0.7; transform: scale(0.6); }
+}

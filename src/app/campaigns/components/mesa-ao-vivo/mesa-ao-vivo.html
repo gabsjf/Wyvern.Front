@@ -1,0 +1,49 @@
+@if (aviso(); as a) {
+  <div class="aviso" role="status" aria-live="polite" [class.critico]="natural(a) === 20" [class.falha]="natural(a) === 1">
+    <app-emblema [nome]="quem(a)" [tamanho]="30" forma="redondo" />
+    <span class="aviso-texto">
+      <strong>{{ quem(a) }}</strong> rolou {{ a.rotulo }}
+    </span>
+    <span class="aviso-total num">{{ a.total }}</span>
+  </div>
+}
+
+@if (aberta()) {
+  <section class="painel" aria-label="Mesa ao vivo">
+    <header class="painel-topo">
+      <h2>Mesa ao vivo</h2>
+      <span class="estado" [class.on]="mesa.conectada()">{{ mesa.conectada() ? 'Conectada' : 'Offline' }}</span>
+      <button type="button" class="fechar" (click)="alternar()" aria-label="Fechar a mesa">✕</button>
+    </header>
+
+    @if (recentes().length === 0) {
+      <p class="vazio">Ninguém rolou nada ainda. Clique numa perícia, salvaguarda ou ataque da ficha, ou use os dados do combate.</p>
+    } @else {
+      <ol class="lista">
+        @for (r of recentes(); track r.id) {
+          <li class="rol" [class.critico]="natural(r) === 20" [class.falha]="natural(r) === 1">
+            <app-emblema [nome]="quem(r)" [tamanho]="34" forma="redondo" />
+            <div class="rol-info">
+              <p class="rol-quem">
+                <strong>{{ quem(r) }}</strong>
+                @if (r.personagem) { <small>{{ r.usuario }}</small> }
+                <time class="num" [attr.datetime]="r.quando">{{ r.quando | date:'HH:mm' }}</time>
+              </p>
+              <p class="rol-rotulo">{{ r.rotulo }}</p>
+              <p class="rol-detalhe num">{{ detalhe(r) }}</p>
+              @if (natural(r) === 20) { <p class="rol-selo">Crítico!</p> }
+              @else if (natural(r) === 1) { <p class="rol-selo">Falha crítica</p> }
+            </div>
+            <span class="rol-total num">{{ r.total }}</span>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}
+
+<button type="button" class="fab" [class.ativo]="aberta()" (click)="alternar()" [attr.aria-expanded]="aberta()" aria-label="Mesa ao vivo: rolagens da campanha">
+  <i class="bi bi-dice-5" aria-hidden="true"></i>
+  <span class="fab-rotulo">Mesa</span>
+  @if (naoVistas() > 0 && !aberta()) { <span class="fab-contador num">{{ naoVistas() > 9 ? '9+' : naoVistas() }}</span> }
+</button>

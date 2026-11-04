@@ -5,6 +5,8 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PersonagemService } from '../../services/personagem.service';
 import { CampaignService } from '../../../campaigns/services/campaign';
 import { Campaign } from '../../../campaigns/models/campaign';
+import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-personagem-create',
@@ -18,6 +20,13 @@ export class PersonagemCreate implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
+  private toast = inject(ToastService);
+
+  // Só o Mestre da campanha escolhida define o tipo (Jogador/NPC/Monstro); o servidor também impõe isso
+  get ehMestreNaCampanha(): boolean {
+    return this.campanhas.find(c => c.campanhaId === this.personagem.campanhaId)?.papel === 'Mestre';
+  }
 
   campanhas: Campaign[] = [];
   periciasDisponiveis: any[] = [];
@@ -25,13 +34,14 @@ export class PersonagemCreate implements OnInit {
   activeTab: string = 'basico';
   isSidebarExpanded: boolean = true;
   tiposPersonagem = [
-    { id: 1, nome: 'Jogador' },
-    { id: 2, nome: 'NPC' },
-    { id: 3, nome: 'Monstro' }
+    { id: 1, nome: 'Herói', descricao: 'Personagem de um jogador' },
+    { id: 2, nome: 'NPC', descricao: 'Personagem do Mestre, aliado ou neutro' },
+    { id: 3, nome: 'Monstro', descricao: 'Criatura ou inimigo de combate' }
   ];
 
   isEditMode: boolean = false;
   personagemId: number | null = null;
+  isSaving: boolean = false;
 
   personagem: any = {
     nome: '',
@@ -58,6 +68,20 @@ export class PersonagemCreate implements OnInit {
     this.activeTab = tab;
   }
 
+  /** Herói qualquer um cria; NPC e Monstro só o Mestre da campanha escolhida. */
+  podeEscolherTipo(tipoId: number): boolean {
+    return tipoId === 1 || this.ehMestreNaCampanha;
+  }
+
+  escolherTipo(tipoId: number) {
+    if (this.podeEscolherTipo(tipoId)) this.personagem.tipoId = tipoId;
+  }
+
+  /** Ao trocar para uma campanha em que não é Mestre, o tipo volta a Herói (o servidor também não aceitaria outro). */
+  aoMudarCampanha() {
+    if (!this.ehMestreNaCampanha) this.personagem.tipoId = 1;
+  }
+
   addAcaoPadrao() { this.personagem.personagemAcoesPadrao.push({ nome: '', descricao: '', alcance: '', bonusAcerto: null, dano: '', tipoDano: '', propriedades: '', atributoBase: 'Forca', proficiente: true, tipoAcao: 'Ataque' }); }
   removeAcaoPadrao(index: number) { this.personagem.personagemAcoesPadrao.splice(index, 1); }
 
@@ -75,12 +99,20 @@ export class PersonagemCreate implements OnInit {
 
   ngOnInit() {
     this.campaignService.getAll().subscribe({
-      next: (data) => this.campanhas = data,
+      next: (data) => {
+        this.campanhas = data;
+        // Personagem novo já abre com uma campanha escolhida (de preferência uma em que o usuário é Mestre),
+        // para o Tipo e os demais campos não ficarem escondidos até alguém escolher.
+        if (!this.isEditMode && !this.personagem.campanhaId && data.length) {
+          this.personagem.campanhaId = (data.find(c => c.papel === 'Mestre') ?? data[0]).campanhaId;
+        }
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Erro ao buscar campanhas:', err)
     });
 
     this.personagemService.getPericias().subscribe({
-      next: (data) => this.periciasDisponiveis = data,
+      next: (data) => { this.periciasDisponiveis = data; this.cdr.detectChanges(); },
       error: (err) => console.error('Erro ao buscar pericias:', err)
     });
 
@@ -130,27 +162,40 @@ export class PersonagemCreate implements OnInit {
   }
 
   save() {
+    if (this.isSaving) return;
+
     if (!this.personagem.nome || this.personagem.nome.trim() === '') {
-      alert('Por favor, preencha o Nome do personagem na aba Básico antes de salvar.');
+      this.activeTab = 'basico';
+      this.toast.erro('Dê um nome ao personagem na aba Básico antes de salvar.');
       return;
     }
-    if (this.personagem.campanhaId === 0) {
-      alert('Por favor, selecione uma Campanha na aba Básico antes de salvar.');
+    if (!this.personagem.campanhaId) {
+      this.activeTab = 'basico';
+      this.toast.erro('Escolha a campanha do personagem na aba Básico antes de salvar.');
       return;
     }
 
     this.personagem.periciasIds = this.selectedPericiasIds;
 
-    if (this.personagem.personagemConjuracao) {
-      for (let i = 1; i <= 9; i++) {
-        if (this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'] > 0) {
-          this.personagem.personagemConjuracao['slotsNivel' + i + 'Atual'] = this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'];
+    // Ao CRIAR, o personagem começa com vida cheia e todos os espaços de magia.
+    // Ao EDITAR, vida atual e espaços gastos são preservados (antes, salvar a edição curava o personagem
+    // e recarregava as magias).
+    if (!this.isEditMode) {
+      if (this.personagem.personagemConjuracao) {
+        for (let i = 1; i <= 9; i++) {
+          if (this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'] > 0) {
+            this.personagem.personagemConjuracao['slotsNivel' + i + 'Atual'] = this.personagem.personagemConjuracao['slotsNivel' + i + 'Max'];
+          }
         }
       }
-    }
-    
-    if (this.personagem.personagemCombate) {
-       this.personagem.personagemCombate.vidaAtual = this.personagem.personagemCombate.vidaMaxima;
+
+      if (this.personagem.personagemCombate) {
+        this.personagem.personagemCombate.vidaAtual = this.personagem.personagemCombate.vidaMaxima;
+      }
+    } else if (this.personagem.personagemCombate) {
+      // Se o máximo baixou abaixo da vida atual, a vida atual acompanha o novo máximo.
+      const { vidaAtual, vidaMaxima } = this.personagem.personagemCombate;
+      if (vidaAtual > vidaMaxima) this.personagem.personagemCombate.vidaAtual = vidaMaxima;
     }
 
     if (this.personagem.personagemAcoesPadrao) {
@@ -173,8 +218,13 @@ export class PersonagemCreate implements OnInit {
       if (!this.personagem.personagemAtaques) this.personagem.personagemAtaques = [];
       if (!this.personagem.personagemMagias) this.personagem.personagemMagias = [];
       
+      // Só espelha ações que ainda não existem nas abas (comparando pelo nome): sem isso, cada salvamento de
+      // uma edição duplicava todos os ataques e magias.
+      const jaTemAtaque = (nome: string) => this.personagem.personagemAtaques.some((a: any) => a.nome === nome);
+      const jaTemMagia = (nome: string) => this.personagem.personagemMagias.some((m: any) => m.nome === nome);
+
       this.personagem.personagemAcoesPadrao.forEach((acao: any) => {
-        if (acao.tipoAcao === 'Ataque') {
+        if (acao.tipoAcao === 'Ataque' && !jaTemAtaque(acao.nome)) {
           this.personagem.personagemAtaques.push({
             nome: acao.nome,
             alcance: acao.alcance || '',
@@ -185,7 +235,7 @@ export class PersonagemCreate implements OnInit {
             atributoBase: acao.atributoBase || 'Forca',
             proficiente: acao.proficiente || false
           });
-        } else if (acao.tipoAcao === 'Magia') {
+        } else if (acao.tipoAcao === 'Magia' && !jaTemMagia(acao.nome)) {
           this.personagem.personagemMagias.push({
             nome: acao.nome,
             descricao: acao.descricao || '',
@@ -210,26 +260,34 @@ export class PersonagemCreate implements OnInit {
     }
 
     if (this.isEditMode && this.personagemId) {
+      this.isSaving = true;
       payload.personagemId = this.personagemId;
       this.personagemService.update(this.personagemId, payload).subscribe({
         next: () => {
-          alert('Personagem atualizado com sucesso!');
+          this.isSaving = false;
+          this.toast.ok('Personagem atualizado.');
           this.router.navigate(['/personagens']);
         },
         error: (err) => {
+          this.isSaving = false;
           console.error('Erro ao atualizar personagem', err);
-          alert('Erro ao atualizar personagem. Veja o console.');
+          this.toast.erro('Não foi possível salvar as alterações. Confira os dados e tente de novo.');
+          this.cdr.detectChanges();
         }
       });
     } else {
+      this.isSaving = true;
       this.personagemService.create(payload).subscribe({
         next: () => {
-          alert('Personagem criado com sucesso!');
+          this.isSaving = false;
+          this.toast.ok('Personagem criado.');
           this.router.navigate(['/personagens']);
         },
         error: (err) => {
+          this.isSaving = false;
           console.error('Erro ao criar personagem', err);
-          alert('Erro ao criar personagem. Veja o console.');
+          this.toast.erro('Não foi possível criar o personagem. Confira os dados e tente de novo.');
+          this.cdr.detectChanges();
         }
       });
     }

@@ -1,59 +1,45 @@
-# WyvernFront
+# Wyvern · Front
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.9.
+Aplicativo Angular do Wyvern (gerenciador de campanhas de RPG). Tema visual "Bestiário", claro e escuro, responsivo para celular e desktop.
 
-## Development server
+## Rodar localmente
 
-To start a local development server, run:
+Precisa do Node 22+ e, para dados reais, da API rodando (repositório `wyvern_`).
 
 ```bash
-ng serve
+npm install
+ng serve            # http://localhost:4200, usa a API em http://localhost:5098
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+A API em modo Development usa SQLite e uma chave JWT de desenvolvimento, sem nada para instalar:
 
 ```bash
-ng generate component component-name
+dotnet run --project Wyvern.Api --no-launch-profile   # com ASPNETCORE_ENVIRONMENT=Development e ASPNETCORE_URLS=http://localhost:5098
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+`ng serve` usa `src/environments/environments.development.ts`; `ng build` usa `environments.ts` (produção).
+
+## Testes e build
 
 ```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
+ng test --watch=false
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Organização
 
-## Running unit tests
+| Pasta | O que tem |
+|---|---|
+| `src/styles.scss` | Tokens do tema (cores, tipografia, espaçamento), botões, formulários, tabelas e utilidades. Nomes antigos de variáveis (`--primary-color`...) são aliases dos tokens novos. |
+| `src/app/core` | Autenticação, interceptor, navegação, tema, painel, landing |
+| `src/app/shared/ui` | Avisos (`ToastService`) e confirmações (`ConfirmService`): usar no lugar de `alert()` e `confirm()` |
+| `src/app/campaigns` | Campanhas, membros, convites, `PapelService` (papel por campanha) |
+| `src/app/personagens` | Lista, formulário, ficha |
+| `src/app/sessoes` | Sessões, combate, anotações |
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Convenções do tema
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Cores só por token (`var(--fg)`, `var(--surface)`, `var(--accent)`, `var(--hi)`...). Nada de hex nos componentes, para o tema claro funcionar.
+- `--accent` (vinho) é para preenchimento de ação; texto de destaque usa `--hi` (dourado).
+- Números de jogo (PV, CA, modificadores) usam a classe `num` (fonte monoespaçada com algarismos tabulares).
+- Alvos de toque com pelo menos 44 px; tabelas ganham `table-stack` para virar cartões no celular.

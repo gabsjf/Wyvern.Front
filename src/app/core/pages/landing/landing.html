@@ -1,0 +1,120 @@
+<div class="landing-container">
+  
+  <!-- Navbar Simples -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <img src="assets/images/wyvern-logo.png" alt="Wyvern Logo" class="brand-logo" />
+      <span class="brand-text">Wyvern</span>
+    </div>
+    <div class="nav-actions">
+      <ng-container *ngIf="!authService.isLoggedIn()">
+        <a routerLink="/login" class="nav-link">Entrar</a>
+        <button class="btn-primary btn-sm" routerLink="/register">Criar Conta</button>
+      </ng-container>
+      <ng-container *ngIf="authService.isLoggedIn()">
+        <button class="btn-primary btn-sm" routerLink="/dashboard">Meu Painel</button>
+      </ng-container>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero-section">
+    <div class="hero-content">
+      <div class="tagline">SaaS para Mestres de RPG</div>
+      <h1 class="hero-title">O controle total da sua mesa,<br>sem planilhas e sem confusão.</h1>
+      <p class="hero-subtitle">
+        Wyvern é a plataforma definitiva para organizar suas campanhas, automatizar combates e sincronizar fichas em tempo real. Deixe a matemática com a gente e foque na narrativa.
+      </p>
+      
+      <div class="hero-actions">
+        <button class="btn-primary btn-lg" routerLink="/register">Comece a Usar Grátis</button>
+        <a href="#recursos" class="btn-secondary btn-lg">Descobrir Recursos</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Social Proof / Pain Points -->
+  <section class="pain-points-section">
+    <div class="container text-center">
+      <p class="pain-text">
+        Chega de 10 abas abertas no navegador, papéis perdidos, Notion desorganizado e de calcular dano de cabeça no meio de um combate tenso.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="recursos" class="features-section">
+    <div class="container">
+      <h2 class="section-title">Construído para resolver seus problemas</h2>
+      
+      <div class="feature-row">
+        <div class="feature-text">
+          <h3>Mestre no Controle Absoluto</h3>
+          <p>
+            Um tracker de combate inteligente que organiza a iniciativa automaticamente. 
+            Calcule dano, controle condições e pontos de vida de monstros, NPCs e jogadores em uma única tela limpa e rápida.
+          </p>
+        </div>
+        <div class="feature-graphic glass-panel">
+          <div class="mock-ui">
+            <div class="mock-line"></div>
+            <div class="mock-line short"></div>
+            <div class="mock-line medium"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-row reverse">
+        <div class="feature-text">
+          <h3>Sincronização ao Vivo</h3>
+          <p>
+            Não perca tempo perguntando "quanto de vida você tem?". Seus jogadores acessam as próprias fichas pelo celular, rolam dados, tomam dano, e você vê tudo acontecendo na sua tela instantaneamente.
+          </p>
+        </div>
+        <div class="feature-graphic glass-panel">
+          <div class="mock-ui">
+            <div class="mock-circle"></div>
+            <div class="mock-line short"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-text">
+          <h3>Acesso Universal (Web e App)</h3>
+          <p>
+            Convide seus jogadores com um único link. Eles entram direto pelo navegador ou aplicativo nativo para Android. A interface é responsiva, pensada para não ocupar espaço na mesa física.
+          </p>
+        </div>
+        <div class="feature-graphic glass-panel">
+          <div class="mock-ui">
+            <div class="mock-app"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Bottom -->
+  <section class="cta-bottom">
+    <div class="container text-center">
+      <h2>Pronto para sua próxima sessão?</h2>
+      <p>Junte-se aos mestres que já estão evoluindo a forma de jogar RPG de mesa.</p>
+      <button class="btn-primary btn-lg mt-4" routerLink="/register">Criar minha primeira Campanha</button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="container flex-between">
+      <div class="footer-brand">
+        <img src="assets/images/wyvern-logo.png" alt="Wyvern Logo" class="brand-logo-small" />
+        <span>Wyvern</span>
+      </div>
+      <div class="footer-links">
+        <a href="#">Termos</a>
+        <a href="#">Privacidade</a>
+      </div>
+    </div>
+  </footer>
+</div>

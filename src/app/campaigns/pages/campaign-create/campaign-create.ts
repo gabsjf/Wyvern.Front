@@ -15,6 +15,8 @@ export class CampaignCreate {
   private campaignService = inject(CampaignService);
   private router = inject(Router);
 
+  isSaving = false;
+
   campaign: Campaign = {
     campanhaId: 0,
     nome: '',
@@ -25,11 +27,15 @@ export class CampaignCreate {
   };
 
   save(): void {
+    if (this.isSaving) return;
+    this.isSaving = true;
     this.campaignService.create(this.campaign).subscribe({
       next: () => {
+        this.isSaving = false;
         this.router.navigate(['/campaigns']);
       },
       error: (err) => {
+        this.isSaving = false;
         console.error('Erro ao criar campanha', err);
       }
     });

@@ -1,0 +1,236 @@
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.page-head .eyebrow { letter-spacing: 0.12em; color: var(--hi); &::first-letter { text-transform: uppercase; } }
+
+/* mosaico de 12 colunas: preenche a largura em vez de empilhar caixas iguais no meio */
+.grade {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--spacing-xl) var(--spacing-xl);
+  align-items: start;
+}
+
+.destaque { grid-column: span 8; }
+.livro { grid-column: span 4; }
+.campanhas { grid-column: span 7; }
+.sessoes { grid-column: span 5; }
+.herois { grid-column: 1 / -1; }
+
+.vazio { margin: 0; padding: var(--spacing-lg) 0; color: var(--muted); }
+
+/* ---- destaque ---- */
+.destaque {
+  position: relative;
+  min-height: 21rem;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: clamp(1.5rem, 3vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(ellipse 70% 90% at 100% 0%, rgba(var(--hi-rgb), 0.16), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 0% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%),
+    var(--surface);
+}
+
+.destaque-marca {
+  position: absolute;
+  right: -2rem;
+  top: 50%;
+  transform: translateY(-50%) rotate(8deg);
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.destaque-corpo { position: relative; max-width: 46rem; }
+
+.destaque-nome {
+  margin: 0 0 var(--spacing-sm);
+  font-size: clamp(2.4rem, 5.5vw, 5rem);
+  line-height: 0.95;
+}
+
+.destaque-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin: 0 0 var(--spacing-lg);
+  color: var(--muted);
+
+  strong { color: var(--fg); }
+}
+
+.destaque-acoes { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
+
+/* ---- grimório: livro-caixa com fio pontilhado ---- */
+.livro {
+  ul { list-style: none; }
+
+  a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--line);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover { .liv-num { color: var(--fg); } .liv-nome { color: var(--hi); } }
+  }
+}
+
+.liv-nome {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.liv-pontos {
+  flex: 1;
+  align-self: flex-end;
+  margin-bottom: 0.4rem;
+  border-bottom: 2px dotted var(--line);
+}
+
+.liv-num {
+  font-size: 2.2rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--hi);
+  transition: color 0.15s;
+}
+
+/* ---- campanhas ---- */
+.lista-campanhas {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--spacing-sm);
+}
+
+.camp {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+
+  &:hover { border-color: var(--hi); transform: translateY(-2px); .camp-seta { transform: translateX(4px); color: var(--hi); } }
+}
+
+.camp-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+
+  strong { font-family: var(--font-display); font-size: 1.3rem; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.1; }
+  small { color: var(--muted); }
+}
+
+.camp-seta { color: var(--muted); transition: transform 0.15s, color 0.15s; }
+
+/* ---- sessões: bloco de data + título ---- */
+.lista-sessoes { list-style: none; display: flex; flex-direction: column; gap: var(--spacing-sm); }
+
+.ses {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0.7rem 1rem 0.7rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: var(--hi); }
+}
+
+.ses-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  width: 3.5rem;
+  padding: 0.4rem 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+}
+
+.ses-dia { font-size: 1.6rem; line-height: 1; }
+.ses-mes { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+.ses-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  strong { font-family: var(--font-display); font-size: 1.2rem; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.1; }
+  small { color: var(--muted); }
+}
+
+/* ---- heróis ---- */
+.lista-herois {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--spacing-md);
+}
+
+.heroi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: var(--spacing-lg) var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(var(--surface), var(--bg));
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+
+  strong { font-family: var(--font-display); font-size: 1.25rem; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.1; margin-top: 0.4rem; }
+  small { color: var(--muted); }
+
+  &:hover { border-color: var(--hi); transform: translateY(-3px); }
+}
+
+/* ---- telas médias e celular ---- */
+@media (max-width: 1280px) {
+  .destaque { grid-column: 1 / -1; }
+  .livro { grid-column: span 5; }
+  .campanhas { grid-column: span 7; }
+  .sessoes { grid-column: 1 / -1; }
+
+  // com o destaque em linha cheia, o grimório sobe ao lado das campanhas
+  .livro { order: 2; }
+  .campanhas { order: 3; }
+}
+
+@media (max-width: 900px) {
+  .grade { gap: var(--spacing-lg); }
+  .destaque,
+  .livro,
+  .campanhas,
+  .sessoes { grid-column: 1 / -1; }
+  .destaque { min-height: 17rem; }
+  .destaque-marca { opacity: 0.1; right: -4rem; }
+}

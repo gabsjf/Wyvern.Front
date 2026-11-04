@@ -1,77 +1,95 @@
-<div class="header-glass-panel glass-panel">
-  <div class="stat-box">
-    <span class="stat-label">Classe de Armadura</span>
-    <div class="shield-shape">
-       <span class="stat-value">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+<section class="ficha-header panel" aria-label="Resumo do personagem">
+  <!-- Linha 1: números que mais se consulta na mesa -->
+  <div class="stat-strip">
+    <div class="stat">
+      <span class="stat-label">CA</span>
+      <span class="stat-value num">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+      <span class="stat-caption">Classe de armadura</span>
+    </div>
+    <button type="button" class="stat stat-roll" (click)="rolarIniciativa()" aria-label="Rolar iniciativa" title="Rolar iniciativa">
+      <span class="stat-label">Inic.</span>
+      <span class="stat-value num">{{ getIniciativaStr() }}</span>
+      <span class="stat-caption">Rolar iniciativa</span>
+    </button>
+    <div class="stat">
+      <span class="stat-label">Desl.</span>
+      <span class="stat-value num">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
+      <span class="stat-caption">Deslocamento</span>
+    </div>
+    <div class="stat stat-hi">
+      <span class="stat-label">Prof.</span>
+      <span class="stat-value num">{{ getProficienciaStr() }}</span>
+      <span class="stat-caption">Proficiência</span>
     </div>
   </div>
-  
-  <div class="stat-box">
-    <span class="stat-label">Iniciativa</span>
-    <div class="box-shape">
-       <span class="stat-value">{{ getIniciativaStr() }}</span>
-    </div>
-  </div>
-  
-  <div class="stat-box">
-    <span class="stat-label">Deslocamento</span>
-    <div class="box-shape">
-       <span class="stat-value">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
-    </div>
-  </div>
-  
-  <div style="display: flex; gap: var(--spacing-md); flex: 1; justify-content: center;">
-    <!-- Dados de Vida -->
-    <div class="stat-box hp-box" style="flex: 1; max-width: 200px;">
-      <div class="hp-header">
-        <span class="stat-label">Dados de Vida</span>
-        <span class="hp-max">Max: {{ personagem?.personagemCombate?.dadoVidaMaximo || 0 }}</span>
+
+  <!-- Linha 2: vida e salvaguarda de morte -->
+  <div class="vital">
+    <div class="vital-card hp" [class.low]="vidaBaixa">
+      <div class="vital-head">
+        <span class="stat-label">Pontos de vida</span>
+        <span class="hp-max num">máx. {{ vidaMaxima }}</span>
       </div>
-      <div class="hp-content" style="display: flex; justify-content: center; align-items: baseline; gap: 5px;">
-        <span class="hp-current">{{ personagem?.personagemCombate?.dadoVidaMaximo || 'Nenhum' }}</span>
+      <div class="hp-linha">
+        <div class="hp-now num" aria-live="polite">{{ vidaAtual }}</div>
+        @if (vidaTemporaria > 0) { <span class="hp-temp num" title="Pontos de vida temporários">+{{ vidaTemporaria }} temp.</span> }
       </div>
+      <div class="bar" role="img" [attr.aria-label]="'Vida em ' + vidaPct + '%'">
+        <i [style.width.%]="vidaPct"></i>
+      </div>
+
+      @if (combate) {
+        <div class="hp-controles">
+          <label class="visually-hidden" for="hp-qtd">Quantidade de dano ou cura</label>
+          <input id="hp-qtd" type="number" min="1" class="form-control num hp-qtd" placeholder="Qtd" [value]="quantidade ?? ''"
+                 (input)="quantidade = $any($event.target).value === '' ? null : +$any($event.target).value"
+                 (keyup.enter)="aplicarDano()" />
+          <button type="button" class="btn-danger" (click)="aplicarDano()" [disabled]="!quantidade">Dano</button>
+          <button type="button" class="btn-secondary hp-cura" (click)="aplicarCura()" [disabled]="!quantidade">Cura</button>
+          <span class="hp-temp-ctl" role="group" aria-label="PV temporários">
+            <button type="button" (click)="ajustarTemporarios(-1)" [disabled]="vidaTemporaria <= 0" aria-label="Um PV temporário a menos">−</button>
+            <span class="num">T {{ vidaTemporaria }}</span>
+            <button type="button" (click)="ajustarTemporarios(1)" aria-label="Um PV temporário a mais">+</button>
+          </span>
+        </div>
+      }
     </div>
 
-    <!-- Testes de Morte -->
-    <div class="stat-box hp-box" style="flex: 1; max-width: 250px; padding-top: 10px;">
-      <div class="hp-header" style="justify-content: center; margin-bottom: 5px;">
-        <span class="stat-label">Salvaguarda de Morte</span>
+    <div class="vital-card">
+      <div class="vital-head">
+        <span class="stat-label">Dados de vida</span>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">SUCESSOS</span>
-          <div style="display: flex; gap: 5px;">
-             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 1"></div>
-             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 2"></div>
-             <div class="ds-circle" [class.filled]="(personagem?.personagemCombate?.deathSaveSucessos || 0) >= 3"></div>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 0.75rem; color: var(--text-secondary); width: 60px; text-align: right; font-weight: bold;">FALHAS</span>
-          <div style="display: flex; gap: 5px;">
-             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 1"></div>
-             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 2"></div>
-             <div class="ds-circle danger" [class.filled]="(personagem?.personagemCombate?.deathSaveFalhas || 0) >= 3"></div>
-          </div>
-        </div>
+      <div class="hd-now num">{{ dadoVida }}</div>
+      @if (combate) {
+        <button type="button" class="inspiracao" [class.on]="inspiracao" [attr.aria-pressed]="inspiracao" (click)="alternarInspiracao()">
+          <i class="bi" [class.bi-star-fill]="inspiracao" [class.bi-star]="!inspiracao" aria-hidden="true"></i>
+          Inspiração heroica
+        </button>
+      }
+    </div>
+
+    <div class="vital-card saves">
+      <div class="vital-head">
+        <span class="stat-label">Salvaguarda de morte</span>
+      </div>
+      <div class="save-row">
+        <span class="save-lbl">Sucessos</span>
+        <span class="dots" role="group" aria-label="Sucessos nas salvaguardas de morte">
+          @for (n of [1, 2, 3]; track n) {
+            <button type="button" [class.on]="sucessosMorte >= n" [attr.aria-pressed]="sucessosMorte >= n"
+                    [attr.aria-label]="'Sucesso ' + n" [disabled]="!combate" (click)="marcarSalvaguarda('sucesso', n)"></button>
+          }
+        </span>
+      </div>
+      <div class="save-row">
+        <span class="save-lbl">Falhas</span>
+        <span class="dots fail" role="group" aria-label="Falhas nas salvaguardas de morte">
+          @for (n of [1, 2, 3]; track n) {
+            <button type="button" [class.on]="falhasMorte >= n" [attr.aria-pressed]="falhasMorte >= n"
+                    [attr.aria-label]="'Falha ' + n" [disabled]="!combate" (click)="marcarSalvaguarda('falha', n)"></button>
+          }
+        </span>
       </div>
     </div>
   </div>
-  
-  <div class="stat-box hp-box">
-    <div class="hp-header">
-      <span class="stat-label">Pontos de Vida</span>
-      <span class="hp-max">Max: {{ personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
-    </div>
-    <div class="hp-content">
-      <span class="hp-current">{{ personagem?.personagemCombate?.vidaAtual || personagem?.personagemCombate?.vidaMaxima || 0 }}</span>
-    </div>
-  </div>
-  
-  <div class="stat-box">
-    <span class="stat-label">Bônus de Proficiência</span>
-    <div class="box-shape proficiency">
-       <span class="stat-value">{{ getProficienciaStr() }}</span>
-    </div>
-  </div>
-</div>
+</section>

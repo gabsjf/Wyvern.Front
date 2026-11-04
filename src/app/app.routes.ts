@@ -15,15 +15,17 @@ import { Login } from './core/pages/login/login';
 import { Register } from './core/pages/register/register';
 
 export const routes: Routes = [
-    {path: '', redirectTo: '/campaigns', pathMatch: 'full'},
+    {path: '', loadComponent: () => import('./core/pages/landing/landing').then(m => m.LandingComponent)},
     {path: 'login', component: Login},
     {path: 'register', component: Register},
     {
       path: '',
       canActivate: [authGuard],
       children: [
+        {path: 'dashboard', loadComponent: () => import('./core/pages/dashboard/dashboard').then(m => m.DashboardComponent)},
         {path: 'campaigns', component: CampaignList},
     {path: 'campaigns/create', component: CampaignCreate},
+    {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},
     {path: 'campaigns/:id', component: CampaignDetail},
     {path: 'personagens', component: PersonagemList},
     {path: 'personagens/create', component: PersonagemCreate},
@@ -36,7 +38,8 @@ export const routes: Routes = [
     {path: 'sessoes/:id/edit', component: SessaoCreate},
     {path: 'sessoes/:id', component: SessaoDetail},
     {path: 'combate', loadComponent: () => import('./sessoes/pages/combate-tracker/combate-tracker').then(m => m.CombateTracker)},
-        {path: 'play/:id', component: PlaySession}
+        {path: 'play/:id', component: PlaySession},
+        {path: 'invite/:token', loadComponent: () => import('./campaigns/pages/invite/invite').then(m => m.InviteComponent)}
       ]
     }
 ];

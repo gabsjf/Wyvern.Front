@@ -1,62 +1,165 @@
 <div class="container animate-fade-in">
   @if (isLoading) {
-    <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-secondary);">
-      Carregando os pergaminhos da campanha...
-    </div>
+    <p class="estado" role="status">Carregando a campanha...</p>
   } @else if (campaign) {
-    <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
-      <button class="btn-secondary" routerLink="/campaigns">← Voltar</button>
-      <button class="btn-primary" style="background: rgba(220, 53, 69, 0.2); border-color: rgba(220, 53, 69, 0.4); color: #ff6b6b;" (click)="deleteCampaign()">Deletar Campanha</button>
-    </div>
+    <a class="voltar" routerLink="/campaigns">← Campanhas</a>
 
-    <div class="glass-panel" style="padding: var(--spacing-xl);">
-      <h1 class="title-glow text-accent" style="font-size: 2.5rem; margin-bottom: var(--spacing-sm);">
-        {{ campaign.nome }}
-      </h1>
-      
-      <div style="display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-lg); flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 250px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Sistema</h3>
-          <p style="font-size: 1.2rem; font-weight: 500;">{{ campaign.sistema || 'Não especificado' }}</p>
+    <!-- Faixa de abertura -->
+    <header class="abertura" [style.background]="capa">
+      <div class="abertura-marca" aria-hidden="true"><app-emblema [nome]="campaign.nome" [tamanho]="220" /></div>
+      <div class="abertura-corpo">
+        <p class="eyebrow">Campanha · {{ campaign.sistema || 'Sistema não definido' }}</p>
+        <h1>{{ campaign.nome }}</h1>
+        <p class="sub">
+          Criada por {{ campaign.mestreNome || '—' }}
+          <span class="chip" [class.chip-hi]="ehMestre">Você é {{ campaign.papel || 'Jogador' }}</span>
+          <span class="chip" [class.chip-ok]="campaign.ativo">{{ campaign.ativo ? 'Em andamento' : 'Encerrada' }}</span>
+        </p>
+      </div>
+
+      <div class="acoes">
+        <a class="btn-primary" [routerLink]="['/campaigns', campaign.campanhaId, 'timeline']">Abrir a crônica</a>
+        @if (ehMestre) {
+          <button type="button" class="btn-secondary" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
+          <button type="button" class="btn-danger" (click)="deleteCampaign()">Excluir</button>
+        } @else {
+          <button type="button" class="btn-secondary" [disabled]="membrosBusy" (click)="sair()">Sair da campanha</button>
+        }
+      </div>
+
+      <dl class="numeros">
+        <div><dt>Sessões</dt><dd class="num">{{ sessoes.length }}</dd></div>
+        <div><dt>Heróis</dt><dd class="num">{{ herois.length }}</dd></div>
+        <div><dt>Membros</dt><dd class="num">{{ membros.length }}</dd></div>
+      </dl>
+    </header>
+
+    @if (inviteUrl) {
+      <section class="panel convite" aria-labelledby="tit-convite">
+        <div class="panel-head">
+          <h2 id="tit-convite">Link de convite</h2>
         </div>
-        
-        <div style="flex: 1; min-width: 250px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Mestre (ID)</h3>
-          <p style="font-size: 1.2rem; font-weight: 500;">{{ campaign.mestreId }}</p>
-        </div>
-        
-        <div style="flex: 1; min-width: 250px;">
-          <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Status</h3>
-          <p style="font-size: 1.2rem; font-weight: 500; color: var(--accent-color);">
-            {{ campaign.ativo ? 'Em Andamento' : 'Concluída / Inativa' }}
+        <div class="convite-corpo">
+          <p class="convite-ajuda">
+            O mesmo link serve para todos os jogadores.
+            @if (inviteExpiraEm) {
+              Vale até <strong class="num">{{ inviteExpiraEm | date:'dd/MM/yyyy HH:mm' }}</strong>.
+            }
           </p>
+          <p class="convite-link num" tabindex="0">{{ inviteUrl }}</p>
+          <div class="convite-acoes">
+            <button type="button" class="btn-primary" (click)="copyInvite()">Copiar link</button>
+            <button type="button" class="btn-secondary" [disabled]="inviteBusy" (click)="renewInvite()">Gerar novo link</button>
+            <button type="button" class="btn-secondary" [disabled]="inviteBusy" (click)="revokeInvite()">Desativar link</button>
+          </div>
         </div>
+      </section>
+    }
+
+    @if (inviteMessage) {
+      <p class="mensagem" role="status">{{ inviteMessage }}</p>
+    }
+
+    <div class="hub">
+      <!-- Coluna principal -->
+      <div class="hub-principal">
+        <section aria-labelledby="tit-sessoes">
+          <h2 class="rotulo-secao" id="tit-sessoes">Sessões
+            @if (ehMestre) { <a class="rotulo-extra" routerLink="/sessoes/create">+ Nova sessão</a> }
+          </h2>
+          @if (sessoes.length > 0) {
+            <ol class="sessoes">
+              @for (s of sessoes; track s.sessaoId) {
+                <li>
+                  <a class="sessao" [routerLink]="['/sessoes', s.sessaoId]">
+                    <span class="sessao-n num">{{ s.numeroSessao }}</span>
+                    <span class="sessao-info">
+                      <strong>{{ s.nome }}</strong>
+                      <small class="num">{{ s.dataSessao | date:'dd/MM/yyyy' }}</small>
+                    </span>
+                  </a>
+                  <a class="btn-primary btn-sm" [routerLink]="['/play', s.sessaoId]">Jogar</a>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="vazio">Nenhuma sessão registrada ainda.</p>
+          }
+        </section>
+
+        <section aria-labelledby="tit-herois">
+          <h2 class="rotulo-secao" id="tit-herois">Heróis <a class="rotulo-extra" routerLink="/personagens/create">+ Novo personagem</a></h2>
+          @if (herois.length > 0) {
+            <ul class="herois">
+              @for (h of herois; track h.personagemId) {
+                <li>
+                  <a class="heroi" [routerLink]="['/ficha', h.personagemId]">
+                    <app-emblema [nome]="h.nome" [tamanho]="60" />
+                    <strong>{{ h.nome }}</strong>
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="vazio">Nenhum herói nesta campanha ainda.</p>
+          }
+        </section>
       </div>
-      
-      <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid rgba(255,255,255,0.05);">
-        <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Membros & Aventureiros</h3>
-        <p style="color: var(--text-muted); font-style: italic;">(Em breve... os personagens vinculados a esta campanha aparecerão aqui.)</p>
-      </div>
+
+      <!-- Coluna lateral -->
+      <aside class="hub-lateral">
+        <a class="cronica" [routerLink]="['/campaigns', campaign.campanhaId, 'timeline']">
+          <span class="cronica-fio" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          <strong>A crônica</strong>
+          <small>Viaje pela história da campanha, evento a evento.</small>
+          <span class="cronica-abrir">Abrir <span aria-hidden="true">→</span></span>
+        </a>
+
+        <section aria-labelledby="tit-membros">
+          <h2 class="rotulo-secao" id="tit-membros">Membros <span class="rotulo-extra num">{{ membros.length }}</span></h2>
+
+          @if (membrosMessage) {
+            <p class="mensagem" role="status">{{ membrosMessage }}</p>
+          }
+
+          @if (membros.length === 0) {
+            <p class="estado">Carregando membros...</p>
+          } @else {
+            <ul class="membros">
+              @for (m of membros; track m.usuarioId) {
+                <li class="membro">
+                  <div class="membro-info">
+                    <app-emblema [nome]="m.nome" [tamanho]="36" forma="redondo" />
+                    <strong>{{ m.nome }}</strong>
+                    @if (m.ehVoce) { <span class="text-muted">(você)</span> }
+                    <span class="chip" [class.chip-hi]="m.papel === 'Mestre'">{{ m.papel }}</span>
+                    @if (m.ehCriador) { <span class="chip">Criador</span> }
+                  </div>
+
+                  @if (ehMestre) {
+                    <div class="membro-acoes">
+                      @if (m.papel === 'Jogador') {
+                        <button type="button" class="btn-secondary btn-sm" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Mestre')">Promover a Mestre</button>
+                      } @else {
+                        <button type="button" class="btn-secondary btn-sm" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Jogador')">Rebaixar a Jogador</button>
+                      }
+                      @if (!m.ehVoce) {
+                        <button type="button" class="btn-danger btn-sm" [disabled]="membrosBusy" (click)="remover(m)">Remover</button>
+                      }
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </aside>
     </div>
   } @else {
-    <div style="text-align: center; padding: var(--spacing-xl);">
-      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Campanha não encontrada.</h2>
-      <button class="btn-primary" routerLink="/campaigns">Voltar para Campanhas</button>
+    <div class="estado nao-encontrada">
+      <h2>Campanha não encontrada</h2>
+      <p>Ela pode ter sido excluída, ou você não participa mais dela.</p>
+      <a class="btn-primary" routerLink="/campaigns">Voltar às campanhas</a>
     </div>
   }
 </div>
-
-@if (showDeleteModal) {
-  <div class="modal-overlay">
-    <div class="modal-content glass-panel animate-fade-in">
-      <h2 style="color: #ff6b6b; margin-bottom: var(--spacing-md);">Confirmar Exclusão</h2>
-      <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
-        Tem certeza que deseja apagar a campanha <strong>{{ campaign?.nome }}</strong>? Esta ação destruirá o mundo criado e não pode ser desfeita.
-      </p>
-      <div class="flex-between" style="justify-content: flex-end; gap: 1rem;">
-        <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
-        <button class="btn-primary" style="background: rgba(220, 53, 69, 0.8);" (click)="confirmDelete()">Destruir Mundo</button>
-      </div>
-    </div>
-  </div>
-}

@@ -1,10 +1,24 @@
 .app-container {
   display: flex;
   min-height: 100vh;
-  padding: 0 1rem;
 }
+
 .main-content {
   flex: 1;
-  padding: 1rem;
-  width: 0; /* allows flex children to shrink */
+  min-width: 0;
+}
+
+.main-content:focus {
+  outline: none;
+}
+
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  /* espaço para a barra inferior (60px) e a área segura do aparelho */
+  .app-container:not(.no-sidebar) .main-content {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
 }

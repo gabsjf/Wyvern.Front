@@ -1,27 +1,47 @@
 <div class="container animate-fade-in">
-  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+  <header class="page-head">
     <div>
-      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Campanhas</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Gerencie suas aventuras e mundos.</p>
+      <p class="eyebrow">Sua estante</p>
+      <h1>Campanhas</h1>
+      <p class="sub">{{ campaigns.length }} {{ campaigns.length === 1 ? 'aventura' : 'aventuras' }} em andamento ou guardadas.</p>
     </div>
-    <button class="btn-primary" routerLink="/campaigns/create">+ Nova Campanha</button>
-  </div>
+    <a class="btn-primary" routerLink="/campaigns/create">+ Nova campanha</a>
+  </header>
 
-  <div class="grid-cards">
+  <ul class="estante">
     @for (campaign of campaigns; track campaign.campanhaId) {
-      <div class="glass-panel" style="padding: var(--spacing-lg); display: flex; flex-direction: column;">
-        <h2 style="margin-bottom: var(--spacing-sm);">{{ campaign.nome }}</h2>
-        <span style="color: var(--primary-color); font-weight: 500; font-size: 0.9rem; margin-bottom: var(--spacing-md);">{{ campaign.sistema }}</span>
-        
-        <div style="margin-top: auto; padding-top: var(--spacing-md); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-          <button class="btn-secondary" [routerLink]="['/campaigns', campaign.campanhaId]">Acessar</button>
-        </div>
-      </div>
-    } @empty {
-      <div class="glass-panel" style="padding: var(--spacing-xl); grid-column: 1 / -1; text-align: center;">
-        <h3 style="color: var(--text-secondary);">Nenhuma campanha encontrada.</h3>
-        <p style="margin-bottom: var(--spacing-md); color: var(--text-secondary);">Comece uma nova aventura criando a primeira campanha!</p>
-      </div>
+      <li>
+        <a class="tomo" [routerLink]="['/campaigns', campaign.campanhaId]">
+          <div class="capa" [style.background]="capa(campaign)">
+            <div class="capa-marca" aria-hidden="true"><app-emblema [nome]="campaign.nome" [tamanho]="150" /></div>
+            <div class="capa-topo">
+              @if (campaign.papel) { <span class="chip" [class.chip-hi]="campaign.papel === 'Mestre'">{{ campaign.papel }}</span> }
+              @if (campaign.ativo !== undefined) { <span class="chip" [class.chip-ok]="campaign.ativo">{{ campaign.ativo ? 'Em andamento' : 'Encerrada' }}</span> }
+            </div>
+            <p class="capa-sistema">{{ campaign.sistema || 'Sistema livre' }}</p>
+          </div>
+
+          <div class="tomo-corpo">
+            <h2>{{ campaign.nome }}</h2>
+            @if (campaign.mestreNome) { <p class="tomo-mestre">Mestre: {{ campaign.mestreNome }}</p> }
+
+            <dl class="tomo-numeros">
+              <div><dt>Sessões</dt><dd class="num">{{ sessoes(campaign) }}</dd></div>
+              <div><dt>Heróis</dt><dd class="num">{{ herois(campaign) }}</dd></div>
+            </dl>
+
+            <span class="tomo-abrir">Abrir campanha <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+      </li>
     }
-  </div>
+
+    <li>
+      <a class="tomo tomo-novo" routerLink="/campaigns/create">
+        <span class="novo-mais" aria-hidden="true">+</span>
+        <strong>{{ campaigns.length === 0 && !carregando ? 'Comece sua primeira campanha' : 'Nova campanha' }}</strong>
+        <small>Crie o mundo, convide os jogadores e registre a história.</small>
+      </a>
+    </li>
+  </ul>
 </div>

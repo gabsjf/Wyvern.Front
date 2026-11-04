@@ -1,4 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+/** Um teste que o usuário pediu para rolar: "Furtividade", bônus +5. */
+export interface PedidoDeTeste {
+  rotulo: string;
+  bonus: number;
+}
+
+const NOMES: Record<string, string> = {
+  forca: 'Força', destreza: 'Destreza', constituicao: 'Constituição', inteligencia: 'Inteligência', sabedoria: 'Sabedoria', carisma: 'Carisma',
+};
 
 @Component({
   selector: 'app-ficha-atributos',
@@ -8,6 +18,23 @@ import { Component, Input } from '@angular/core';
 })
 export class FichaAtributos {
   @Input() personagem: any;
+  /** Clicar numa perícia, salvaguarda ou modificador pede a rolagem de um d20 com o bônus dela. */
+  @Output() rolar = new EventEmitter<PedidoDeTeste>();
+
+  rolarAtributo(atributo: string) {
+    this.rolar.emit({ rotulo: `Teste de ${NOMES[atributo]}`, bonus: this.getModValue(this.personagem?.atributo?.[atributo]) });
+  }
+
+  rolarSalvaguarda(atributo: string) {
+    const score = this.personagem?.atributo?.[atributo];
+    const bonus = this.getModValue(score) + (this.isSaveProficient(atributo) ? this.getProficienciaBonus() : 0);
+    this.rolar.emit({ rotulo: `Salvaguarda de ${NOMES[atributo]}`, bonus });
+  }
+
+  rolarPericia(nome: string, score: number | undefined) {
+    const bonus = this.getModValue(score) + (this.isProficient(nome) ? this.getProficienciaBonus() : 0);
+    this.rolar.emit({ rotulo: nome, bonus });
+  }
 
   getModValue(score: number | undefined): number {
     if (score === undefined || score === null) return 0;

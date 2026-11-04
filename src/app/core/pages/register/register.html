@@ -59,7 +59,7 @@
     </form>
 
     <div class="auth-footer">
-      <p>Já tem uma conta? <a routerLink="/login" class="text-accent">Faça Login</a></p>
+      <p>Já tem uma conta? <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }" class="text-accent">Faça login aqui</a></p>
     </div>
   </div>
 </div>

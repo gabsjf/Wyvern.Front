@@ -1,34 +1,48 @@
 <div class="ficha-container animate-fade-in">
   <aside class="ficha-sidebar glass-panel">
     <div class="character-portrait-section">
-      <div class="portrait-img-placeholder title-glow">
-        <i class="icon-user"></i>
-      </div>
+
       <h2 class="text-accent character-name">{{ personagem?.nome || 'Carregando...' }}</h2>
       <p class="text-secondary character-class">{{ personagem?.personagemPlayer?.classe || 'Sem Classe' }} Nv. {{ personagem?.personagemPlayer?.nivel || 1 }}</p>
     </div>
     
-    <nav class="ficha-nav">
-      <button class="nav-btn" [class.active]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos e Perícias</button>
-      <button class="nav-btn" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
-      <button class="nav-btn" [class.active]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
-      <button class="nav-btn" [class.active]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
-      <button class="nav-btn" [class.active]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
+    <nav class="ficha-nav" role="tablist" aria-label="Seções da ficha">
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'atributos'" [attr.aria-selected]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'magias'" [attr.aria-selected]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'inventario'" [attr.aria-selected]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
+      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'caracteristicas'" [attr.aria-selected]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
     </nav>
-    
-    <div class="sidebar-actions">
-       <button class="btn-primary w-100" (click)="importPdf()">Importar PDF 5.5</button>
-       <button class="btn-secondary w-100 mt-2" (click)="exportPdf()">Exportar PDF</button>
+
+    <!-- Descansos: valem para o dono da ficha e para o Mestre (o servidor confere) -->
+    <div class="descansos" role="group" aria-label="Descansos">
+      <p class="descansos-rotulo">Descansar</p>
+      <button type="button" class="btn-primary w-100" [disabled]="!personagem?.personagemCombate" (click)="abrirDescanso('curto')">
+        <i class="bi bi-cup-hot" aria-hidden="true"></i> Descanso curto
+      </button>
+      <button type="button" class="btn-secondary w-100" [disabled]="!personagem?.personagemCombate" (click)="abrirDescanso('longo')">
+        <i class="bi bi-moon-stars" aria-hidden="true"></i> Descanso longo
+      </button>
+      @if (personagem && !personagem.personagemCombate) {
+        <p class="descansos-aviso">Defina os pontos de vida do personagem para poder descansar.</p>
+      }
     </div>
+
+    <div class="sidebar-actions">
+      <button type="button" class="btn-secondary w-100" (click)="importPdf()">Importar PDF 5.5</button>
+      <button type="button" class="btn-secondary w-100" (click)="exportPdf()">Exportar PDF</button>
+    </div>
+    
+
   </aside>
 
   <main class="ficha-content">
-    <app-ficha-header [personagem]="personagem"></app-ficha-header>
+    <app-ficha-header [personagem]="personagem" (rolar)="rolarTeste($event)" (recarregar)="recarregar()"></app-ficha-header>
     
     <div class="ficha-main-area">
       <!-- ABA: ATRIBUTOS E PERÍCIAS -->
       <ng-container *ngIf="activeTab === 'atributos'">
-        <app-ficha-atributos [personagem]="personagem"></app-ficha-atributos>
+        <app-ficha-atributos [personagem]="personagem" (rolar)="rolarTeste($event)"></app-ficha-atributos>
         
         <div class="secondary-info-grid">
           <div class="info-card glass-panel">
@@ -40,9 +54,16 @@
           <div class="info-card glass-panel">
             <h3 class="text-accent title-glow">Defesas e Condições</h3>
             <div class="info-text">
-               <strong>Resistências:</strong> Nenhuma<br><br>
-               <strong>Condições Ativas:</strong> Nenhuma
+               <strong>Resistências:</strong> Nenhuma
             </div>
+            @if (personagem?.personagemCombate) {
+              <p class="condicoes-rotulo">Condições ativas</p>
+              <div class="condicoes" role="group" aria-label="Condições ativas">
+                @for (c of condicoesPadrao; track c) {
+                  <button type="button" class="condicao" [class.on]="condicaoAtiva(c)" [attr.aria-pressed]="condicaoAtiva(c)" (click)="alternarCondicao(c)">{{ c }}</button>
+                }
+              </div>
+            }
           </div>
           
           <div class="info-card glass-panel">
@@ -59,11 +80,11 @@
       <!-- ABA: COMBATE -->
       <ng-container *ngIf="activeTab === 'combate'">
         <div class="weapons-panel glass-panel">
-          <div class="flex-between" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; padding-bottom: 10px;">
-            <h3 class="panel-title text-accent title-glow" style="border: none; margin: 0; padding: 0;">Ataques e Armas</h3>
-            <button class="btn-primary" (click)="showAtaqueModal = true">+ Adicionar</button>
+          <div class="panel-head" style="padding-left: 0; padding-right: 0; margin-bottom: var(--spacing-md);">
+            <h3 class="panel-title" style="margin: 0;">Ataques e armas</h3>
+            <button type="button" class="btn-primary" (click)="showAtaqueModal = true">+ Adicionar</button>
           </div>
-          <table class="premium-table">
+          <table class="premium-table table-stack">
             <thead>
               <tr>
                 <th>Ataque</th>
@@ -71,20 +92,24 @@
                 <th>Acerto</th>
                 <th>Dano / Tipo</th>
                 <th>Propriedades</th>
-                <th></th>
+                <th><span class="visually-hidden">Ações</span></th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let ataque of personagem?.personagemAtaques">
-                <td><strong>{{ ataque.nome }}</strong></td>
-                <td>{{ ataque.alcance || '--' }}</td>
-                <td><span class="badge-acerto">{{ getBonusAtaque(ataque) }}</span></td>
-                <td>{{ getDanoAtaque(ataque) }} {{ ataque.tipoDano }}</td>
-                <td class="text-secondary">{{ ataque.propriedades || '--' }}</td>
-                <td><button class="btn-icon-danger" (click)="removerAtaque(ataque.personagemAtaqueId)" title="Remover">&times;</button></td>
+                <td data-label="Ataque"><strong>{{ ataque.nome }}</strong></td>
+                <td data-label="Alcance">{{ ataque.alcance || '--' }}</td>
+                <td data-label="Acerto"><span class="badge-acerto">{{ getBonusAtaque(ataque) }}</span></td>
+                <td data-label="Dano">{{ getDanoAtaque(ataque) }} {{ ataque.tipoDano }}</td>
+                <td data-label="Propriedades" class="text-secondary">{{ ataque.propriedades || '--' }}</td>
+                <td class="rolar-celula">
+                  <button type="button" class="btn-primary btn-sm" (click)="rolarAtaque(ataque)" [attr.aria-label]="'Rolar ataque ' + ataque.nome">Atacar</button>
+                  <button type="button" class="btn-secondary btn-sm" (click)="rolarDano(ataque)" [attr.aria-label]="'Rolar dano de ' + ataque.nome">Dano</button>
+                  <button type="button" class="btn-icon-danger" (click)="removerAtaque(ataque.personagemAtaqueId)" [attr.aria-label]="'Remover ' + ataque.nome" title="Remover">&times;</button>
+                </td>
               </tr>
               <tr *ngIf="!personagem?.personagemAtaques || personagem.personagemAtaques.length === 0">
-                <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum ataque cadastrado.</td>
+                <td colspan="6" style="text-align: center; color: var(--muted); padding: 20px;">Nenhum ataque cadastrado. Use “Adicionar” para criar o primeiro.</td>
               </tr>
             </tbody>
           </table>
@@ -110,12 +135,19 @@
               </div>
             </div>
 
-            <!-- Spell Slots -->
-            <div style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+            <!-- Espaços de magia: clique numa marca cheia para gastar, numa vazia para recuperar -->
+            <div class="espacos" role="group" aria-label="Espaços de magia">
               <ng-container *ngFor="let nivel of [1,2,3,4,5,6,7,8,9]">
-                <div class="slot-box" *ngIf="personagem.personagemConjuracao['slotsNivel' + nivel + 'Max'] > 0" style="background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center;">
-                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Círculo {{ nivel }}</div>
-                  <div style="font-size: 1.2rem; font-weight: 600;">{{ getSlotAtual(nivel) }} / {{ personagem.personagemConjuracao['slotsNivel' + nivel + 'Max'] }}</div>
+                <div class="espaco-circulo" *ngIf="espacosMaximos(nivel) > 0">
+                  <span class="espaco-nome">Círculo {{ nivel }}</span>
+                  <span class="espaco-marcas">
+                    @for (i of marcas(espacosMaximos(nivel)); track i) {
+                      <button type="button" class="marca" [class.cheia]="i < espacosAtuais(nivel)" (click)="alternarEspaco(nivel, i)"
+                              [attr.aria-pressed]="i < espacosAtuais(nivel)"
+                              [attr.aria-label]="'Círculo ' + nivel + ', espaço ' + (i + 1) + (i < espacosAtuais(nivel) ? ', disponível' : ', gasto')"></button>
+                    }
+                  </span>
+                  <span class="espaco-conta num">{{ espacosAtuais(nivel) }} / {{ espacosMaximos(nivel) }}</span>
                 </div>
               </ng-container>
             </div>
@@ -359,3 +391,13 @@
     </div>
   </div>
 </div>
+
+<!-- Descanso curto / longo -->
+@if (descansoAberto) {
+  <app-descanso-dialog [personagem]="personagem" [tipo]="descansoAberto" (fechar)="fecharDescanso()" (concluido)="aoConcluirDescanso($event)"></app-descanso-dialog>
+}
+
+<!-- Mesa ao vivo: o que a campanha está rolando -->
+@if (personagem?.campanhaId) {
+  <app-mesa-ao-vivo [campanhaId]="personagem.campanhaId"></app-mesa-ao-vivo>
+}

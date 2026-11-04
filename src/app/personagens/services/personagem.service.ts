@@ -2,6 +2,20 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
 import { Personagem } from '../models/personagem';
+import { ResultadoDescanso } from '../utils/regras-descanso';
+
+/** Mudança parcial no estado de jogo da ficha: só o que vier preenchido é alterado. */
+export interface EstadoParcial {
+  vidaAtual?: number;
+  vidaTemporaria?: number;
+  inspiracaoHeroica?: boolean;
+  deathSaveSucessos?: number;
+  deathSaveFalhas?: number;
+  /** Condições ativas, separadas por vírgula. */
+  condicoes?: string;
+  /** Espaços de magia não gastos, do 1º ao 9º nível. */
+  espacosAtuais?: number[];
+}
 
 @Injectable({
   providedIn: 'root',
@@ -51,6 +65,21 @@ export class PersonagemService {
 
   removeAtaque(personagemId: number, ataqueId: number) {
     return this.http.delete(`${this.apiUrl}/${personagemId}/ataques/${ataqueId}`);
+  }
+
+  /** Copia a ficha inteira (na mesma campanha ou em outra onde o usuário é Mestre). */
+  duplicar(id: number, opcoes: { campanhaId?: number; nome?: string } = {}) {
+    return this.http.post<Personagem>(`${this.apiUrl}/${id}/duplicar`, opcoes);
+  }
+
+  /** Muda só o estado de jogo (PV, condições, espaços de magia...), sem reenviar a ficha inteira. */
+  atualizarEstado(id: number, estado: EstadoParcial) {
+    return this.http.put<Personagem>(`${this.apiUrl}/${id}/estado`, estado);
+  }
+
+  /** Registra o resultado de um descanso curto ou longo (já calculado; o servidor só confere os limites). */
+  registrarDescanso(id: number, resultado: ResultadoDescanso) {
+    return this.http.post<Personagem>(`${this.apiUrl}/${id}/descanso`, resultado);
   }
 
   importPdf(file: File, campanhaId: number) {

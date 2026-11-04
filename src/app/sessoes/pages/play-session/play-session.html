@@ -1,21 +1,39 @@
-<div class="play-session-container animate-fade-in" *ngIf="sessao">
-  <div class="glass-panel header-panel">
-    <div>
-      <h2 class="title-glow text-accent">Modo Jogar: {{ sessao.nome }}</h2>
-      <p class="subtitle text-secondary">Sessão {{ sessao.numeroSessao }} | Campanha: {{ sessao.campanhaId }}</p>
-    </div>
-    <div class="tabs-container">
-      <button class="btn-tab" [class.active]="activeTab === 'combate'" (click)="setTab('combate')">Tracker de Combate</button>
-      <button class="btn-tab" [class.active]="activeTab === 'anotacoes'" (click)="setTab('anotacoes')">Anotações</button>
-    </div>
-  </div>
+@if (sessao) {
+  <div class="play-session animate-fade-in">
+    <header class="barra-sessao">
+      <a class="voltar" [routerLink]="['/campaigns', sessao.campanhaId]" aria-label="Voltar para a campanha">←</a>
+      <div class="barra-titulo">
+        <p class="eyebrow">Modo jogar · {{ sessao.campanha?.nome || 'Campanha' }}</p>
+        <h1>{{ sessao.nome }} <span class="barra-num num">#{{ sessao.numeroSessao }}</span></h1>
+      </div>
 
-  <div class="content-panel">
-    <div *ngIf="activeTab === 'combate'">
-      <app-combate-tracker [sessaoId]="sessaoId" [campanhaId]="sessao.campanhaId"></app-combate-tracker>
+      <div class="top-nav-tabs" role="tablist" aria-label="Ferramentas da sessão">
+        <button type="button" role="tab" class="tab-btn" id="aba-combate" aria-controls="painel-sessao"
+                [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'"
+                (click)="setTab('combate')">Combate</button>
+        <button type="button" role="tab" class="tab-btn" id="aba-mapa" aria-controls="painel-sessao"
+                [class.active]="activeTab === 'mapa'" [attr.aria-selected]="activeTab === 'mapa'"
+                (click)="setTab('mapa')">Mapa</button>
+        <button type="button" role="tab" class="tab-btn" id="aba-anotacoes" aria-controls="painel-sessao"
+                [class.active]="activeTab === 'anotacoes'" [attr.aria-selected]="activeTab === 'anotacoes'"
+                (click)="setTab('anotacoes')">Anotações</button>
+      </div>
+    </header>
+
+    <div class="content-panel" id="painel-sessao" role="tabpanel"
+         [class.rolavel]="activeTab !== 'mapa'"
+         [attr.aria-labelledby]="'aba-' + activeTab">
+      @if (activeTab === 'combate') {
+        <app-combate-tracker [sessaoId]="sessaoId" [campanhaId]="sessao.campanhaId"></app-combate-tracker>
+      } @else if (activeTab === 'mapa') {
+        <app-mapa-tatico [campanhaId]="sessao.campanhaId" [sessaoId]="sessaoId"></app-mapa-tatico>
+      } @else {
+        <app-anotacoes [campanhaId]="sessao.campanhaId"></app-anotacoes>
+      }
     </div>
-    <div *ngIf="activeTab === 'anotacoes'">
-      <app-anotacoes [campanhaId]="sessao.campanhaId"></app-anotacoes>
-    </div>
+
+    <app-mesa-ao-vivo [campanhaId]="sessao.campanhaId"></app-mesa-ao-vivo>
   </div>
-</div>
+} @else {
+  <p class="carregando text-muted" role="status">Carregando a sessão...</p>
+}

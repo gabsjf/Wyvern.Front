@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environments';
 import { PastaAnotacao } from '../models/pasta-anotacao.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PastaAnotacaoService {
-  private apiUrl = 'https://localhost:7098/PastaAnotacao'; // Update with your actual API URL
+  private apiUrl = environment.apiUrl + '/PastaAnotacao';
 
   constructor(private http: HttpClient) { }
 

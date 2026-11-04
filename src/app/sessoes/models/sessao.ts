@@ -3,7 +3,9 @@ export interface Sessao {
     numeroSessao: number;
     nome: string;
     dataSessao: string;
+    dataAgendada?: string;
     obs?: string;
     campanhaId: number;
+    campanha?: { nome: string };
     ativo?: boolean;
 }

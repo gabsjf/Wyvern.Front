@@ -12,8 +12,12 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('token');
+    const usuarioIdStr = localStorage.getItem('usuarioId');
     if (token) {
-      this.currentUserSubject.next({ token });
+      this.currentUserSubject.next({ 
+        token,
+        usuarioId: usuarioIdStr ? parseInt(usuarioIdStr, 10) : undefined 
+      });
     }
   }
 
@@ -26,6 +30,7 @@ export class AuthService {
       tap(response => {
         if (response && response.token) {
           localStorage.setItem('token', response.token);
+          if (response.usuarioId) localStorage.setItem('usuarioId', response.usuarioId.toString());
           this.currentUserSubject.next(response);
         }
       })
@@ -37,6 +42,7 @@ export class AuthService {
       tap(response => {
         if (response && response.token) {
           localStorage.setItem('token', response.token);
+          if (response.usuarioId) localStorage.setItem('usuarioId', response.usuarioId.toString());
           this.currentUserSubject.next(response);
         }
       })
@@ -45,6 +51,8 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('papel');
+    localStorage.removeItem('usuarioId');
     this.currentUserSubject.next(null);
   }
 
@@ -52,7 +60,25 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  // Logado = existe token e ele ainda não expirou (o servidor continua sendo quem valida de verdade).
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return false;
+    }
+    return true;
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const { exp } = JSON.parse(atob(payload));
+      return typeof exp === 'number' && exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
   }
 }

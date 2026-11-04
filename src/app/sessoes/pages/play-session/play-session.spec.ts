@@ -1,3 +1,6 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PlaySession } from './play-session';
@@ -9,6 +12,7 @@ describe('PlaySession', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PlaySession],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlaySession);

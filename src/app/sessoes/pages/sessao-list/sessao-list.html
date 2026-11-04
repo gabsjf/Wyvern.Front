@@ -1,41 +1,47 @@
 <div class="container animate-fade-in">
-  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+  <header class="page-head">
     <div>
-      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Sessões</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Os registros históricos das suas campanhas.</p>
+      <p class="eyebrow">Diário de mesa</p>
+      <h1>Sessões</h1>
+      <p class="sub">{{ sessoes.length }} {{ sessoes.length === 1 ? 'sessão registrada' : 'sessões registradas' }} nas suas campanhas.</p>
     </div>
-    <button class="btn-primary" routerLink="/sessoes/create">+ Nova Sessão</button>
-  </div>
+    @if (podeCriarSessao) {
+      <a class="btn-primary" routerLink="/sessoes/create">+ Nova sessão</a>
+    }
+  </header>
 
-  <div class="glass-panel" style="overflow-x: auto;">
-    <table class="premium-table">
-      <thead>
-        <tr>
-          <th>Número</th>
-          <th>Título</th>
-          <th>Data</th>
-          <th>ID Campanha</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (sessao of sessoes; track sessao.sessaoId) {
-          <tr>
-            <td style="font-weight: bold;">Sessão #{{ sessao.numeroSessao }}</td>
-            <td style="font-weight: 500; color: var(--primary-color);">{{ sessao.nome }}</td>
-            <td>{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</td>
-            <td>#{{ sessao.campanhaId }}</td>
-            <td>
-              <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem; margin-right: 0.5rem;" [routerLink]="['/play', sessao.sessaoId]">Jogar</button>
-              <button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" style="text-align: center; padding: var(--spacing-lg);">Nenhuma sessão registrada.</td>
-          </tr>
+  @for (grupo of porCampanha; track grupo.campanhaId) {
+    <section class="grupo" [attr.aria-label]="grupo.nome">
+      <h2 class="rotulo-secao">{{ grupo.nome }} <span class="rotulo-extra">{{ grupo.sessoes.length }} {{ grupo.sessoes.length === 1 ? 'sessão' : 'sessões' }}</span></h2>
+
+      <ul class="mural">
+        @for (sessao of grupo.sessoes; track sessao.sessaoId; let primeira = $first) {
+          <li [class.destaque]="primeira">
+            <article class="folha" [class.agendada]="agendada(sessao)">
+              <span class="folha-numero num" aria-hidden="true">{{ sessao.numeroSessao }}</span>
+              <div class="folha-corpo">
+                <p class="folha-sobre">
+                  Sessão <span class="num">{{ sessao.numeroSessao }}</span>
+                  @if (agendada(sessao)) { <span class="chip chip-hi">Agendada</span> }
+                  @else if (primeira) { <span class="chip">Mais recente</span> }
+                </p>
+                <h3>{{ sessao.nome }}</h3>
+                <p class="folha-data num">{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</p>
+                @if (sessao.obs) { <p class="folha-obs">{{ sessao.obs }}</p> }
+              </div>
+              <div class="folha-acoes">
+                <a class="btn-primary btn-sm" [routerLink]="['/play', sessao.sessaoId]">Jogar</a>
+                <a class="btn-secondary btn-sm" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</a>
+              </div>
+            </article>
+          </li>
         }
-      </tbody>
-    </table>
-  </div>
+      </ul>
+    </section>
+  } @empty {
+    <div class="vazio">
+      <h2>O diário está em branco</h2>
+      <p>Nenhuma sessão registrada ainda.@if (podeCriarSessao) { Use “Nova sessão” para criar a primeira. }</p>
+    </div>
+  }
 </div>

@@ -354,7 +354,7 @@
 /* ---------- celular e tablet ---------- */
 @media (max-width: 1024px) {
   .ficha-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
     padding: var(--spacing-md);
   }
@@ -424,4 +424,126 @@
 
     > * { width: 100%; }
   }
+}
+
+/* ---- descansos ---- */
+.descansos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--line);
+
+  .w-100 { width: 100%; }
+  i { font-size: 1.1em; }
+}
+
+.descansos-rotulo {
+  margin: 0 0 0.15rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hi);
+}
+
+.descansos-aviso { margin: 0; font-size: 0.85rem; color: var(--muted); }
+
+@media (max-width: 720px) {
+  .descansos {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-top: 0;
+    padding-top: 0;
+
+    .descansos-rotulo, .descansos-aviso { width: 100%; }
+    > button { flex: 1; min-width: 0; padding-inline: 0.5rem; }
+  }
+}
+
+
+/* ---- condições ---- */
+.condicoes-rotulo {
+  margin: var(--spacing-sm) 0 var(--spacing-xs);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.condicoes { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.condicao {
+  min-height: 36px;
+  padding: 0 0.7rem;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:hover { border-color: var(--danger); color: var(--fg); }
+  &.on { background: color-mix(in srgb, var(--danger) 20%, transparent); border-color: var(--danger); color: var(--danger); font-weight: 600; }
+}
+
+/* ---- espaços de magia ---- */
+.espacos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: 1.5rem;
+}
+
+.espaco-circulo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 7rem;
+  padding: 0.5rem 0.75rem 0.4rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.espaco-nome { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.espaco-conta { font-size: 0.8rem; color: var(--muted); }
+.espaco-marcas { display: flex; flex-wrap: wrap; justify-content: center; }
+
+.marca {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 18px;
+    height: 18px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    border: 2px solid var(--hi);
+    border-radius: 3px;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+
+  &.cheia::after { background: var(--hi); box-shadow: 0 0 10px rgba(var(--hi-rgb), 0.5); }
+  &:hover::after { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+}
+
+/* ---- ataques ---- */
+.rolar-celula {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
 }

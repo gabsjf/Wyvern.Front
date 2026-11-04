@@ -2,7 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FichaHeader } from '../../components/ficha-header/ficha-header';
-import { FichaAtributos } from '../../components/ficha-atributos/ficha-atributos';
+import { FichaAtributos, PedidoDeTeste } from '../../components/ficha-atributos/ficha-atributos';
+import { MesaAoVivo } from '../../../campaigns/components/mesa-ao-vivo/mesa-ao-vivo';
+import { MesaService } from '../../../campaigns/services/mesa.service';
+import { formulaD20, analisarFormula } from '../../../core/utils/formula-dados';
+import { CONDICOES, alternarCondicao, lerCondicoes, temCondicao } from '../../utils/condicoes';
+import { DescansoDialog, TipoDescanso } from '../../components/descanso-dialog/descanso-dialog';
 
 import { ItemService, Item } from '../../../core/services/item.service';
 import { MagiaService, Magia } from '../../../core/services/magia.service';
@@ -15,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-ficha',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichaHeader, FichaAtributos],
+  imports: [CommonModule, FormsModule, FichaHeader, FichaAtributos, DescansoDialog, MesaAoVivo],
   templateUrl: './ficha.html',
   styleUrls: ['./ficha.scss']
 })
@@ -63,6 +68,7 @@ export class FichaComponent implements OnInit {
     private personagemService: PersonagemService,
     private campaignService: CampaignService,
     private toast: ToastService,
+    private mesa: MesaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -104,6 +110,113 @@ export class FichaComponent implements OnInit {
 
   setTab(tab: string) {
     this.activeTab = tab;
+  }
+
+
+  // ----- rolagens -----
+  /** Um teste pedido pelas perícias, salvaguardas, modificadores ou iniciativa: d20 + bônus. */
+  rolarTeste(pedido: PedidoDeTeste) {
+    void this.rolarFormula(pedido.rotulo, formulaD20(pedido.bonus));
+  }
+
+  async rolarFormula(rotulo: string, formula: string) {
+    try {
+      const r = await this.mesa.rolar(rotulo, formula, this.personagem?.nome);
+      // com a mesa conectada, o resultado já aparece no painel; sem ela, avisa aqui
+      if (!this.mesa.conectada()) this.toast.info(`${rotulo}: ${r.total}`);
+    } catch {
+      this.toast.erro(`Não consegui rolar "${formula}". Confira a fórmula do ataque na ficha.`);
+    }
+  }
+
+  rolarAtaque(ataque: any) {
+    void this.rolarFormula(`Ataque: ${ataque.nome}`, formulaD20(this.bonusAtaqueNumero(ataque)));
+  }
+
+  rolarDano(ataque: any) {
+    const formula = this.getDanoAtaque(ataque).replace(/\s+/g, '');
+    if (!analisarFormula(formula)) {
+      this.toast.erro(`O dano de "${ataque.nome}" (${ataque.dano || 'vazio'}) não é uma fórmula de dados. Ex.: 1d8+3.`);
+      return;
+    }
+    void this.rolarFormula(`Dano: ${ataque.nome}`, formula);
+  }
+
+  /** Recarrega a ficha do servidor (quando uma alteração falha ou depois de um descanso). */
+  recarregar() {
+    if (this.personagem?.personagemId) this.loadPersonagem(String(this.personagem.personagemId));
+  }
+
+  // ----- condições -----
+  readonly condicoesPadrao = CONDICOES;
+
+  get condicoesAtivas(): string[] {
+    return lerCondicoes(this.personagem?.personagemCombate?.condicoes);
+  }
+
+  condicaoAtiva(nome: string): boolean {
+    return temCondicao(this.personagem?.personagemCombate?.condicoes, nome);
+  }
+
+  alternarCondicao(nome: string) {
+    const combate = this.personagem?.personagemCombate;
+    if (!combate) return;
+    const novas = alternarCondicao(combate.condicoes, nome);
+    combate.condicoes = novas;
+    this.personagemService.atualizarEstado(this.personagem.personagemId, { condicoes: novas }).subscribe({
+      error: () => {
+        this.toast.erro('Não foi possível salvar as condições.');
+        this.recarregar();
+      },
+    });
+  }
+
+  // ----- espaços de magia -----
+  /** Espaços não gastos de um círculo (o valor real, sem nenhum "se for zero, mostra o máximo"). */
+  espacosAtuais(nivel: number): number {
+    return this.personagem?.personagemConjuracao?.['slotsNivel' + nivel + 'Atual'] ?? 0;
+  }
+
+  espacosMaximos(nivel: number): number {
+    return this.personagem?.personagemConjuracao?.['slotsNivel' + nivel + 'Max'] ?? 0;
+  }
+
+  /** Clicar numa marca: se está cheia, gasta a partir dela; se está vazia, recupera até ela. */
+  alternarEspaco(nivel: number, indice: number) {
+    const conjuracao = this.personagem?.personagemConjuracao;
+    if (!conjuracao) return;
+    const atual = this.espacosAtuais(nivel);
+    conjuracao['slotsNivel' + nivel + 'Atual'] = indice < atual ? indice : indice + 1;
+
+    const todos = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => this.espacosAtuais(n));
+    this.personagemService.atualizarEstado(this.personagem.personagemId, { espacosAtuais: todos }).subscribe({
+      error: () => {
+        this.toast.erro('Não foi possível salvar os espaços de magia.');
+        this.recarregar();
+      },
+    });
+  }
+
+  marcas(total: number): number[] {
+    return Array.from({ length: total }, (_, i) => i);
+  }
+
+  // ----- descanso curto / longo -----
+  descansoAberto: TipoDescanso | null = null;
+
+  abrirDescanso(tipo: TipoDescanso) {
+    this.descansoAberto = tipo;
+  }
+
+  fecharDescanso() {
+    this.descansoAberto = null;
+  }
+
+  aoConcluirDescanso(resumo: string) {
+    this.descansoAberto = null;
+    this.toast.ok(resumo);
+    // recarrega a ficha para mostrar PV, dados de vida e espaços de magia já com o resultado
+    this.loadPersonagem(this.personagem.personagemId.toString());
   }
 
   showDetalhesModal = false;
@@ -240,6 +353,16 @@ export class FichaComponent implements OnInit {
     return Math.floor((score - 10) / 2);
   }
 
+  /** Bônus de acerto como número (atributo + proficiência + bônus fixo da arma). */
+  bonusAtaqueNumero(ataque: any): number {
+    let mod = 0;
+    if (ataque.atributoBase && this.personagem?.atributo) {
+      mod += this.getModValue(this.personagem.atributo[ataque.atributoBase.toLowerCase()]);
+    }
+    if (ataque.proficiente) mod += this.personagem?.personagemCombate?.proficienciaBonus || 0;
+    return mod + (ataque.bonusAcerto || 0);
+  }
+
   getBonusAtaque(ataque: any): string {
     let mod = 0;
     if (ataque.atributoBase && this.personagem?.atributo) {
@@ -290,11 +413,4 @@ export class FichaComponent implements OnInit {
     return 8 + mod + pb;
   }
 
-  getSlotAtual(nivel: number): number {
-    if (!this.personagem?.personagemConjuracao) return 0;
-    const max = this.personagem.personagemConjuracao['slotsNivel' + nivel + 'Max'];
-    const atual = this.personagem.personagemConjuracao['slotsNivel' + nivel + 'Atual'];
-    // Assuming if it's strictly 0 we want to show it as full if it's never been used, but since we don't have usage tracking yet, let's just return Max for now if Atual is 0, or Atual if it is > 0.
-    return atual !== undefined && atual !== 0 ? atual : max;
-  }
 }

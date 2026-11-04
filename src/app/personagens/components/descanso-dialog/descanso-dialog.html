@@ -1,0 +1,150 @@
+<div class="fundo" (click)="!salvando() && fechar.emit()"></div>
+
+<section #caixa class="caixa" role="dialog" aria-modal="true" aria-labelledby="descanso-titulo" tabindex="-1" [attr.data-tipo]="tipo">
+  <header class="topo">
+    <span class="topo-icone" aria-hidden="true"><i class="bi" [class.bi-cup-hot]="ehCurto" [class.bi-moon-stars]="!ehCurto"></i></span>
+    <div>
+      <p class="eyebrow">{{ nomePersonagem }}</p>
+      <h2 id="descanso-titulo">{{ ehCurto ? 'Descanso curto' : 'Descanso longo' }}</h2>
+      <p class="regra">
+        @if (ehCurto) { Pelo menos 1 hora. Gaste dados de vida para recuperar PV. }
+        @else { Pelo menos 8 horas. Recupera PV, parte dos dados de vida e os espaços de magia. }
+      </p>
+    </div>
+    <button type="button" class="fechar" (click)="fechar.emit()" [disabled]="salvando()" aria-label="Fechar">✕</button>
+  </header>
+
+  <!-- Como chegar ao resultado -->
+  <div class="modos" role="group" aria-label="Como registrar o resultado">
+    <button type="button" class="modo" [class.ativo]="modo === 'sistema'" [attr.aria-pressed]="modo === 'sistema'" (click)="trocarModo('sistema')">
+      <strong>{{ ehCurto ? 'O sistema rola' : 'Pelas regras' }}</strong>
+      <small>{{ ehCurto ? 'Os dados de vida são sorteados aqui' : 'Aplica o que o livro manda' }}</small>
+    </button>
+    <button type="button" class="modo" [class.ativo]="modo === 'manual'" [attr.aria-pressed]="modo === 'manual'" (click)="trocarModo('manual')">
+      <strong>{{ ehCurto ? 'Eu rolo' : 'Ajustar à mão' }}</strong>
+      <small>{{ ehCurto ? 'Dados físicos: digito o resultado' : 'Edito cada valor do descanso' }}</small>
+    </button>
+  </div>
+
+  <div class="corpo">
+    @if (ehCurto) {
+      <!-- ===== DESCANSO CURTO ===== -->
+      <dl class="placar">
+        <div><dt>PV agora</dt><dd class="num">{{ vidaAtual }}<small> / {{ vidaMaxima }}</small></dd></div>
+        <div>
+          <dt>Dados de vida</dt>
+          <dd class="num">{{ dados.disponiveis }}<small> / {{ dados.total }}@if (dados.faces) { · d{{ dados.faces }} }</small></dd>
+        </div>
+        <div><dt>Mod. de CON</dt><dd class="num">{{ modConTexto }}</dd></div>
+      </dl>
+
+      @if (dados.disponiveis === 0) {
+        <p class="aviso">Nenhum dado de vida disponível. Só um descanso longo devolve os dados gastos.</p>
+      } @else {
+        <div class="linha">
+          <span class="rotulo" id="rot-qtd">Dados de vida a gastar</span>
+          <div class="passo" role="group" aria-labelledby="rot-qtd">
+            <button type="button" (click)="ajustarQuantidade(-1)" [disabled]="quantidade <= 0 || !!rolagens" aria-label="Gastar um dado a menos">−</button>
+            <output class="num">{{ quantidade }}</output>
+            <button type="button" (click)="ajustarQuantidade(1)" [disabled]="quantidade >= dados.disponiveis || !!rolagens" aria-label="Gastar um dado a mais">+</button>
+          </div>
+        </div>
+      }
+
+      @if (modo === 'sistema') {
+        @if (!podeRolar) {
+          <p class="aviso">A ficha não informa o tipo do dado de vida (ex.: 5d10). Use “Eu rolo” ou corrija a ficha.</p>
+        } @else if (!rolagens) {
+          <button type="button" class="btn-primary rolar" (click)="rolar()" [disabled]="quantidade < 1">
+            Rolar {{ quantidade || '' }} {{ quantidade === 1 ? 'dado' : 'dados' }} de vida (d{{ dados.faces }})
+          </button>
+        } @else {
+          <ol class="rolagens" aria-label="Resultado dos dados">
+            @for (r of rolagens; track $index) {
+              <li [style.--i]="$index">
+                <span class="face num">{{ r.face }}</span>
+                <span class="conta num">{{ modConTexto }}</span>
+                <span class="igual num">= {{ r.cura }}</span>
+              </li>
+            }
+          </ol>
+          <button type="button" class="link" (click)="descartarRolagem()">Descartar e rolar de novo</button>
+        }
+      } @else {
+        <div class="linha">
+          <label class="rotulo" for="cura-manual">PV recuperados no total</label>
+          <input id="cura-manual" type="number" min="0" class="form-control num campo" [(ngModel)]="curaManual" placeholder="0" />
+        </div>
+        <p class="dica">Some cada dado rolado mais o modificador de CON ({{ modConTexto }} por dado). Os PV nunca passam do máximo.</p>
+      }
+
+      @if (temEspacos) {
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="restaurarEspacosCurto" />
+          <span>Restaurar espaços de magia <small>(ex.: Bruxo)</small></span>
+        </label>
+      }
+
+      <p class="depois" aria-live="polite">
+        PV: <strong class="num">{{ vidaAtual }}</strong> → <strong class="num destaque">{{ vidaDepois }}</strong> / <span class="num">{{ vidaMaxima }}</span>
+        @if (cura > 0) { <span class="ganho num">+{{ cura }}</span> }
+      </p>
+    } @else {
+      <!-- ===== DESCANSO LONGO ===== -->
+      <ul class="efeitos">
+        <li>
+          <span class="ef-nome">Pontos de vida</span>
+          <span class="ef-antes num">{{ vidaAtual }}</span><span aria-hidden="true">→</span>
+          @if (modo === 'manual') {
+            <input type="number" min="0" [max]="vidaMaxima" class="form-control num campo" [(ngModel)]="longo.vidaAtual" aria-label="PV depois do descanso" />
+          } @else { <strong class="ef-depois num">{{ longo.vidaAtual }}</strong> }
+          <span class="ef-lim num">/ {{ vidaMaxima }}</span>
+        </li>
+        <li>
+          <span class="ef-nome">Dados de vida gastos</span>
+          <span class="ef-antes num">{{ dados.gasto }}</span><span aria-hidden="true">→</span>
+          @if (modo === 'manual') {
+            <input type="number" min="0" [max]="dados.total" class="form-control num campo" [(ngModel)]="longo.dadoVidaGasto" aria-label="Dados de vida gastos depois do descanso" />
+          } @else { <strong class="ef-depois num">{{ longo.dadoVidaGasto }}</strong> }
+          <span class="ef-lim num">/ {{ dados.total }}</span>
+        </li>
+        <li>
+          <span class="ef-nome">PV temporários</span>
+          <span class="ef-antes num">{{ vidaTemporaria }}</span><span aria-hidden="true">→</span>
+          @if (modo === 'manual') {
+            <input type="number" min="0" class="form-control num campo" [(ngModel)]="longo.vidaTemporaria" aria-label="PV temporários depois do descanso" />
+          } @else { <strong class="ef-depois num">{{ longo.vidaTemporaria }}</strong> }
+        </li>
+        <li>
+          <span class="ef-nome">Salvaguardas de morte</span>
+          @if (modo === 'manual') {
+            <label class="check inline"><input type="checkbox" [(ngModel)]="zerarSalvaguardas" /> <span>Zerar</span></label>
+          } @else { <strong class="ef-depois">{{ zerarSalvaguardas ? 'Zeradas' : 'Mantidas' }}</strong> }
+        </li>
+        @if (temEspacos) {
+          <li>
+            <span class="ef-nome">Espaços de magia</span>
+            @if (modo === 'manual') {
+              <label class="check inline"><input type="checkbox" [(ngModel)]="longo.restaurarEspacosMagia" /> <span>Restaurar todos</span></label>
+            } @else { <strong class="ef-depois">Todos restaurados</strong> }
+          </li>
+        }
+      </ul>
+
+      <p class="dica">
+        Pelas regras, o descanso longo devolve metade dos dados de vida (no mínimo 1). Nada é sorteado: se preferir outro valor,
+        use “Ajustar à mão”.
+      </p>
+      @if (longoErro) { <p class="erro" role="alert">{{ longoErro }}</p> }
+    }
+
+    @if (erroServidor()) { <p class="erro" role="alert">{{ erroServidor() }}</p> }
+  </div>
+
+  <footer class="rodape">
+    <button type="button" class="btn-secondary" (click)="fechar.emit()" [disabled]="salvando()">Cancelar</button>
+    <button type="button" class="btn-primary" (click)="aplicar()" [disabled]="!podeAplicar">
+      {{ salvando() ? 'Registrando...' : (ehCurto ? 'Concluir descanso curto' : 'Concluir descanso longo') }}
+    </button>
+  </footer>
+</section>

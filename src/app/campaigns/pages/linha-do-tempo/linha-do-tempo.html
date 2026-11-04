@@ -1,0 +1,253 @@
+@if (carregando()) {
+  <p class="carregando" role="status">Abrindo a crônica...</p>
+} @else if (campanha(); as c) {
+  <div class="cena">
+    <!-- Atmosfera -->
+    <div class="fundo" aria-hidden="true"><div class="poeira"></div></div>
+
+    <!-- Palco: ocupa a tela toda -->
+    <div #palco class="palco" [class.arrastando]="arrastando()" [class.leitura]="leitura()" tabindex="0" role="region"
+         aria-label="Linha do tempo. Use as setas para navegar e Enter para ler."
+         (scroll)="aoRolar()" (wheel)="aoGirarRoda($event)"
+         (pointerdown)="aoPressionar($event)" (pointermove)="aoMover($event)" (pointerup)="aoSoltar()" (pointerleave)="aoSoltar()" (pointercancel)="aoSoltar()">
+      @if (total() === 0) {
+        <div class="vazio">
+          <h2>{{ filtro() ? 'Nenhum evento deste tipo' : 'A crônica ainda está em branco' }}</h2>
+          <p>{{ filtro() ? 'Tire o filtro para ver os outros.' : 'Registre o primeiro marco da campanha.' }}</p>
+        </div>
+      } @else {
+        <div class="trilha">
+          @for (g of grupos(); track g.chave) {
+            <section class="capitulo" [id]="'cap-' + g.chave">
+              <header class="cap-marca">
+                @if (g.sessao) {
+                  <span class="fantasma num" aria-hidden="true">{{ g.sessao.numero }}</span>
+                  <p class="cap-sobre">Sessão {{ g.sessao.numero }}</p>
+                  <h2 class="cap-titulo">{{ g.sessao.nome }}</h2>
+                  <p class="cap-data num">{{ g.sessao.data | date:'dd/MM/yyyy' }}</p>
+                } @else {
+                  <h2 class="cap-titulo">{{ g.titulo }}</h2>
+                }
+              </header>
+
+              <ol class="eventos">
+                @for (e of g.eventos; track e.eventoId) {
+                  <li class="evento" [id]="'ev-' + e.eventoId" [attr.data-tipo]="e.tipo" [class.foco]="e.eventoId === focoId()">
+                    <!-- Balão: aparece quando o evento chega ao centro -->
+                    <div class="balao" [attr.inert]="e.eventoId === focoId() ? null : ''">
+                      <p class="balao-sobre">
+                        <span class="balao-tipo">{{ e.tipo }}</span>
+                        @if (modo() === 'sessao' && e.rotuloData) { · <span class="num">{{ e.rotuloData }}</span> }
+                        @if (modo() === 'mundo' && e.sessaoNumero) { · Sessão <span class="num">{{ e.sessaoNumero }}</span> }
+                        @if (e.visibilidade === 'Mestre') { · <span class="balao-segredo">Só mestre</span> }
+                      </p>
+                      <h3 class="balao-titulo">{{ e.titulo }}</h3>
+                      @if (resumo(e)) {
+                        <p class="balao-texto">{{ resumo(e) }}</p>
+                      }
+                      <button type="button" class="balao-ler" (click)="abrirLeitura(e)">Ler a história <span aria-hidden="true">→</span></button>
+                    </div>
+
+                    <button type="button" class="no" (click)="clicar(e)" [attr.aria-label]="e.tipo + ': ' + e.titulo" [attr.aria-pressed]="e.eventoId === focoId()">{{ icone(e.tipo) }}</button>
+                    <span class="rotulo">{{ e.titulo }}</span>
+                  </li>
+                }
+              </ol>
+            </section>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Cabeçalho mínimo -->
+    <header class="topo">
+      <a class="topo-voltar" [routerLink]="['/campaigns', c.campanhaId]" aria-label="Voltar para a campanha">←</a>
+      <div class="topo-titulo">
+        <p class="topo-sobre">Crônica</p>
+        <h1>{{ c.nome }}</h1>
+      </div>
+
+      <div class="topo-acoes">
+        <div class="modos" role="group" aria-label="Ordenar por">
+          <button type="button" class="modo" [class.ativo]="modo() === 'sessao'" [attr.aria-pressed]="modo() === 'sessao'" (click)="trocarModo('sessao')">Mesa</button>
+          <button type="button" class="modo" [class.ativo]="modo() === 'mundo'" [attr.aria-pressed]="modo() === 'mundo'" (click)="trocarModo('mundo')">Mundo</button>
+        </div>
+
+        <button type="button" class="botao-icone" [class.ativo]="filtro() || menu() === 'filtro'" (click)="alternarMenu('filtro')"
+                aria-haspopup="true" [attr.aria-expanded]="menu() === 'filtro'">
+          <i class="bi bi-funnel" aria-hidden="true"></i><span class="so-desktop">Filtrar</span>
+          @if (filtro()) { <span class="ponto" aria-hidden="true"></span> }
+        </button>
+
+        @if (anteriormente()) {
+          <button type="button" class="botao-icone" [class.ativo]="menu() === 'anterior'" (click)="alternarMenu('anterior')"
+                  aria-haspopup="true" [attr.aria-expanded]="menu() === 'anterior'">
+            <i class="bi bi-clock-history" aria-hidden="true"></i><span class="so-desktop">Anteriormente</span>
+          </button>
+        }
+
+        <button type="button" class="botao-novo" (click)="novo()"><span aria-hidden="true">+</span><span class="so-desktop"> Novo evento</span><span class="so-leitor-tela">Novo evento</span></button>
+      </div>
+
+      @if (menu()) {
+        <button type="button" class="menu-fundo" aria-label="Fechar menu" (click)="menu.set(null)"></button>
+      }
+
+      @if (menu() === 'filtro') {
+        <div class="menu" role="group" aria-label="Filtrar por tipo">
+          @for (t of tipos; track t.tipo) {
+            <button type="button" class="filtro" [attr.data-tipo]="t.tipo" [class.ativo]="filtro() === t.tipo" [attr.aria-pressed]="filtro() === t.tipo"
+                    [disabled]="!contagem().get(t.tipo) && filtro() !== t.tipo" (click)="alternarFiltro(t.tipo)">
+              <span class="filtro-icone" aria-hidden="true">{{ t.icone }}</span> {{ t.tipo }}
+              <span class="num filtro-n">{{ contagem().get(t.tipo) ?? 0 }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (menu() === 'anterior' && anteriormente(); as ant) {
+        <div class="menu menu-anterior">
+          <p class="menu-titulo">Anteriormente em {{ c.nome }}… <span class="text-muted">Sessão {{ ant.sessao.numero }}</span></p>
+          <ul>
+            @for (e of ant.eventos; track e.eventoId) {
+              <li><button type="button" class="menu-item" (click)="irParaEvento(e)"><span class="menu-icone" aria-hidden="true">{{ icone(e.tipo) }}</span> {{ e.titulo }}</button></li>
+            }
+          </ul>
+        </div>
+      }
+    </header>
+
+    <!-- Rodapé: navegação e progresso -->
+    @if (total() > 0) {
+      <footer class="rodape">
+        <p class="dica" aria-hidden="true">← → ou arraste · Enter para ler</p>
+        <div class="rodape-nav">
+          <button type="button" class="seta" (click)="navegar(-1)" [disabled]="posicao() === 1" aria-label="Evento anterior">‹</button>
+          <span class="contador num" aria-live="polite">{{ posicao() || '–' }} / {{ total() }}</span>
+          <button type="button" class="seta" (click)="navegar(1)" [disabled]="posicao() === total()" aria-label="Próximo evento">›</button>
+        </div>
+
+        <nav class="mapa" aria-label="Capítulos">
+          @for (g of grupos(); track g.chave) {
+            <button type="button" class="mapa-cap" [class.sem-numero]="!g.sessao" (click)="irParaCapitulo(g.chave)" [title]="g.titulo">
+              @if (g.sessao) { <span class="mapa-n num">{{ g.sessao.numero }}</span> }
+              <span class="mapa-nome">{{ g.titulo }}</span>
+              <span class="mapa-pontos" aria-hidden="true">
+                @for (e of g.eventos; track e.eventoId) { <i [attr.data-tipo]="e.tipo"></i> }
+              </span>
+            </button>
+          }
+        </nav>
+        <div class="progresso" aria-hidden="true"><span [style.width.%]="progresso() * 100"></span></div>
+      </footer>
+    }
+
+    <!-- Leitor: a história completa -->
+    @if (leitura(); as sel) {
+      <button type="button" class="leitor-fundo" aria-label="Fechar leitura" (click)="fecharLeitura()"></button>
+      <article class="leitor" [attr.data-tipo]="sel.tipo" aria-live="polite">
+        <button type="button" class="leitor-fechar btn-secondary btn-sm" (click)="fecharLeitura()" aria-label="Fechar">✕</button>
+        <div class="leitor-medalhao" aria-hidden="true">{{ icone(sel.tipo) }}</div>
+        <p class="leitor-sobre">
+          <span class="leitor-tipo">{{ sel.tipo }}</span>
+          @if (sel.rotuloData) { · <span class="num">{{ sel.rotuloData }}</span> }
+          @if (sel.sessaoNumero) { · Sessão <span class="num">{{ sel.sessaoNumero }}</span> }
+        </p>
+        <h2 class="leitor-titulo">{{ sel.titulo }}</h2>
+        <div class="chips">
+          @if (sel.visibilidade === 'Mestre') { <span class="chip chip-danger">Só mestre</span> }
+          @if (sel.origem === 'Automatico') { <span class="chip">Registro automático</span> }
+          <span class="chip">{{ sel.autorNome }}</span>
+        </div>
+        @if (sel.descricao) {
+          <div class="texto" [innerHTML]="html(sel.descricao)"></div>
+        } @else {
+          <p class="text-muted">Sem descrição.</p>
+        }
+
+        <footer class="leitor-pe">
+          <div class="leitor-nav">
+            <button type="button" class="btn-secondary" [disabled]="posicao() === 1" (click)="navegar(-1)">← Anterior</button>
+            <button type="button" class="btn-secondary" [disabled]="posicao() === total()" (click)="navegar(1)">Próximo →</button>
+          </div>
+          @if (podeEditar(sel)) {
+            <div class="leitor-acoes">
+              <button type="button" class="btn-secondary btn-sm" (click)="editar(sel)">Editar</button>
+              <button type="button" class="btn-danger btn-sm" (click)="excluir(sel)">Excluir</button>
+            </div>
+          }
+        </footer>
+      </article>
+    }
+
+    <!-- Formulário -->
+    @if (formAberto()) {
+      <div class="modal-fundo" (click)="cancelar()"></div>
+      <section class="modal panel" role="dialog" aria-modal="true" aria-labelledby="tit-form">
+        <div class="panel-head">
+          <h2 id="tit-form">{{ editandoId() === null ? 'Novo evento' : 'Editar evento' }}</h2>
+        </div>
+        <form class="form-corpo" (ngSubmit)="salvar()">
+          <div class="form-group">
+            <label class="form-label" for="ev-titulo">Título</label>
+            <input id="ev-titulo" class="form-control" name="titulo" [(ngModel)]="form.titulo" maxlength="120" placeholder="O que aconteceu?" autocomplete="off" />
+          </div>
+
+          <div class="form-linha">
+            <div class="form-group">
+              <label class="form-label" for="ev-tipo">Tipo</label>
+              <select id="ev-tipo" class="form-control" name="tipo" [(ngModel)]="form.tipo">
+                @for (t of tipos; track t.tipo) {
+                  <option [value]="t.tipo">{{ t.icone }} {{ t.tipo }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ev-sessao">Sessão da mesa</label>
+              <select id="ev-sessao" class="form-control" name="sessao" [(ngModel)]="form.sessaoId">
+                <option [ngValue]="null">Sem sessão</option>
+                @for (s of sessoes(); track s.sessaoId) {
+                  <option [ngValue]="s.sessaoId">{{ s.numero }} · {{ s.nome }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-linha">
+            <div class="form-group">
+              <label class="form-label" for="ev-data">Data no mundo</label>
+              <input id="ev-data" class="form-control" name="rotuloData" [(ngModel)]="form.rotuloData" maxlength="60" placeholder="Ex.: 12 de Mirtul, 1492" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ev-ordem">Posição na cronologia</label>
+              <input id="ev-ordem" class="form-control num" type="number" name="ordem" [(ngModel)]="form.ordem" />
+              <p class="dica-form">Menor número = mais antigo. Ordena a visão “Mundo”.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ev-desc">Descrição <span class="text-muted">(aceita markdown)</span></label>
+            <textarea id="ev-desc" class="form-control" name="descricao" rows="4" [(ngModel)]="form.descricao" placeholder="Conte o que aconteceu, quem estava lá, o que mudou…"></textarea>
+          </div>
+
+          @if (ehMestre()) {
+            <label class="check">
+              <input type="checkbox" name="segredo" [checked]="form.soMestre" (change)="form.soMestre = $any($event.target).checked" />
+              <span>Só o mestre vê <span class="text-muted">(segredos e spoilers)</span></span>
+            </label>
+          }
+
+          <div class="form-acoes">
+            <button type="submit" class="btn-primary">{{ editandoId() === null ? 'Adicionar à linha do tempo' : 'Salvar' }}</button>
+            <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
+          </div>
+        </form>
+      </section>
+    }
+  </div>
+} @else {
+  <div class="carregando">
+    <h2>Campanha não encontrada</h2>
+    <a class="btn-primary" routerLink="/campaigns">Voltar às campanhas</a>
+  </div>
+}

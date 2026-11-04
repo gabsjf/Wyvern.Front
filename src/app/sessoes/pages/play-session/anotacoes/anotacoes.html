@@ -3,9 +3,16 @@
   <aside class="lista panel" aria-label="Pastas e anotações">
     <div class="panel-head">
       <h2>Anotações</h2>
-      <button type="button" class="btn-secondary btn-sm" (click)="novaPasta()">
-        <i class="bi bi-folder-plus" aria-hidden="true"></i> Nova pasta
-      </button>
+      <span class="lista-acoes">
+        @if (userRole === 'Mestre') {
+          <button type="button" class="btn-secondary btn-sm" (click)="novoRoteiro()" title="Modelo com cenas, segredos e tesouro em checklists">
+            <i class="bi bi-card-checklist" aria-hidden="true"></i> Roteiro
+          </button>
+        }
+        <button type="button" class="btn-secondary btn-sm" (click)="novaPasta()">
+          <i class="bi bi-folder-plus" aria-hidden="true"></i> Nova pasta
+        </button>
+      </span>
     </div>
 
     <div class="lista-corpo">
@@ -119,6 +126,12 @@
             <button type="button" class="btn-secondary btn-sm" (click)="cancelarEdicao()">Cancelar</button>
           } @else {
             <span class="chip" [class.chip-hi]="anotacaoSelecionada?.isPublica">{{ anotacaoSelecionada?.isPublica ? 'Pública' : 'Privada' }}</span>
+            @if (userRole === 'Mestre') {
+              <button type="button" class="btn-secondary btn-sm" (click)="alternarRevelacao()">
+                <i class="bi" [class.bi-eye-slash]="anotacaoSelecionada?.isPublica" [class.bi-eye]="!anotacaoSelecionada?.isPublica" aria-hidden="true"></i>
+                {{ anotacaoSelecionada?.isPublica ? 'Esconder dos jogadores' : 'Revelar aos jogadores' }}
+              </button>
+            }
             @if (podeEditar(anotacaoSelecionada!)) {
               <button type="button" class="btn-primary btn-sm" (click)="editarAnotacao()">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
@@ -132,15 +145,29 @@
         <div class="modos" role="tablist" aria-label="Modo do editor">
           <button type="button" role="tab" class="modo" [class.ativo]="!showPreview" [attr.aria-selected]="!showPreview" (click)="showPreview = false">Escrever</button>
           <button type="button" role="tab" class="modo" [class.ativo]="showPreview" [attr.aria-selected]="showPreview" (click)="togglePreview()">Visualizar</button>
+
+          @if (!showPreview) {
+            <span class="ferramentas">
+              <button type="button" class="btn-secondary btn-sm" (click)="inserirChecklist()" title="Insere um item de checklist">
+                <i class="bi bi-check2-square" aria-hidden="true"></i> Checklist
+              </button>
+              @if (conhecidos.length > 0) {
+                <select class="mencao-select" aria-label="Mencionar com @" (change)="inserirMencao($any($event.target).value); $any($event.target).value = ''">
+                  <option value="">@ Mencionar…</option>
+                  @for (c of conhecidos; track c.nome) { <option [value]="c.nome">{{ c.nome }}</option> }
+                </select>
+              }
+            </span>
+          }
         </div>
       }
 
       @if (isEditing && !showPreview) {
         <label class="visually-hidden" for="conteudo-nota">Conteúdo da anotação em Markdown</label>
-        <textarea id="conteudo-nota" [(ngModel)]="editConteudo" class="texto-md"
+        <textarea #conteudoNota id="conteudo-nota" [(ngModel)]="editConteudo" class="texto-md"
                   placeholder="Escreva em Markdown. Ex.: ## Título, **negrito**, *itálico*, - lista"></textarea>
       } @else {
-        <div class="markdown-content" [innerHTML]="previewHtml"></div>
+        <div class="markdown-content" [innerHTML]="previewHtml" (click)="aoClicarConteudo($event)" (keydown)="aoTeclarConteudo($event)"></div>
       }
     }
   </section>

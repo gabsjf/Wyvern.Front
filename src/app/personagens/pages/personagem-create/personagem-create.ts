@@ -34,9 +34,9 @@ export class PersonagemCreate implements OnInit {
   activeTab: string = 'basico';
   isSidebarExpanded: boolean = true;
   tiposPersonagem = [
-    { id: 1, nome: 'Jogador' },
-    { id: 2, nome: 'NPC' },
-    { id: 3, nome: 'Monstro' }
+    { id: 1, nome: 'Herói', descricao: 'Personagem de um jogador' },
+    { id: 2, nome: 'NPC', descricao: 'Personagem do Mestre, aliado ou neutro' },
+    { id: 3, nome: 'Monstro', descricao: 'Criatura ou inimigo de combate' }
   ];
 
   isEditMode: boolean = false;
@@ -68,6 +68,20 @@ export class PersonagemCreate implements OnInit {
     this.activeTab = tab;
   }
 
+  /** Herói qualquer um cria; NPC e Monstro só o Mestre da campanha escolhida. */
+  podeEscolherTipo(tipoId: number): boolean {
+    return tipoId === 1 || this.ehMestreNaCampanha;
+  }
+
+  escolherTipo(tipoId: number) {
+    if (this.podeEscolherTipo(tipoId)) this.personagem.tipoId = tipoId;
+  }
+
+  /** Ao trocar para uma campanha em que não é Mestre, o tipo volta a Herói (o servidor também não aceitaria outro). */
+  aoMudarCampanha() {
+    if (!this.ehMestreNaCampanha) this.personagem.tipoId = 1;
+  }
+
   addAcaoPadrao() { this.personagem.personagemAcoesPadrao.push({ nome: '', descricao: '', alcance: '', bonusAcerto: null, dano: '', tipoDano: '', propriedades: '', atributoBase: 'Forca', proficiente: true, tipoAcao: 'Ataque' }); }
   removeAcaoPadrao(index: number) { this.personagem.personagemAcoesPadrao.splice(index, 1); }
 
@@ -85,12 +99,20 @@ export class PersonagemCreate implements OnInit {
 
   ngOnInit() {
     this.campaignService.getAll().subscribe({
-      next: (data) => this.campanhas = data,
+      next: (data) => {
+        this.campanhas = data;
+        // Personagem novo já abre com uma campanha escolhida (de preferência uma em que o usuário é Mestre),
+        // para o Tipo e os demais campos não ficarem escondidos até alguém escolher.
+        if (!this.isEditMode && !this.personagem.campanhaId && data.length) {
+          this.personagem.campanhaId = (data.find(c => c.papel === 'Mestre') ?? data[0]).campanhaId;
+        }
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Erro ao buscar campanhas:', err)
     });
 
     this.personagemService.getPericias().subscribe({
-      next: (data) => this.periciasDisponiveis = data,
+      next: (data) => { this.periciasDisponiveis = data; this.cdr.detectChanges(); },
       error: (err) => console.error('Erro ao buscar pericias:', err)
     });
 

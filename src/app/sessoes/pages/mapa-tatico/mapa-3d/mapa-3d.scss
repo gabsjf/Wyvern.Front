@@ -1,0 +1,81 @@
+:host {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.area {
+  position: absolute;
+  inset: 0;
+
+  canvas { display: block; outline: none; }
+}
+
+/* câmera: no canto de baixo, longe da barra de ferramentas */
+.comandos {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  display: flex;
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+.cmd {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 1.1rem;
+  cursor: pointer;
+
+  & + & { border-left: 1px solid var(--line); }
+  &:hover { background: var(--tint-2); }
+  &.ativo { background: var(--hi); color: var(--hi-fg); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -3px; }
+}
+
+.dica {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  z-index: 1;
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: some 0.4s 6s forwards;
+}
+
+@keyframes some { to { opacity: 0; visibility: hidden; } }
+
+.carregando {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .dica { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dica { animation: none; }
+}

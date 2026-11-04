@@ -12,13 +12,16 @@
   </div>
 </header>
 
-<!-- Desktop: trilho lateral -->
-<nav class="rail" aria-label="Principal">
-  <a class="brand" routerLink="/dashboard" aria-label="Wyvern, ir para o painel">Wyvern</a>
+<!-- Desktop: trilho lateral (recolhível) -->
+<nav class="rail" [class.recolhida]="layout.recolhida()" aria-label="Principal">
+  <a class="brand" routerLink="/dashboard" aria-label="Wyvern, ir para o painel">
+    <span class="brand-completo">Wyvern</span>
+    <span class="brand-curto" aria-hidden="true">W</span>
+  </a>
   <ul class="links">
     @for (d of destinos; track d.rota) {
       <li>
-        <a [routerLink]="d.rota" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <a [routerLink]="d.rota" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.title]="layout.recolhida() ? d.rotulo : null">
           <i class="bi {{ d.icone }}" aria-hidden="true"></i>
           <span>{{ d.rotulo }}</span>
         </a>
@@ -26,13 +29,19 @@
     }
   </ul>
   <div class="rail-foot">
-    <button type="button" class="rail-btn" (click)="alternarTema()">
+    <button type="button" class="rail-btn" (click)="alternarTema()" [attr.title]="layout.recolhida() ? (temaAtual === 'escuro' ? 'Tema claro' : 'Tema escuro') : null">
       <i class="bi" [class.bi-sun]="temaAtual === 'escuro'" [class.bi-moon-stars]="temaAtual === 'claro'" aria-hidden="true"></i>
       <span>{{ temaAtual === 'escuro' ? 'Tema claro' : 'Tema escuro' }}</span>
     </button>
-    <button type="button" class="rail-btn" (click)="logout()">
+    <button type="button" class="rail-btn" (click)="logout()" [attr.title]="layout.recolhida() ? 'Sair' : null">
       <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
       <span>Sair</span>
+    </button>
+    <button type="button" class="rail-btn rail-toggle" (click)="layout.alternar()" [attr.aria-expanded]="!layout.recolhida()"
+            [attr.aria-label]="layout.recolhida() ? 'Expandir a barra lateral' : 'Recolher a barra lateral'"
+            [attr.title]="layout.recolhida() ? 'Expandir a barra lateral' : null">
+      <i class="bi" [class.bi-chevron-bar-left]="!layout.recolhida()" [class.bi-chevron-bar-right]="layout.recolhida()" aria-hidden="true"></i>
+      <span>Recolher</span>
     </button>
   </div>
 </nav>

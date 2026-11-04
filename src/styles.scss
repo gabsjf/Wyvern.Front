@@ -233,19 +233,45 @@ a { color: var(--hi); }
 }
 .panel-head h2, .panel-head h3, .panel-head h4 { margin: 0; }
 
-/* Cabeçalho de página: título com filete */
+/* Cabeçalho de página: título grande, filete fino e um traço vinho que ancora o bloco */
 .page-head {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--spacing-md);
-  padding-bottom: 0.75rem;
-  margin-bottom: var(--spacing-lg);
-  border-bottom: 2px solid var(--accent);
+  padding-bottom: 1.1rem;
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--line);
 }
-.page-head h1, .page-head h2 { margin: 0; }
-.page-head .sub { color: var(--muted); margin-top: 0.25rem; }
+.page-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 5rem;
+  height: 3px;
+  background: var(--accent);
+}
+.page-head h1, .page-head h2 { margin: 0; font-size: clamp(2.1rem, 4.2vw, 3.4rem); line-height: 1; }
+.page-head .sub { color: var(--muted); margin-top: 0.5rem; }
+
+/* Rótulo de seção: título pequeno em dourado seguido de um fio que preenche a linha */
+.rotulo-secao {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 var(--spacing-md);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hi);
+}
+.rotulo-secao::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.rotulo-secao .rotulo-extra { order: 3; letter-spacing: 0.04em; text-transform: none; font-weight: 500; }
 
 /* ---------- botões ---------- */
 .btn-primary,
@@ -340,11 +366,14 @@ select.form-control { appearance: auto; }
 }
 
 /* ---------- layout ---------- */
+/* Páginas usam a largura toda (com folga nas laterais); formulários e leituras usam .estreito */
 .container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 2200px;
   margin: 0 auto;
-  padding: var(--spacing-xl);
+  padding: clamp(1rem, 2.4vw, 2.75rem);
 }
+.container.estreito { max-width: 880px; }
 
 .flex-center { display: flex; align-items: center; justify-content: center; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
@@ -464,6 +493,24 @@ select.form-control { appearance: auto; }
   .table-stack tr:hover td {
     background: transparent;
   }
+}
+
+/* Canvas dos dados 3D (criado pela biblioteca, fora do escopo dos componentes). Sem tamanho em CSS ele
+   fica com os 300x150px padrão e o mundo dos dados, paredes inclusas, vira uma caixinha no canto da tela. */
+/* Camada global dos dados 3D */
+.dice-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+#dice-box canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* ---------- animação discreta ---------- */

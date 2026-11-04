@@ -25,6 +25,7 @@ export const routes: Routes = [
         {path: 'dashboard', loadComponent: () => import('./core/pages/dashboard/dashboard').then(m => m.DashboardComponent)},
         {path: 'campaigns', component: CampaignList},
     {path: 'campaigns/create', component: CampaignCreate},
+    {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},
     {path: 'campaigns/:id', component: CampaignDetail},
     {path: 'personagens', component: PersonagemList},
     {path: 'personagens/create', component: PersonagemCreate},

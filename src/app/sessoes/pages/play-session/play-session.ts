@@ -1,14 +1,17 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessaoService } from '../../services/sessao.service';
 import { Sessao } from '../../models/sessao';
 import { CombateTracker } from '../combate-tracker/combate-tracker';
 import { Anotacoes } from './anotacoes/anotacoes';
+import { MapaTatico } from '../mapa-tatico/mapa-tatico';
+import { LayoutService } from '../../../core/layout/layout.service';
+import { MesaAoVivo } from '../../../campaigns/components/mesa-ao-vivo/mesa-ao-vivo';
 
 @Component({
   selector: 'app-play-session',
-  imports: [CommonModule, CombateTracker, Anotacoes],
+  imports: [CommonModule, RouterLink, CombateTracker, Anotacoes, MapaTatico, MesaAoVivo],
   templateUrl: './play-session.html',
   styleUrl: './play-session.scss'
 })
@@ -16,10 +19,17 @@ export class PlaySession implements OnInit {
   private route = inject(ActivatedRoute);
   private sessaoService = inject(SessaoService);
   private cdr = inject(ChangeDetectorRef);
+  private layout = inject(LayoutService);
 
   sessaoId!: number;
   sessao: Sessao | null = null;
-  activeTab: 'combate' | 'anotacoes' = 'combate';
+  activeTab: 'combate' | 'mapa' | 'anotacoes' = 'combate';
+
+  constructor() {
+    // A mesa ocupa a tela toda: some a barra do app enquanto ela estiver aberta
+    this.layout.imersivo.set(true);
+    inject(DestroyRef).onDestroy(() => this.layout.imersivo.set(false));
+  }
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -44,7 +54,7 @@ export class PlaySession implements OnInit {
     });
   }
 
-  setTab(tab: 'combate' | 'anotacoes') {
+  setTab(tab: 'combate' | 'mapa' | 'anotacoes') {
     this.activeTab = tab;
   }
 }

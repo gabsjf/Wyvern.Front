@@ -25,20 +25,31 @@
             </div>
             <div class="col">
               <label class="form-label">Campanha*</label>
-              <select name="campanhaId" class="form-control" [(ngModel)]="personagem.campanhaId" required>
+              <select name="campanhaId" class="form-control" [(ngModel)]="personagem.campanhaId" (ngModelChange)="aoMudarCampanha()" required>
                 @for (campanha of campanhas; track campanha.campanhaId) {
                   <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
                 }
               </select>
             </div>
-            <div class="col" *ngIf="ehMestreNaCampanha">
-              <label class="form-label">Tipo*</label>
-              <select name="tipoId" class="form-control" [(ngModel)]="personagem.tipoId" required (change)="personagem.tipoId === 1 ? setTab('basico') : null">
-                @for (tipo of tiposPersonagem; track tipo.id) {
-                  <option [ngValue]="tipo.id">{{ tipo.nome }}</option>
-                }
-              </select>
+          </div>
+
+          <!-- Tipo: sempre visível; NPC e Monstro só ficam liberados para o Mestre da campanha -->
+          <div class="form-group tipo-grupo" role="radiogroup" aria-labelledby="rot-tipo">
+            <span class="form-label" id="rot-tipo">Tipo de personagem*</span>
+            <div class="tipos">
+              @for (tipo of tiposPersonagem; track tipo.id) {
+                <button type="button" role="radio" class="tipo-op" [class.ativo]="personagem.tipoId === tipo.id"
+                        [attr.aria-checked]="personagem.tipoId === tipo.id" [disabled]="!podeEscolherTipo(tipo.id)" (click)="escolherTipo(tipo.id)">
+                  <strong>{{ tipo.nome }}</strong>
+                  <small>{{ tipo.descricao }}</small>
+                </button>
+              }
             </div>
+            @if (!personagem.campanhaId) {
+              <p class="tipo-dica">Escolha a campanha para liberar os outros tipos. Só o Mestre dela cria NPCs e monstros.</p>
+            } @else if (!ehMestreNaCampanha) {
+              <p class="tipo-dica">Só o Mestre da campanha cria NPCs e monstros. Nesta campanha você cria heróis.</p>
+            }
           </div>
 
           <!-- JOGADOR -->

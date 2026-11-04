@@ -28,12 +28,49 @@ $ponto: 900px;
   padding: 1.25rem 0.75rem;
   background: var(--surface);
   border-right: 1px solid var(--line);
+  overflow: hidden;
+  transition: width 0.2s ease, padding 0.2s ease;
 
   .brand {
     padding: 0.25rem 0.75rem 1.25rem;
     border-bottom: 2px solid var(--accent);
     margin-bottom: 0.75rem;
+    white-space: nowrap;
   }
+}
+
+.brand-curto { display: none; }
+
+/* recolhida: só os ícones */
+.rail.recolhida {
+  width: 68px;
+  padding-inline: 0.5rem;
+
+  .brand {
+    padding-inline: 0;
+    text-align: center;
+  }
+
+  .brand-completo { display: none; }
+  .brand-curto { display: inline; }
+
+  .links a,
+  .rail-btn {
+    justify-content: center;
+    padding-inline: 0;
+
+    span { display: none; }
+  }
+
+  .links a.active { box-shadow: inset 3px 0 0 var(--hi); }
+}
+
+.rail-toggle {
+  margin-top: 0.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail { transition: none; }
 }
 
 .links {

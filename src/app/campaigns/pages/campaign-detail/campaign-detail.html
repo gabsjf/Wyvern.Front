@@ -4,25 +4,34 @@
   } @else if (campaign) {
     <a class="voltar" routerLink="/campaigns">← Campanhas</a>
 
-    <header class="page-head">
-      <div>
+    <!-- Faixa de abertura -->
+    <header class="abertura" [style.background]="capa">
+      <div class="abertura-marca" aria-hidden="true"><app-emblema [nome]="campaign.nome" [tamanho]="220" /></div>
+      <div class="abertura-corpo">
         <p class="eyebrow">Campanha · {{ campaign.sistema || 'Sistema não definido' }}</p>
         <h1>{{ campaign.nome }}</h1>
         <p class="sub">
           Criada por {{ campaign.mestreNome || '—' }}
-          · <span class="chip" [class.chip-hi]="ehMestre">Você é {{ campaign.papel || 'Jogador' }}</span>
-          · <span class="chip" [class.chip-ok]="campaign.ativo">{{ campaign.ativo ? 'Em andamento' : 'Encerrada' }}</span>
+          <span class="chip" [class.chip-hi]="ehMestre">Você é {{ campaign.papel || 'Jogador' }}</span>
+          <span class="chip" [class.chip-ok]="campaign.ativo">{{ campaign.ativo ? 'Em andamento' : 'Encerrada' }}</span>
         </p>
       </div>
 
       <div class="acoes">
+        <a class="btn-primary" [routerLink]="['/campaigns', campaign.campanhaId, 'timeline']">Abrir a crônica</a>
         @if (ehMestre) {
-          <button type="button" class="btn-primary" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
-          <button type="button" class="btn-danger" (click)="deleteCampaign()">Excluir campanha</button>
+          <button type="button" class="btn-secondary" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
+          <button type="button" class="btn-danger" (click)="deleteCampaign()">Excluir</button>
         } @else {
           <button type="button" class="btn-secondary" [disabled]="membrosBusy" (click)="sair()">Sair da campanha</button>
         }
       </div>
+
+      <dl class="numeros">
+        <div><dt>Sessões</dt><dd class="num">{{ sessoes.length }}</dd></div>
+        <div><dt>Heróis</dt><dd class="num">{{ herois.length }}</dd></div>
+        <div><dt>Membros</dt><dd class="num">{{ membros.length }}</dd></div>
+      </dl>
     </header>
 
     @if (inviteUrl) {
@@ -51,48 +60,101 @@
       <p class="mensagem" role="status">{{ inviteMessage }}</p>
     }
 
-    <section class="panel" aria-labelledby="tit-membros">
-      <div class="panel-head">
-        <h2 id="tit-membros">Membros</h2>
-        <span class="chip num">{{ membros.length }}</span>
+    <div class="hub">
+      <!-- Coluna principal -->
+      <div class="hub-principal">
+        <section aria-labelledby="tit-sessoes">
+          <h2 class="rotulo-secao" id="tit-sessoes">Sessões
+            @if (ehMestre) { <a class="rotulo-extra" routerLink="/sessoes/create">+ Nova sessão</a> }
+          </h2>
+          @if (sessoes.length > 0) {
+            <ol class="sessoes">
+              @for (s of sessoes; track s.sessaoId) {
+                <li>
+                  <a class="sessao" [routerLink]="['/sessoes', s.sessaoId]">
+                    <span class="sessao-n num">{{ s.numeroSessao }}</span>
+                    <span class="sessao-info">
+                      <strong>{{ s.nome }}</strong>
+                      <small class="num">{{ s.dataSessao | date:'dd/MM/yyyy' }}</small>
+                    </span>
+                  </a>
+                  <a class="btn-primary btn-sm" [routerLink]="['/play', s.sessaoId]">Jogar</a>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="vazio">Nenhuma sessão registrada ainda.</p>
+          }
+        </section>
+
+        <section aria-labelledby="tit-herois">
+          <h2 class="rotulo-secao" id="tit-herois">Heróis <a class="rotulo-extra" routerLink="/personagens/create">+ Novo personagem</a></h2>
+          @if (herois.length > 0) {
+            <ul class="herois">
+              @for (h of herois; track h.personagemId) {
+                <li>
+                  <a class="heroi" [routerLink]="['/ficha', h.personagemId]">
+                    <app-emblema [nome]="h.nome" [tamanho]="60" />
+                    <strong>{{ h.nome }}</strong>
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="vazio">Nenhum herói nesta campanha ainda.</p>
+          }
+        </section>
       </div>
 
-      <div class="membros-corpo">
-        @if (membrosMessage) {
-          <p class="mensagem" role="status">{{ membrosMessage }}</p>
-        }
+      <!-- Coluna lateral -->
+      <aside class="hub-lateral">
+        <a class="cronica" [routerLink]="['/campaigns', campaign.campanhaId, 'timeline']">
+          <span class="cronica-fio" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          <strong>A crônica</strong>
+          <small>Viaje pela história da campanha, evento a evento.</small>
+          <span class="cronica-abrir">Abrir <span aria-hidden="true">→</span></span>
+        </a>
 
-        @if (membros.length === 0) {
-          <p class="estado">Carregando membros...</p>
-        } @else {
-          <ul class="membros">
-            @for (m of membros; track m.usuarioId) {
-              <li class="membro">
-                <div class="membro-info">
-                  <strong>{{ m.nome }}</strong>
-                  @if (m.ehVoce) { <span class="text-muted">(você)</span> }
-                  <span class="chip" [class.chip-hi]="m.papel === 'Mestre'">{{ m.papel }}</span>
-                  @if (m.ehCriador) { <span class="chip">Criador</span> }
-                </div>
+        <section aria-labelledby="tit-membros">
+          <h2 class="rotulo-secao" id="tit-membros">Membros <span class="rotulo-extra num">{{ membros.length }}</span></h2>
 
-                @if (ehMestre) {
-                  <div class="membro-acoes">
-                    @if (m.papel === 'Jogador') {
-                      <button type="button" class="btn-secondary btn-sm" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Mestre')">Promover a Mestre</button>
-                    } @else {
-                      <button type="button" class="btn-secondary btn-sm" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Jogador')">Rebaixar a Jogador</button>
-                    }
-                    @if (!m.ehVoce) {
-                      <button type="button" class="btn-danger btn-sm" [disabled]="membrosBusy" (click)="remover(m)">Remover</button>
-                    }
+          @if (membrosMessage) {
+            <p class="mensagem" role="status">{{ membrosMessage }}</p>
+          }
+
+          @if (membros.length === 0) {
+            <p class="estado">Carregando membros...</p>
+          } @else {
+            <ul class="membros">
+              @for (m of membros; track m.usuarioId) {
+                <li class="membro">
+                  <div class="membro-info">
+                    <app-emblema [nome]="m.nome" [tamanho]="36" forma="redondo" />
+                    <strong>{{ m.nome }}</strong>
+                    @if (m.ehVoce) { <span class="text-muted">(você)</span> }
+                    <span class="chip" [class.chip-hi]="m.papel === 'Mestre'">{{ m.papel }}</span>
+                    @if (m.ehCriador) { <span class="chip">Criador</span> }
                   </div>
-                }
-              </li>
-            }
-          </ul>
-        }
-      </div>
-    </section>
+
+                  @if (ehMestre) {
+                    <div class="membro-acoes">
+                      @if (m.papel === 'Jogador') {
+                        <button type="button" class="btn-secondary btn-sm" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Mestre')">Promover a Mestre</button>
+                      } @else {
+                        <button type="button" class="btn-secondary btn-sm" [disabled]="membrosBusy" (click)="mudarPapel(m, 'Jogador')">Rebaixar a Jogador</button>
+                      }
+                      @if (!m.ehVoce) {
+                        <button type="button" class="btn-danger btn-sm" [disabled]="membrosBusy" (click)="remover(m)">Remover</button>
+                      }
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </aside>
+    </div>
   } @else {
     <div class="estado nao-encontrada">
       <h2>Campanha não encontrada</h2>

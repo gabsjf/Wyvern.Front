@@ -1,9 +1,9 @@
 @if (!loading && summary) {
-  <div class="container animate-fade-in">
+  <div class="container painel animate-fade-in">
     <header class="page-head">
       <div>
+        <p class="eyebrow">{{ hoje | date:'EEEE, d \'de\' MMMM' }}</p>
         <h1>Painel</h1>
-        <p class="sub">Suas campanhas, personagens e próximas sessões.</p>
       </div>
       <div class="head-actions">
         <a class="btn-secondary" routerLink="/personagens/create">+ Personagem</a>
@@ -11,84 +11,113 @@
       </div>
     </header>
 
-    <!-- Números gerais: cada um leva à lista correspondente -->
-    <div class="dashboard-grid">
-      <a class="panel stat-card" routerLink="/campaigns">
-        <span class="stat-num num">{{ summary.totalCampanhas }}</span>
-        <span class="stat-name">Campanhas</span>
-      </a>
-      <a class="panel stat-card" routerLink="/personagens">
-        <span class="stat-num num">{{ summary.totalHerois }}</span>
-        <span class="stat-name">Heróis</span>
-      </a>
-      <a class="panel stat-card" routerLink="/personagens">
-        <span class="stat-num num">{{ summary.totalNpcs }}</span>
-        <span class="stat-name">NPCs</span>
-      </a>
-      <a class="panel stat-card" routerLink="/personagens">
-        <span class="stat-num num">{{ summary.totalViloes }}</span>
-        <span class="stat-name">Monstros</span>
-      </a>
-    </div>
-
-    <div class="dashboard-sections">
-      <section class="panel" aria-labelledby="tit-campanhas">
-        <div class="panel-head">
-          <h2 id="tit-campanhas">Últimas campanhas</h2>
-          <a routerLink="/campaigns" class="ver-mais">Ver todas</a>
-        </div>
-
-        @if (summary.ultimasCampanhas.length > 0) {
-          <ul class="lista">
-            @for (camp of summary.ultimasCampanhas; track camp.campanhaId) {
-              <li class="list-item">
-                <div class="item-info">
-                  <h3>{{ camp.nome }}</h3>
-                  <p>
-                    {{ camp.sistema || 'Sistema não definido' }}
-                    @if (camp.papel) {
-                      <span class="chip" [class.chip-hi]="camp.papel === 'Mestre'">{{ camp.papel }}</span>
-                    }
-                  </p>
-                </div>
-                <a class="btn-secondary" [routerLink]="['/campaigns', camp.campanhaId]">Abrir</a>
-              </li>
-            }
-          </ul>
+    <div class="grade">
+      <!-- Campanha em destaque -->
+      <section class="destaque" aria-labelledby="tit-destaque">
+        @if (destaque; as d) {
+          <div class="destaque-marca" aria-hidden="true"><app-emblema [nome]="d.nome" [tamanho]="340" /></div>
+          <div class="destaque-corpo">
+            <p class="rotulo-secao" id="tit-destaque">Continue de onde parou</p>
+            <h2 class="destaque-nome">{{ d.nome }}</h2>
+            <p class="destaque-meta">
+              <span>{{ d.sistema || 'Sistema não definido' }}</span>
+              @if (d.papel) { <span class="chip" [class.chip-hi]="d.papel === 'Mestre'">{{ d.papel }}</span> }
+              @if (ultimaSessao; as s) { <span>Última sessão: <strong class="num">#{{ s.numeroSessao }}</strong> {{ s.nome }}</span> }
+            </p>
+            <div class="destaque-acoes">
+              @if (ultimaSessao; as s) { <a class="btn-primary" [routerLink]="['/play', s.sessaoId]">Jogar sessão {{ s.numeroSessao }}</a> }
+              <a class="btn-secondary" [routerLink]="['/campaigns', d.campanhaId]">Abrir campanha</a>
+              <a class="btn-secondary" [routerLink]="['/campaigns', d.campanhaId, 'timeline']">Crônica</a>
+            </div>
+          </div>
         } @else {
-          <div class="empty-state">
-            <p>Você ainda não tem campanhas.</p>
-            <a class="btn-primary" routerLink="/campaigns/create">Criar a primeira campanha</a>
+          <div class="destaque-corpo">
+            <p class="rotulo-secao" id="tit-destaque">Comece aqui</p>
+            <h2 class="destaque-nome">Sua primeira aventura</h2>
+            <p class="destaque-meta"><span>Crie uma campanha, convide os jogadores e registre a história.</span></p>
+            <div class="destaque-acoes"><a class="btn-primary" routerLink="/campaigns/create">Criar campanha</a></div>
           </div>
         }
       </section>
 
-      <section class="panel" aria-labelledby="tit-sessoes">
-        <div class="panel-head">
-          <h2 id="tit-sessoes">Próximas sessões</h2>
-          <a routerLink="/sessoes" class="ver-mais">Ver todas</a>
-        </div>
+      <!-- Livro de números -->
+      <section class="livro" aria-labelledby="tit-livro">
+        <h2 class="rotulo-secao" id="tit-livro">O grimório</h2>
+        <ul>
+          <li><a routerLink="/campaigns"><span class="liv-nome">Campanhas</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalCampanhas }}</span></a></li>
+          <li><a routerLink="/sessoes"><span class="liv-nome">Sessões</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ sessoes.length }}</span></a></li>
+          <li><a routerLink="/personagens"><span class="liv-nome">Heróis</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalHerois }}</span></a></li>
+          <li><a routerLink="/personagens"><span class="liv-nome">NPCs</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalNpcs }}</span></a></li>
+          <li><a routerLink="/personagens"><span class="liv-nome">Monstros</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalViloes }}</span></a></li>
+        </ul>
+      </section>
 
-        @if (summary.proximasSessoes.length > 0) {
-          <ul class="lista">
-            @for (sessao of summary.proximasSessoes; track sessao.sessaoId) {
-              <li class="list-item">
-                <div class="item-info">
-                  <h3>{{ sessao.nome }} <small class="text-accent">Sessão {{ sessao.numeroSessao }}</small></h3>
-                  <p>{{ sessao.campanha?.nome || 'Campanha' }}</p>
-                </div>
-                <div class="item-data num">
-                  <a [routerLink]="['/sessoes', sessao.sessaoId]">{{ sessao.dataAgendada | date:'dd/MM' }}</a>
-                </div>
+      <!-- Campanhas -->
+      <section class="campanhas" aria-labelledby="tit-campanhas">
+        <h2 class="rotulo-secao" id="tit-campanhas">Suas campanhas <a routerLink="/campaigns" class="rotulo-extra">Ver todas</a></h2>
+        @if (campanhas.length > 0) {
+          <ul class="lista-campanhas">
+            @for (camp of campanhas; track camp.campanhaId) {
+              <li>
+                <a class="camp" [routerLink]="['/campaigns', camp.campanhaId]">
+                  <app-emblema [nome]="camp.nome" [tamanho]="52" />
+                  <span class="camp-info">
+                    <strong>{{ camp.nome }}</strong>
+                    <small>{{ camp.sistema || 'Sistema não definido' }}</small>
+                  </span>
+                  @if (camp.papel) { <span class="chip" [class.chip-hi]="camp.papel === 'Mestre'">{{ camp.papel }}</span> }
+                  <span class="camp-seta" aria-hidden="true">→</span>
+                </a>
               </li>
             }
           </ul>
         } @else {
-          <div class="empty-state">
-            <p>Nenhuma sessão agendada.</p>
-          </div>
+          <p class="vazio">Você ainda não tem campanhas.</p>
         }
       </section>
+
+      <!-- Sessões -->
+      <section class="sessoes" aria-labelledby="tit-sessoes">
+        <h2 class="rotulo-secao" id="tit-sessoes">{{ listaSessoes.titulo }} <a routerLink="/sessoes" class="rotulo-extra">Ver todas</a></h2>
+        @if (listaSessoes.itens.length > 0) {
+          <ul class="lista-sessoes">
+            @for (s of listaSessoes.itens; track s.sessaoId) {
+              <li>
+                <a class="ses" [routerLink]="['/sessoes', s.sessaoId]">
+                  <span class="ses-data" aria-hidden="true">
+                    <span class="ses-dia num">{{ (s.dataAgendada || s.dataSessao) | date:'dd' }}</span>
+                    <span class="ses-mes">{{ (s.dataAgendada || s.dataSessao) | date:'MMM' }}</span>
+                  </span>
+                  <span class="ses-info">
+                    <strong>{{ s.nome }}</strong>
+                    <small>Sessão <span class="num">{{ s.numeroSessao }}</span> · {{ s.campanha?.nome || nomeDaCampanha(s.campanhaId) }}</small>
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="vazio">Nenhuma sessão ainda.</p>
+        }
+      </section>
+
+      <!-- Heróis -->
+      @if (herois.length > 0) {
+        <section class="herois" aria-labelledby="tit-herois">
+          <h2 class="rotulo-secao" id="tit-herois">Seus heróis <a routerLink="/personagens" class="rotulo-extra">Ver todos</a></h2>
+          <ul class="lista-herois">
+            @for (h of herois; track h.personagemId) {
+              <li>
+                <a class="heroi" [routerLink]="['/ficha', h.personagemId]">
+                  <app-emblema [nome]="h.nome" [tamanho]="64" />
+                  <strong>{{ h.nome }}</strong>
+                  <small>{{ nomeDaCampanha(h.campanhaId) }}</small>
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
     </div>
   </div>
 } @else if (loading) {

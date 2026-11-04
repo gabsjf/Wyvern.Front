@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { App as CapacitorApp } from '@capacitor/app';
 import { ToastContainer } from './shared/ui/toast/toast-container';
 import { ConfirmDialog } from './shared/ui/confirm/confirm-dialog';
+import { LayoutService } from './core/layout/layout.service';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,13 @@ export class App implements OnInit {
   protected readonly title = signal('wyvern-front');
   authService = inject(AuthService);
   router = inject(Router);
+  layout = inject(LayoutService);
+
+  /** Largura da barra lateral, para elementos flutuantes não ficarem por cima dela (no celular ela não existe). */
+  get larguraLateral(): string {
+    if (!this.authService.isLoggedIn() || this.layout.imersivo()) return "0px";
+    return this.layout.recolhida() ? "68px" : "208px";
+  }
 
   ngOnInit() {
     // Escuta eventos de Deep Link

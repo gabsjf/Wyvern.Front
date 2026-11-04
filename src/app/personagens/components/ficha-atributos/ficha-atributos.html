@@ -3,18 +3,18 @@
   <div class="atributo-card glass-panel">
     <div class="attr-header">FORÇA</div>
     <div class="attr-score">{{ personagem?.atributo?.forca || 10 }}</div>
-    <div class="attr-mod">{{ getMod(personagem?.atributo?.forca) }}</div>
+    <button type="button" class="attr-mod attr-roll" (click)="rolarAtributo('forca')" aria-label="Rolar teste de forca" title="Rolar teste">{{ getMod(personagem?.atributo?.forca) }}</button>
     <div class="attr-skills">
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isSaveProficient('forca')" disabled>
-        <span class="skill-name">Salvaguarda</span>
-        <span class="skill-val">{{ getSaveValue('forca', personagem?.atributo?.forca) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Atletismo')" disabled>
-        <span class="skill-name">Atletismo</span>
-        <span class="skill-val">{{ getSkillValue('Atletismo', personagem?.atributo?.forca) }}</span>
-      </div>
+      <button type="button" class="skill-row skill-roll" (click)="rolarSalvaguarda('forca')" [attr.aria-label]="'Rolar ' + 'Salvaguarda' + ', bônus ' + getSaveValue('forca', personagem?.atributo?.forca)">
+          <span class="skill-prof" [class.on]="isSaveProficient('forca')" aria-hidden="true"></span>
+          <span class="skill-name">Salvaguarda</span>
+          <span class="skill-val">{{ getSaveValue('forca', personagem?.atributo?.forca) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Atletismo', personagem?.atributo?.forca)" [attr.aria-label]="'Rolar ' + 'Atletismo' + ', bônus ' + getSkillValue('Atletismo', personagem?.atributo?.forca)">
+          <span class="skill-prof" [class.on]="isProficient('Atletismo')" aria-hidden="true"></span>
+          <span class="skill-name">Atletismo</span>
+          <span class="skill-val">{{ getSkillValue('Atletismo', personagem?.atributo?.forca) }}</span>
+        </button>
     </div>
   </div>
 
@@ -22,28 +22,28 @@
   <div class="atributo-card glass-panel">
     <div class="attr-header">DESTREZA</div>
     <div class="attr-score">{{ personagem?.atributo?.destreza || 10 }}</div>
-    <div class="attr-mod">{{ getMod(personagem?.atributo?.destreza) }}</div>
+    <button type="button" class="attr-mod attr-roll" (click)="rolarAtributo('destreza')" aria-label="Rolar teste de destreza" title="Rolar teste">{{ getMod(personagem?.atributo?.destreza) }}</button>
     <div class="attr-skills">
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isSaveProficient('destreza')" disabled>
-        <span class="skill-name">Salvaguarda</span>
-        <span class="skill-val">{{ getSaveValue('destreza', personagem?.atributo?.destreza) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Acrobacia')" disabled>
-        <span class="skill-name">Acrobacia</span>
-        <span class="skill-val">{{ getSkillValue('Acrobacia', personagem?.atributo?.destreza) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Furtividade')" disabled>
-        <span class="skill-name">Furtividade</span>
-        <span class="skill-val">{{ getSkillValue('Furtividade', personagem?.atributo?.destreza) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Prestidigitação')" disabled>
-        <span class="skill-name">Prestidigitação</span>
-        <span class="skill-val">{{ getSkillValue('Prestidigitação', personagem?.atributo?.destreza) }}</span>
-      </div>
+      <button type="button" class="skill-row skill-roll" (click)="rolarSalvaguarda('destreza')" [attr.aria-label]="'Rolar ' + 'Salvaguarda' + ', bônus ' + getSaveValue('destreza', personagem?.atributo?.destreza)">
+          <span class="skill-prof" [class.on]="isSaveProficient('destreza')" aria-hidden="true"></span>
+          <span class="skill-name">Salvaguarda</span>
+          <span class="skill-val">{{ getSaveValue('destreza', personagem?.atributo?.destreza) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Acrobacia', personagem?.atributo?.destreza)" [attr.aria-label]="'Rolar ' + 'Acrobacia' + ', bônus ' + getSkillValue('Acrobacia', personagem?.atributo?.destreza)">
+          <span class="skill-prof" [class.on]="isProficient('Acrobacia')" aria-hidden="true"></span>
+          <span class="skill-name">Acrobacia</span>
+          <span class="skill-val">{{ getSkillValue('Acrobacia', personagem?.atributo?.destreza) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Furtividade', personagem?.atributo?.destreza)" [attr.aria-label]="'Rolar ' + 'Furtividade' + ', bônus ' + getSkillValue('Furtividade', personagem?.atributo?.destreza)">
+          <span class="skill-prof" [class.on]="isProficient('Furtividade')" aria-hidden="true"></span>
+          <span class="skill-name">Furtividade</span>
+          <span class="skill-val">{{ getSkillValue('Furtividade', personagem?.atributo?.destreza) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Prestidigitação', personagem?.atributo?.destreza)" [attr.aria-label]="'Rolar ' + 'Prestidigitação' + ', bônus ' + getSkillValue('Prestidigitação', personagem?.atributo?.destreza)">
+          <span class="skill-prof" [class.on]="isProficient('Prestidigitação')" aria-hidden="true"></span>
+          <span class="skill-name">Prestidigitação</span>
+          <span class="skill-val">{{ getSkillValue('Prestidigitação', personagem?.atributo?.destreza) }}</span>
+        </button>
     </div>
   </div>
 
@@ -51,13 +51,13 @@
   <div class="atributo-card glass-panel">
     <div class="attr-header">CONSTITUIÇÃO</div>
     <div class="attr-score">{{ personagem?.atributo?.constituicao || 10 }}</div>
-    <div class="attr-mod">{{ getMod(personagem?.atributo?.constituicao) }}</div>
+    <button type="button" class="attr-mod attr-roll" (click)="rolarAtributo('constituicao')" aria-label="Rolar teste de constituicao" title="Rolar teste">{{ getMod(personagem?.atributo?.constituicao) }}</button>
     <div class="attr-skills">
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isSaveProficient('constituicao')" disabled>
-        <span class="skill-name">Salvaguarda</span>
-        <span class="skill-val">{{ getSaveValue('constituicao', personagem?.atributo?.constituicao) }}</span>
-      </div>
+      <button type="button" class="skill-row skill-roll" (click)="rolarSalvaguarda('constituicao')" [attr.aria-label]="'Rolar ' + 'Salvaguarda' + ', bônus ' + getSaveValue('constituicao', personagem?.atributo?.constituicao)">
+          <span class="skill-prof" [class.on]="isSaveProficient('constituicao')" aria-hidden="true"></span>
+          <span class="skill-name">Salvaguarda</span>
+          <span class="skill-val">{{ getSaveValue('constituicao', personagem?.atributo?.constituicao) }}</span>
+        </button>
     </div>
   </div>
   
@@ -65,38 +65,38 @@
   <div class="atributo-card glass-panel">
     <div class="attr-header">INTELIGÊNCIA</div>
     <div class="attr-score">{{ personagem?.atributo?.inteligencia || 10 }}</div>
-    <div class="attr-mod">{{ getMod(personagem?.atributo?.inteligencia) }}</div>
+    <button type="button" class="attr-mod attr-roll" (click)="rolarAtributo('inteligencia')" aria-label="Rolar teste de inteligencia" title="Rolar teste">{{ getMod(personagem?.atributo?.inteligencia) }}</button>
     <div class="attr-skills">
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isSaveProficient('inteligencia')" disabled>
-        <span class="skill-name">Salvaguarda</span>
-        <span class="skill-val">{{ getSaveValue('inteligencia', personagem?.atributo?.inteligencia) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Arcanismo')" disabled>
-        <span class="skill-name">Arcanismo</span>
-        <span class="skill-val">{{ getSkillValue('Arcanismo', personagem?.atributo?.inteligencia) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('História')" disabled>
-        <span class="skill-name">História</span>
-        <span class="skill-val">{{ getSkillValue('História', personagem?.atributo?.inteligencia) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Investigação')" disabled>
-        <span class="skill-name">Investigação</span>
-        <span class="skill-val">{{ getSkillValue('Investigação', personagem?.atributo?.inteligencia) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Natureza')" disabled>
-        <span class="skill-name">Natureza</span>
-        <span class="skill-val">{{ getSkillValue('Natureza', personagem?.atributo?.inteligencia) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Religião')" disabled>
-        <span class="skill-name">Religião</span>
-        <span class="skill-val">{{ getSkillValue('Religião', personagem?.atributo?.inteligencia) }}</span>
-      </div>
+      <button type="button" class="skill-row skill-roll" (click)="rolarSalvaguarda('inteligencia')" [attr.aria-label]="'Rolar ' + 'Salvaguarda' + ', bônus ' + getSaveValue('inteligencia', personagem?.atributo?.inteligencia)">
+          <span class="skill-prof" [class.on]="isSaveProficient('inteligencia')" aria-hidden="true"></span>
+          <span class="skill-name">Salvaguarda</span>
+          <span class="skill-val">{{ getSaveValue('inteligencia', personagem?.atributo?.inteligencia) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Arcanismo', personagem?.atributo?.inteligencia)" [attr.aria-label]="'Rolar ' + 'Arcanismo' + ', bônus ' + getSkillValue('Arcanismo', personagem?.atributo?.inteligencia)">
+          <span class="skill-prof" [class.on]="isProficient('Arcanismo')" aria-hidden="true"></span>
+          <span class="skill-name">Arcanismo</span>
+          <span class="skill-val">{{ getSkillValue('Arcanismo', personagem?.atributo?.inteligencia) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('História', personagem?.atributo?.inteligencia)" [attr.aria-label]="'Rolar ' + 'História' + ', bônus ' + getSkillValue('História', personagem?.atributo?.inteligencia)">
+          <span class="skill-prof" [class.on]="isProficient('História')" aria-hidden="true"></span>
+          <span class="skill-name">História</span>
+          <span class="skill-val">{{ getSkillValue('História', personagem?.atributo?.inteligencia) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Investigação', personagem?.atributo?.inteligencia)" [attr.aria-label]="'Rolar ' + 'Investigação' + ', bônus ' + getSkillValue('Investigação', personagem?.atributo?.inteligencia)">
+          <span class="skill-prof" [class.on]="isProficient('Investigação')" aria-hidden="true"></span>
+          <span class="skill-name">Investigação</span>
+          <span class="skill-val">{{ getSkillValue('Investigação', personagem?.atributo?.inteligencia) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Natureza', personagem?.atributo?.inteligencia)" [attr.aria-label]="'Rolar ' + 'Natureza' + ', bônus ' + getSkillValue('Natureza', personagem?.atributo?.inteligencia)">
+          <span class="skill-prof" [class.on]="isProficient('Natureza')" aria-hidden="true"></span>
+          <span class="skill-name">Natureza</span>
+          <span class="skill-val">{{ getSkillValue('Natureza', personagem?.atributo?.inteligencia) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Religião', personagem?.atributo?.inteligencia)" [attr.aria-label]="'Rolar ' + 'Religião' + ', bônus ' + getSkillValue('Religião', personagem?.atributo?.inteligencia)">
+          <span class="skill-prof" [class.on]="isProficient('Religião')" aria-hidden="true"></span>
+          <span class="skill-name">Religião</span>
+          <span class="skill-val">{{ getSkillValue('Religião', personagem?.atributo?.inteligencia) }}</span>
+        </button>
     </div>
   </div>
 
@@ -104,38 +104,38 @@
   <div class="atributo-card glass-panel">
     <div class="attr-header">SABEDORIA</div>
     <div class="attr-score">{{ personagem?.atributo?.sabedoria || 10 }}</div>
-    <div class="attr-mod">{{ getMod(personagem?.atributo?.sabedoria) }}</div>
+    <button type="button" class="attr-mod attr-roll" (click)="rolarAtributo('sabedoria')" aria-label="Rolar teste de sabedoria" title="Rolar teste">{{ getMod(personagem?.atributo?.sabedoria) }}</button>
     <div class="attr-skills">
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isSaveProficient('sabedoria')" disabled>
-        <span class="skill-name">Salvaguarda</span>
-        <span class="skill-val">{{ getSaveValue('sabedoria', personagem?.atributo?.sabedoria) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Adestrar Animais')" disabled>
-        <span class="skill-name">Adestrar Animais</span>
-        <span class="skill-val">{{ getSkillValue('Adestrar Animais', personagem?.atributo?.sabedoria) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Intuição')" disabled>
-        <span class="skill-name">Intuição</span>
-        <span class="skill-val">{{ getSkillValue('Intuição', personagem?.atributo?.sabedoria) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Medicina')" disabled>
-        <span class="skill-name">Medicina</span>
-        <span class="skill-val">{{ getSkillValue('Medicina', personagem?.atributo?.sabedoria) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Percepção')" disabled>
-        <span class="skill-name">Percepção</span>
-        <span class="skill-val">{{ getSkillValue('Percepção', personagem?.atributo?.sabedoria) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Sobrevivência')" disabled>
-        <span class="skill-name">Sobrevivência</span>
-        <span class="skill-val">{{ getSkillValue('Sobrevivência', personagem?.atributo?.sabedoria) }}</span>
-      </div>
+      <button type="button" class="skill-row skill-roll" (click)="rolarSalvaguarda('sabedoria')" [attr.aria-label]="'Rolar ' + 'Salvaguarda' + ', bônus ' + getSaveValue('sabedoria', personagem?.atributo?.sabedoria)">
+          <span class="skill-prof" [class.on]="isSaveProficient('sabedoria')" aria-hidden="true"></span>
+          <span class="skill-name">Salvaguarda</span>
+          <span class="skill-val">{{ getSaveValue('sabedoria', personagem?.atributo?.sabedoria) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Adestrar Animais', personagem?.atributo?.sabedoria)" [attr.aria-label]="'Rolar ' + 'Adestrar Animais' + ', bônus ' + getSkillValue('Adestrar Animais', personagem?.atributo?.sabedoria)">
+          <span class="skill-prof" [class.on]="isProficient('Adestrar Animais')" aria-hidden="true"></span>
+          <span class="skill-name">Adestrar Animais</span>
+          <span class="skill-val">{{ getSkillValue('Adestrar Animais', personagem?.atributo?.sabedoria) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Intuição', personagem?.atributo?.sabedoria)" [attr.aria-label]="'Rolar ' + 'Intuição' + ', bônus ' + getSkillValue('Intuição', personagem?.atributo?.sabedoria)">
+          <span class="skill-prof" [class.on]="isProficient('Intuição')" aria-hidden="true"></span>
+          <span class="skill-name">Intuição</span>
+          <span class="skill-val">{{ getSkillValue('Intuição', personagem?.atributo?.sabedoria) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Medicina', personagem?.atributo?.sabedoria)" [attr.aria-label]="'Rolar ' + 'Medicina' + ', bônus ' + getSkillValue('Medicina', personagem?.atributo?.sabedoria)">
+          <span class="skill-prof" [class.on]="isProficient('Medicina')" aria-hidden="true"></span>
+          <span class="skill-name">Medicina</span>
+          <span class="skill-val">{{ getSkillValue('Medicina', personagem?.atributo?.sabedoria) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Percepção', personagem?.atributo?.sabedoria)" [attr.aria-label]="'Rolar ' + 'Percepção' + ', bônus ' + getSkillValue('Percepção', personagem?.atributo?.sabedoria)">
+          <span class="skill-prof" [class.on]="isProficient('Percepção')" aria-hidden="true"></span>
+          <span class="skill-name">Percepção</span>
+          <span class="skill-val">{{ getSkillValue('Percepção', personagem?.atributo?.sabedoria) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Sobrevivência', personagem?.atributo?.sabedoria)" [attr.aria-label]="'Rolar ' + 'Sobrevivência' + ', bônus ' + getSkillValue('Sobrevivência', personagem?.atributo?.sabedoria)">
+          <span class="skill-prof" [class.on]="isProficient('Sobrevivência')" aria-hidden="true"></span>
+          <span class="skill-name">Sobrevivência</span>
+          <span class="skill-val">{{ getSkillValue('Sobrevivência', personagem?.atributo?.sabedoria) }}</span>
+        </button>
     </div>
   </div>
 
@@ -143,33 +143,33 @@
   <div class="atributo-card glass-panel">
     <div class="attr-header">CARISMA</div>
     <div class="attr-score">{{ personagem?.atributo?.carisma || 10 }}</div>
-    <div class="attr-mod">{{ getMod(personagem?.atributo?.carisma) }}</div>
+    <button type="button" class="attr-mod attr-roll" (click)="rolarAtributo('carisma')" aria-label="Rolar teste de carisma" title="Rolar teste">{{ getMod(personagem?.atributo?.carisma) }}</button>
     <div class="attr-skills">
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isSaveProficient('carisma')" disabled>
-        <span class="skill-name">Salvaguarda</span>
-        <span class="skill-val">{{ getSaveValue('carisma', personagem?.atributo?.carisma) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Atuação')" disabled>
-        <span class="skill-name">Atuação</span>
-        <span class="skill-val">{{ getSkillValue('Atuação', personagem?.atributo?.carisma) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Enganação')" disabled>
-        <span class="skill-name">Enganação</span>
-        <span class="skill-val">{{ getSkillValue('Enganação', personagem?.atributo?.carisma) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Intimidação')" disabled>
-        <span class="skill-name">Intimidação</span>
-        <span class="skill-val">{{ getSkillValue('Intimidação', personagem?.atributo?.carisma) }}</span>
-      </div>
-      <div class="skill-row">
-        <input type="radio" class="skill-prof" [checked]="isProficient('Persuasão')" disabled>
-        <span class="skill-name">Persuasão</span>
-        <span class="skill-val">{{ getSkillValue('Persuasão', personagem?.atributo?.carisma) }}</span>
-      </div>
+      <button type="button" class="skill-row skill-roll" (click)="rolarSalvaguarda('carisma')" [attr.aria-label]="'Rolar ' + 'Salvaguarda' + ', bônus ' + getSaveValue('carisma', personagem?.atributo?.carisma)">
+          <span class="skill-prof" [class.on]="isSaveProficient('carisma')" aria-hidden="true"></span>
+          <span class="skill-name">Salvaguarda</span>
+          <span class="skill-val">{{ getSaveValue('carisma', personagem?.atributo?.carisma) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Atuação', personagem?.atributo?.carisma)" [attr.aria-label]="'Rolar ' + 'Atuação' + ', bônus ' + getSkillValue('Atuação', personagem?.atributo?.carisma)">
+          <span class="skill-prof" [class.on]="isProficient('Atuação')" aria-hidden="true"></span>
+          <span class="skill-name">Atuação</span>
+          <span class="skill-val">{{ getSkillValue('Atuação', personagem?.atributo?.carisma) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Enganação', personagem?.atributo?.carisma)" [attr.aria-label]="'Rolar ' + 'Enganação' + ', bônus ' + getSkillValue('Enganação', personagem?.atributo?.carisma)">
+          <span class="skill-prof" [class.on]="isProficient('Enganação')" aria-hidden="true"></span>
+          <span class="skill-name">Enganação</span>
+          <span class="skill-val">{{ getSkillValue('Enganação', personagem?.atributo?.carisma) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Intimidação', personagem?.atributo?.carisma)" [attr.aria-label]="'Rolar ' + 'Intimidação' + ', bônus ' + getSkillValue('Intimidação', personagem?.atributo?.carisma)">
+          <span class="skill-prof" [class.on]="isProficient('Intimidação')" aria-hidden="true"></span>
+          <span class="skill-name">Intimidação</span>
+          <span class="skill-val">{{ getSkillValue('Intimidação', personagem?.atributo?.carisma) }}</span>
+        </button>
+      <button type="button" class="skill-row skill-roll" (click)="rolarPericia('Persuasão', personagem?.atributo?.carisma)" [attr.aria-label]="'Rolar ' + 'Persuasão' + ', bônus ' + getSkillValue('Persuasão', personagem?.atributo?.carisma)">
+          <span class="skill-prof" [class.on]="isProficient('Persuasão')" aria-hidden="true"></span>
+          <span class="skill-name">Persuasão</span>
+          <span class="skill-val">{{ getSkillValue('Persuasão', personagem?.atributo?.carisma) }}</span>
+        </button>
     </div>
   </div>
 </div>

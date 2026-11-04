@@ -78,7 +78,7 @@
     background: transparent;
     flex-shrink: 0;
 
-    &:checked {
+    &.on {
       border-color: var(--hi);
       background: var(--hi);
     }
@@ -131,4 +131,31 @@
   .attr-score { grid-area: score; }
   .attr-mod { grid-area: mod; margin-bottom: 0; }
   .attr-skills { grid-area: skills; align-self: stretch; }
+}
+
+/* linhas e modificadores clicáveis: rolam um d20 com o bônus */
+.skill-roll {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:last-child { border-bottom: 0; }
+  &:hover { background: color-mix(in srgb, var(--hi) 12%, transparent); .skill-name { color: var(--fg); } .skill-val { color: var(--hi); } }
+  &:active { background: color-mix(in srgb, var(--hi) 22%, transparent); }
+}
+
+.attr-roll {
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover { transform: scale(1.08); box-shadow: 0 0 14px rgba(var(--hi-rgb), 0.45); }
+  &:active { transform: scale(0.96); }
 }

@@ -1,7 +1,4 @@
 <div class="combate-container animate-fade-in">
-  <!-- Camada dos dados 3D: cobre a tela inteira e não captura toques -->
-  <div id="dice-box" class="dice-layer" aria-hidden="true"></div>
-
   <!-- ===== MESTRE: PREPARAR COMBATE ===== -->
   @if (!combateAtivo && userRole === 'Mestre') {
     <section class="panel preparacao" aria-labelledby="tit-preparar">
@@ -14,12 +11,18 @@
           <h3>Disponíveis</h3>
           <ul class="lista-disponiveis" aria-label="Personagens disponíveis">
             @for (p of personagens; track p.personagemId) {
-              <li>
-                <button type="button" class="item-disponivel" (click)="adicionarParticipante(p)"
-                        [attr.aria-label]="'Adicionar ' + p.nome + ' ao combate'">
-                  <span class="nome">{{ p.nome }}</span>
-                  <span class="chip" [class.chip-hi]="p.tipoId === 1" [class.chip-danger]="p.tipoId !== 1">{{ p.tipoId === 1 ? 'Herói' : 'Inimigo' }}</span>
-                </button>
+              <li class="disponivel">
+                <span class="nome">{{ p.nome }}</span>
+                <span class="chip" [class.chip-hi]="p.tipoId === 1" [class.chip-danger]="p.tipoId !== 1">{{ p.tipoId === 1 ? 'Herói' : p.tipoId === 2 ? 'NPC' : 'Monstro' }}</span>
+                @if (!ehHeroi(p)) {
+                  <span class="qtd-passo" role="group" [attr.aria-label]="'Quantidade de ' + p.nome">
+                    <button type="button" (click)="ajustarQuantidade(p, -1)" [disabled]="quantidadeDe(p) <= 1" aria-label="Uma cópia a menos">−</button>
+                    <output class="num">{{ quantidadeDe(p) }}</output>
+                    <button type="button" (click)="ajustarQuantidade(p, 1)" aria-label="Uma cópia a mais">+</button>
+                  </span>
+                }
+                <button type="button" class="btn-secondary btn-sm" (click)="adicionarComQuantidade(p)"
+                        [attr.aria-label]="'Adicionar ' + p.nome + ' ao combate'">Adicionar</button>
               </li>
             }
             @if (personagens.length === 0) {
@@ -54,7 +57,11 @@
         <div class="prep-col">
           <div class="prep-topo">
             <h3>Participantes</h3>
-            <button type="button" class="btn-secondary" (click)="rolarIniciativaMonstros()">Rolar iniciativa dos inimigos</button>
+            <span class="prep-topo-acoes">
+              <label class="check-pv"><input type="checkbox" [(ngModel)]="sortearPv" /> <span>Sortear PV pela fórmula</span></label>
+              <button type="button" class="btn-secondary" (click)="rolarIniciativaMonstros()">Iniciativa dos inimigos</button>
+              <button type="button" class="btn-secondary" (click)="rolarIniciativaTodos()">Iniciativa de todos</button>
+            </span>
           </div>
 
           <table class="premium-table table-stack">
@@ -64,6 +71,7 @@
                 <th>Iniciativa</th>
                 <th>PV</th>
                 <th>CA</th>
+                <th>Inimigo</th>
                 <th><span class="visually-hidden">Remover</span></th>
               </tr>
             </thead>
@@ -72,8 +80,12 @@
                 <tr>
                   <td data-label="Nome"><strong>{{ sel.nome }}</strong></td>
                   <td data-label="Iniciativa">
-                    <input type="number" min="0" class="form-control num campo-curto" [(ngModel)]="sel.iniciativa"
-                           [attr.aria-label]="'Iniciativa de ' + sel.nome" />
+                    <span class="ini-edit">
+                      <input type="number" class="form-control num campo-curto" [(ngModel)]="sel.iniciativa"
+                             [attr.aria-label]="'Iniciativa de ' + sel.nome" />
+                      <button type="button" class="btn-secondary btn-sm" (click)="rolarIniciativaParticipante(sel)"
+                              [attr.aria-label]="'Rolar iniciativa de ' + sel.nome" title="Rolar d20 + bônus">d20</button>
+                    </span>
                   </td>
                   <td data-label="PV">
                     <span class="pv-edit">
@@ -83,6 +95,7 @@
                     </span>
                   </td>
                   <td data-label="CA" class="num">{{ sel.classeArmadura }}</td>
+                  <td data-label="Inimigo"><input type="checkbox" [(ngModel)]="sel.isInimigo" [attr.aria-label]="sel.nome + ' é inimigo'" /></td>
                   <td>
                     <button type="button" class="btn-danger btn-sm" (click)="removerParticipanteSelecionado($index)"
                             [attr.aria-label]="'Remover ' + sel.nome">Remover</button>
@@ -91,7 +104,7 @@
               }
               @if (participantesSelecionados.length === 0) {
                 <tr>
-                  <td colspan="5" class="vazio">Nenhum participante ainda. Toque em um personagem da lista para adicioná-lo.</td>
+                  <td colspan="6" class="vazio">Nenhum participante ainda. Toque em um personagem da lista para adicioná-lo.</td>
                 </tr>
               }
             </tbody>
@@ -115,54 +128,69 @@
     </section>
   }
 
+
   <!-- ===== COMBATE EM ANDAMENTO ===== -->
   @if (combateAtivo) {
     <header class="combate-topo">
-      <div>
-        <p class="eyebrow">Rodada</p>
-        <h2 class="rodada"><span class="num">{{ combateAtivo.rodadaAtual }}</span></h2>
+      <div class="rodada-bloco">
+        <span class="rodada-rotulo">Rodada</span>
+        <span class="rodada num">{{ combateAtivo.rodadaAtual }}</span>
       </div>
+
+      <!-- Faixa de iniciativa: a ordem de relance -->
+      <ol class="faixa" aria-label="Ordem de iniciativa">
+        @for (p of participantesCombate; track $index) {
+          <li class="faixa-item" [class.atual]="$index === combateAtivo.turnoAtualIndex" [class.inimigo]="p.isInimigo" [class.abatido]="estaMorto(p)">
+            <span class="faixa-ini num">{{ p.iniciativa }}</span>
+            <span class="faixa-nome">{{ p.nomeNPC }}</span>
+          </li>
+        }
+      </ol>
+
       @if (userRole === 'Mestre') {
         <div class="combate-acoes">
-          <button type="button" class="btn-secondary" (click)="encerrarCombate()">Encerrar combate</button>
+          <button type="button" class="btn-secondary" (click)="encerrarCombate()">Encerrar</button>
           <button type="button" class="btn-primary" [disabled]="isProcessingTurn" (click)="proximoTurno()">
-            {{ isProcessingTurn ? 'Aguarde...' : 'Próximo turno' }}
+            {{ isProcessingTurn ? 'Aguarde...' : 'Próximo turno →' }}
           </button>
         </div>
       }
     </header>
 
-    <ol class="tracker-list" aria-label="Ordem de iniciativa">
-      @for (p of participantesCombate; track $index) {
-        @let ehTurno = $index === combateAtivo.turnoAtualIndex;
-        @let morto = (p.isInimigo && p.vidaAtual <= 0) || (!p.isInimigo && p.falhasMorte >= 3);
-        @let controla = userRole === 'Mestre' || isMeuPersonagem(p.personagemId);
-        @let veDetalhes = userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId);
-        @let pct = p.vidaMaxima > 0 ? (p.vidaAtual / p.vidaMaxima) * 100 : 0;
-        <li class="tracker-card" [class.active-turn]="ehTurno" [class.inimigo]="p.isInimigo" [class.dead]="morto"
-            [attr.aria-current]="ehTurno ? 'step' : null">
-          <div class="linha-principal">
-            <div class="ini num" title="Iniciativa">{{ p.iniciativa }}</div>
+    <div class="mesa">
+      <ol class="tracker-list" aria-label="Combatentes">
+        @for (p of participantesCombate; track $index) {
+          @let ehTurno = $index === combateAtivo.turnoAtualIndex;
+          @let morto = estaMorto(p);
+          @let controla = userRole === 'Mestre' || isMeuPersonagem(p.personagemId);
+          @let veDetalhes = userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId);
+          @let pct = p.vidaMaxima > 0 ? (p.vidaAtual / p.vidaMaxima) * 100 : 0;
+          <li class="tracker-card" [class.active-turn]="ehTurno" [class.inimigo]="p.isInimigo" [class.dead]="morto"
+              [attr.aria-current]="ehTurno ? 'step' : null">
+            @if (ehTurno) { <span class="selo-turno">Turno atual</span> }
 
-            <div class="quem">
-              <h3>{{ p.nomeNPC }}</h3>
-              <p class="meta">
-                @if (p.isInimigo) { <span class="chip chip-danger">Inimigo</span> } @else { <span class="chip chip-hi">Herói</span> }
-                @if (ehTurno) { <span class="chip chip-hi">Turno atual</span> }
-                @if (morto) { <span class="chip chip-danger">{{ p.isInimigo ? 'Abatido' : 'Morto' }}</span> }
-              </p>
+            <div class="linha-principal">
+              <div class="ini num" title="Iniciativa">{{ p.iniciativa }}</div>
+
+              <div class="quem">
+                <h3>{{ p.nomeNPC }}</h3>
+                <p class="meta">
+                  @if (p.isInimigo) { <span class="chip chip-danger">Inimigo</span> } @else { <span class="chip chip-hi">Herói</span> }
+                  @if (morto) { <span class="chip chip-danger">{{ p.isInimigo ? 'Abatido' : 'Morto' }}</span> }
+                </p>
+              </div>
+
+              @if (veDetalhes) {
+                <div class="ca num" title="Classe de armadura"><small>CA</small>{{ p.classeArmadura }}</div>
+              }
             </div>
-
-            @if (veDetalhes) {
-              <div class="ca num" title="Classe de armadura"><small>CA</small>{{ p.classeArmadura }}</div>
-            }
 
             <div class="vida">
               @if (controla) {
                 <div class="vida-nums">
                   <label class="visually-hidden" [for]="'pv-' + $index">PV de {{ p.nomeNPC }}</label>
                   <input [id]="'pv-' + $index" type="number" min="0" class="form-control num pv-input" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" />
-                  <span class="num">/ {{ p.vidaMaxima }} PV</span>
+                  <span class="num pv-max">/ {{ p.vidaMaxima }} PV</span>
                 </div>
                 <div class="bar" role="img" [attr.aria-label]="'Vida em ' + (pct | number:'1.0-0') + '%'">
                   <i [style.width.%]="pct" [class.low]="pct < 30"></i>
@@ -173,66 +201,118 @@
                 <span class="chip">Estado desconhecido</span>
               }
             </div>
-          </div>
 
-          @if (controla) {
-            <div class="dano-cura">
-              <label class="visually-hidden" [for]="'dano-' + $index">Quantidade de dano ou cura para {{ p.nomeNPC }}</label>
-              <input [id]="'dano-' + $index" type="number" min="0" #danoInput class="form-control num qtd" placeholder="Qtd" />
-              <button type="button" class="btn-danger" (click)="aplicarDano(p, danoInput.value, false)">Dano</button>
-              <button type="button" class="btn-secondary btn-cura" (click)="aplicarDano(p, danoInput.value, true)">Cura</button>
-            </div>
-          }
+            @if (controla || veDetalhes) {
+              <div class="acoes-linha">
+                @if (controla) {
+                  <div class="dano-cura">
+                    <label class="visually-hidden" [for]="'dano-' + $index">Quantidade de dano ou cura para {{ p.nomeNPC }}</label>
+                    <input [id]="'dano-' + $index" type="number" min="0" #danoInput class="form-control num qtd" placeholder="Qtd" />
+                    <button type="button" class="btn-danger" (click)="aplicarDano(p, danoInput.value, false)">Dano</button>
+                    <button type="button" class="btn-secondary btn-cura" (click)="aplicarDano(p, danoInput.value, true)">Cura</button>
+                  </div>
+                }
 
-          @if (veDetalhes) {
-            <div class="efeitos">
-              <label class="efeitos-rotulo" [for]="'ef-' + $index">Efeitos</label>
-              @if (controla) {
-                <input [id]="'ef-' + $index" type="text" class="form-control" placeholder="Ex.: Agarrado, Envenenado" [(ngModel)]="p.condicoes" (blur)="salvarParticipante(p)" />
-              } @else {
-                <span class="efeitos-texto" [id]="'ef-' + $index">{{ p.condicoes || 'Nenhum' }}</span>
-              }
-            </div>
-          }
-
-          @if (p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3) {
-            @let podeRolar = ehTurno && controla;
-            <div class="salvaguardas" role="group" [attr.aria-label]="'Salvaguardas de morte de ' + p.nomeNPC">
-              @if (!ehTurno) {
-                <p class="aviso">As salvaguardas são marcadas no turno deste herói.</p>
-              }
-              <div class="grupo" [class.travado]="!podeRolar">
-                <span class="rotulo ok">Sucessos</span>
-                <span class="bolas">
-                  @for (n of [1, 2, 3]; track n) {
-                    <button type="button" class="bola ok" [class.on]="p.sucessosMorte >= n" [attr.aria-pressed]="p.sucessosMorte >= n"
-                            [attr.aria-label]="'Sucesso ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleSucessoMorte(p, n, podeRolar)"></button>
-                  }
-                </span>
+                @if (veDetalhes) {
+                  <div class="efeitos">
+                    <span class="efeitos-rotulo">Efeitos</span>
+                    <div class="chips-condicao">
+                      @for (c of condicoesDe(p); track c) {
+                        @if (controla) {
+                          <button type="button" class="cond on" (click)="removerCondicao(p, c)" [attr.aria-label]="'Remover ' + c">{{ c }} <span aria-hidden="true">×</span></button>
+                        } @else {
+                          <span class="cond on">{{ c }}</span>
+                        }
+                      }
+                      @if (controla) {
+                        <select class="cond-add" aria-label="Adicionar condição" (change)="adicionarCondicao(p, $any($event.target).value); $any($event.target).value = ''">
+                          <option value="">+ Condição</option>
+                          @for (c of condicoesPadrao; track c) {
+                            @if (!temCondicao(p, c)) { <option [value]="c">{{ c }}</option> }
+                          }
+                        </select>
+                      } @else if (condicoesDe(p).length === 0) {
+                        <span class="efeitos-texto">Nenhum</span>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
-              <div class="grupo" [class.travado]="!podeRolar">
-                <span class="rotulo ruim">Falhas</span>
-                <span class="bolas">
-                  @for (n of [1, 2, 3]; track n) {
-                    <button type="button" class="bola ruim" [class.on]="p.falhasMorte >= n" [attr.aria-pressed]="p.falhasMorte >= n"
-                            [attr.aria-label]="'Falha ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleFalhaMorte(p, n, podeRolar)"></button>
-                  }
-                </span>
+            }
+
+            @if (p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3) {
+              @let podeRolar = ehTurno && controla;
+              <div class="salvaguardas" role="group" [attr.aria-label]="'Salvaguardas de morte de ' + p.nomeNPC">
+                @if (!ehTurno) {
+                  <p class="aviso">As salvaguardas são marcadas no turno deste herói.</p>
+                }
+                <div class="grupo" [class.travado]="!podeRolar">
+                  <span class="rotulo ok">Sucessos</span>
+                  <span class="bolas">
+                    @for (n of [1, 2, 3]; track n) {
+                      <button type="button" class="bola ok" [class.on]="p.sucessosMorte >= n" [attr.aria-pressed]="p.sucessosMorte >= n"
+                              [attr.aria-label]="'Sucesso ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleSucessoMorte(p, n, podeRolar)"></button>
+                    }
+                  </span>
+                </div>
+                <div class="grupo" [class.travado]="!podeRolar">
+                  <span class="rotulo ruim">Falhas</span>
+                  <span class="bolas">
+                    @for (n of [1, 2, 3]; track n) {
+                      <button type="button" class="bola ruim" [class.on]="p.falhasMorte >= n" [attr.aria-pressed]="p.falhasMorte >= n"
+                              [attr.aria-label]="'Falha ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleFalhaMorte(p, n, podeRolar)"></button>
+                    }
+                  </span>
+                </div>
               </div>
-            </div>
-          }
-        </li>
-      }
-    </ol>
+            }
+          </li>
+        }
+      </ol>
+
+      <aside class="bandeja-coluna">
+        <ng-container *ngTemplateOutlet="bandeja"></ng-container>
+      </aside>
+    </div>
+  } @else {
+    <ng-container *ngTemplateOutlet="bandeja"></ng-container>
   }
 
-  <!-- ===== ROLADOR DE DADOS ===== -->
-  <section class="dice-ui panel" aria-label="Rolador de dados">
-    <label class="dice-rotulo" for="formula-dados">Rolador de dados</label>
-    <div class="dice-linha">
-      <input id="formula-dados" type="text" class="form-control num" [(ngModel)]="diceFormula" placeholder="Ex.: 1d20+5" (keyup.enter)="rolarDados()" />
-      <button type="button" class="btn-primary" (click)="rolarDados()">Rolar</button>
-    </div>
-    <p class="dice-resultado num" role="status" aria-live="polite">{{ diceResult }}</p>
-  </section>
+  <!-- ===== BANDEJA DE DADOS ===== -->
+  <ng-template #bandeja>
+    <section class="dados panel" aria-label="Rolador de dados">
+      <h2 class="dados-titulo">Dados</h2>
+
+      <div class="dados-rapidos" role="group" aria-label="Dados rápidos">
+        @for (f of dadosRapidos; track f) {
+          <button type="button" class="dado" [class.d20]="f === 20" (click)="rolarRapido(f)" [attr.aria-label]="'Rolar 1d' + f">
+            <span class="dado-faces num">d{{ f }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="dados-formula">
+        <label class="visually-hidden" for="formula-dados">Fórmula de dados</label>
+        <input id="formula-dados" type="text" class="form-control num" [(ngModel)]="diceFormula" placeholder="Ex.: 2d6+3" (keyup.enter)="rolarDados()" />
+        <button type="button" class="btn-primary" (click)="rolarDados()">Rolar</button>
+      </div>
+
+      <div class="dados-resultado" [class.vazio]="ultimoTotal === null" role="status" aria-live="polite">
+        @if (ultimoTotal !== null) {
+          <span class="resultado-num num">{{ ultimoTotal }}</span>
+          <span class="resultado-formula num">{{ ultimaFormula }}</span>
+        } @else {
+          <span class="resultado-vazio">Role um dado para ver o resultado aqui.</span>
+        }
+      </div>
+
+      @if (historico.length > 1) {
+        <ol class="historico" aria-label="Rolagens anteriores">
+          @for (h of historico.slice(1); track $index) {
+            <li><span class="num">{{ h.formula }}</span><span class="num h-total">{{ h.total }}</span></li>
+          }
+        </ol>
+      }
+    </section>
+  </ng-template>
 </div>

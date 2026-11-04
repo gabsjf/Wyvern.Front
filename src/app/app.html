@@ -1,11 +1,13 @@
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
-<div class="app-container" [class.no-sidebar]="!authService.isLoggedIn()">
-  @if (authService.isLoggedIn()) {
+<div class="app-container" [class.no-sidebar]="!authService.isLoggedIn() || layout.imersivo()" [style.--lateral]="larguraLateral">
+  @if (authService.isLoggedIn() && !layout.imersivo()) {
     <app-sidebar></app-sidebar>
   }
   <main id="conteudo" class="main-content" tabindex="-1">
     <router-outlet></router-outlet>
   </main>
 </div>
+<!-- Camada global dos dados 3D (usada por qualquer tela que role dados): cobre a tela e não captura toques -->
+<div id="dice-box" class="dice-layer" aria-hidden="true"></div>
 <app-toast-container></app-toast-container>
 <app-confirm-dialog></app-confirm-dialog>

@@ -1,0 +1,653 @@
+<section class="mapa" [class.com-painel]="painelAberto()" [class.modo-3d]="modo3d()" aria-label="Mapa tático">
+  <div class="palco-moldura">
+    <div #palco class="palco" [class.regua]="ferramenta() !== 'mover'"
+         (pointerdown)="aoApertarFundo($event)" (pointermove)="aoMoverPonteiro($event)"
+         (pointerup)="aoSoltarPonteiro($event)" (pointercancel)="aoCancelarPonteiro($event)" (dblclick)="aoDuploClique($event)">
+      @if (cena(); as c) {
+        <div class="mundo" [style.width.px]="c.largura" [style.height.px]="c.altura"
+             [style.transform]="'translate(' + vista().x + 'px, ' + vista().y + 'px) scale(' + vista().zoom + ')'"
+             [style.--zoom]="vista().zoom" [style.--celula.px]="c.tamanhoCelula">
+          @if (imagemUrl(); as url) {
+            <img class="imagem" [src]="url" [alt]="'Mapa: ' + c.nome" draggable="false" />
+          }
+          <div class="grade" aria-hidden="true"></div>
+          @if (neblinaAtiva()) {
+            <canvas #canvasNeblina class="neblina" [class.do-mestre]="ehMestre()" aria-hidden="true"
+                    [style.width.px]="c.largura" [style.height.px]="c.altura"></canvas>
+          }
+
+          @if (paredes().length || paredeEmCurso()) {
+            <svg class="paredes-svg" [attr.width]="c.largura" [attr.height]="c.altura" aria-hidden="true">
+              @for (w of paredes(); track w.paredeId) {
+                @if (w.porta || w.janela || ehMestre()) {
+                  <line [attr.x1]="w.x1 * c.tamanhoCelula" [attr.y1]="w.y1 * c.tamanhoCelula"
+                        [attr.x2]="w.x2 * c.tamanhoCelula" [attr.y2]="w.y2 * c.tamanhoCelula"
+                        [class]="w.porta ? (w.aberta ? 'porta aberta' : 'porta') : (w.janela ? 'janela' : 'parede')" />
+                }
+              }
+              @if (paredeEmCurso(); as pc) {
+                <line class="em-curso" [class.porta]="ferramenta() === 'porta'" [class.janela]="ferramenta() === 'janela'" [attr.x1]="pc.x1 * c.tamanhoCelula" [attr.y1]="pc.y1 * c.tamanhoCelula"
+                      [attr.x2]="pc.x2 * c.tamanhoCelula" [attr.y2]="pc.y2 * c.tamanhoCelula" />
+              }
+            </svg>
+          }
+
+          @if (tracosDesenhados().length || tracoEmCursoD()) {
+            <svg class="tracos-svg" [attr.width]="c.largura" [attr.height]="c.altura" aria-hidden="true">
+              @for (t of tracosDesenhados(); track t.tracoId) {
+                <path [class]="'traco ' + corDe(t.cor)" [attr.d]="t.d" [attr.stroke-width]="t.espessura" />
+              }
+              @if (tracoEmCursoD(); as d) {
+                <path [class]="'traco ' + corDe(corDoTraco())" [attr.d]="d" [attr.stroke-width]="espessuraDoTraco()" />
+              }
+            </svg>
+          }
+
+          <canvas #canvasAlcance class="alcance" aria-hidden="true" [style.width.px]="c.largura" [style.height.px]="c.altura"></canvas>
+
+          @if (custoDoArrasto(); as k) {
+            <div class="custo-arrasto num" [class.fora]="!k.ok" [style.left.px]="k.x" [style.top.px]="k.y" role="status">
+              @if (k.custo !== null) { {{ k.custo }} {{ k.custo === 1 ? 'quadrado' : 'quadrados' }} <small>{{ metros(k.custo) }} m</small> }
+              @else if (k.ok) { <small>livre</small> }
+              @else { fora do alcance }
+            </div>
+          }
+
+          @for (m of marcadores(); track m.marcadorId) {
+            @let mp = posicaoDoMarcador(m);
+            <div class="ponto-interesse" role="button" tabindex="0" [attr.aria-label]="m.titulo + (m.visivel ? '' : ', escondido dos jogadores')"
+                 [class.selecionado]="selecionadoMarcadorId() === m.marcadorId" [class.escondido]="!m.visivel"
+                 [class.arrastando]="arrastoMarcador()?.marcadorId === m.marcadorId"
+                 [style.left.px]="mp.x" [style.top.px]="mp.y"
+                 (pointerdown)="aoApertarMarcador($event, m)" (keydown.enter)="selecionarMarcador(m)">
+              <span class="pi-pino"><i [class]="'bi ' + iconeDoMarcador(m.icone)" aria-hidden="true"></i></span>
+              <span class="pi-rotulo">{{ m.titulo }}</span>
+            </div>
+          }
+
+          @for (t of tokensVisiveis(); track t.tokenId) {
+            @let inf = info(t);
+            @let pos = posicao(t);
+            <div class="token" role="button" tabindex="0" [class]="'token ' + corDe(t.cor)"
+                 [class.inimigo]="t.inimigo" [class.selecionado]="selecionadoId() === t.tokenId"
+                 [class.turno]="inf?.turno" [class.abatido]="inf?.abatido" [class.oculto]="t.oculto"
+                 [class.arrastando]="arrasto()?.tokenId === t.tokenId" [class.movivel]="podeMover(t)"
+                 [class.fora-de-alcance]="arrasto()?.tokenId === t.tokenId && custoDoArrasto()?.ok === false"
+                 [style.left.px]="pos.x" [style.top.px]="pos.y"
+                 [style.width.px]="t.tamanho * c.tamanhoCelula" [style.height.px]="t.tamanho * c.tamanhoCelula"
+                 [attr.aria-label]="t.nome + (inf?.turno ? ', é o turno dele' : '') + (t.oculto ? ', escondido dos jogadores' : '')"
+                 [attr.aria-pressed]="selecionadoId() === t.tokenId"
+                 (pointerdown)="aoApertarToken($event, t)" (keydown)="aoTeclaNoToken($event, t)">
+              <span class="disco">
+                @if (retratoDe(t); as foto) { <img class="retrato" [src]="foto" alt="" draggable="false" /> }
+                @else { <span class="iniciais">{{ iniciais(t.nome) }}</span> }
+              </span>
+              @if (inf?.vida; as v) {
+                <span class="vida" role="img" [attr.aria-label]="v.atual + ' de ' + v.maxima + ' pontos de vida'">
+                  <span class="vida-barra" [class.baixa]="v.pct <= 25" [style.width.%]="v.pct"></span>
+                </span>
+              }
+              @if (inf && inf.condicoes.length) {
+                <span class="condicoes" [title]="inf.condicoes.join(', ')">
+                  @for (cond of inf.condicoes.slice(0, 3); track cond) { <span class="condicao">{{ cond[0] }}</span> }
+                  @if (inf.condicoes.length > 3) { <span class="condicao">+</span> }
+                </span>
+              }
+              @if (t.oculto) { <i class="bi bi-eye-slash marca-oculto" aria-hidden="true"></i> }
+              <span class="rotulo">{{ t.nome }}</span>
+            </div>
+          }
+
+          @if (contornoNeblina(c); as k) {
+            <div class="contorno-neblina" [class.cobrindo]="ferramenta() === 'cobrir'"
+                 [style.left.px]="k.x" [style.top.px]="k.y" [style.width.px]="k.w" [style.height.px]="k.h"></div>
+          }
+
+          @if (formaDesenhada(); as f) {
+            <svg class="area-svg" [attr.width]="c.largura" [attr.height]="c.altura" aria-hidden="true">
+              @if (f.tipo === 'circulo') { <circle [attr.cx]="f.cx" [attr.cy]="f.cy" [attr.r]="f.r" /> }
+              @else { <polygon [attr.points]="f.pontos" /> }
+            </svg>
+            <div class="regua-medida num" [style.left.px]="f.rotulo.x" [style.top.px]="f.rotulo.y" role="status">
+              {{ fmtM(pesParaMetros(pesDaArea())) }} m <small>{{ formaDeArea() }}</small>
+            </div>
+          }
+
+          @for (p of pings(); track p.chave) {
+            <div class="ping" [style.left.px]="p.x" [style.top.px]="p.y" aria-hidden="true">
+              <span class="ping-anel"></span><span class="ping-anel atraso"></span><span class="ping-ponto"></span>
+              <span class="ping-nome">{{ p.nome }}</span>
+            </div>
+          }
+
+          @for (o of reguasDosOutros(); track o.usuarioId) {
+            @let ox1 = (o.c1 + 0.5) * c.tamanhoCelula;
+            @let oy1 = (o.l1 + 0.5) * c.tamanhoCelula;
+            @let ox2 = (o.c2 + 0.5) * c.tamanhoCelula;
+            @let oy2 = (o.l2 + 0.5) * c.tamanhoCelula;
+            <svg class="regua-linha de-outro" [attr.width]="c.largura" [attr.height]="c.altura" aria-hidden="true">
+              <line [attr.x1]="ox1" [attr.y1]="oy1" [attr.x2]="ox2" [attr.y2]="oy2" />
+              <circle [attr.cx]="ox1" [attr.cy]="oy1" r="6" />
+              <circle [attr.cx]="ox2" [attr.cy]="oy2" r="6" />
+            </svg>
+            @if (o.quadrados > 0) {
+              <div class="regua-medida de-outro num" [style.left.px]="(ox1 + ox2) / 2" [style.top.px]="(oy1 + oy2) / 2" role="status">
+                {{ metros(o.quadrados) }} m <small>{{ o.nome }}</small>
+              </div>
+            }
+          }
+
+          @if (regua(); as r) {
+            @let x1 = (r.c1 + 0.5) * c.tamanhoCelula;
+            @let y1 = (r.l1 + 0.5) * c.tamanhoCelula;
+            @let x2 = (r.c2 + 0.5) * c.tamanhoCelula;
+            @let y2 = (r.l2 + 0.5) * c.tamanhoCelula;
+            <svg class="regua-linha" [attr.width]="c.largura" [attr.height]="c.altura" aria-hidden="true">
+              <line [attr.x1]="x1" [attr.y1]="y1" [attr.x2]="x2" [attr.y2]="y2" />
+              <circle [attr.cx]="x1" [attr.cy]="y1" r="6" />
+              <circle [attr.cx]="x2" [attr.cy]="y2" r="6" />
+            </svg>
+            @if (medida(); as m) {
+              @if (m.quadrados > 0) {
+                <div class="regua-medida num" [style.left.px]="(x1 + x2) / 2" [style.top.px]="(y1 + y2) / 2" role="status">
+                  {{ metros(m.quadrados) }} m <small>{{ m.quadrados }} {{ m.quadrados === 1 ? 'quadrado' : 'quadrados' }}</small>
+                </div>
+              }
+            }
+          }
+        </div>
+      }
+
+      @if (carregando()) {
+        <div class="aviso-palco" role="status"><p>Abrindo o mapa…</p></div>
+      } @else if (!cena()) {
+        <div class="aviso-palco vazio">
+          <p class="eyebrow">Mapa tático</p>
+          @if (ehMestre()) {
+            <h2>Nenhum mapa ainda</h2>
+            <p>Suba a imagem de uma masmorra, taverna ou campo de batalha. A grade e os tokens ficam por cima, e os jogadores acompanham ao vivo.</p>
+            <button type="button" class="btn-primary" (click)="abrirNovaCena()"><i class="bi bi-image" aria-hidden="true"></i> Subir o primeiro mapa</button>
+          } @else {
+            <h2>A mesa ainda está sem mapa</h2>
+            <p>Quando o Mestre abrir uma cena, ela aparece aqui e os seus tokens podem ser movidos.</p>
+          }
+        </div>
+      }
+    </div>
+
+    @if (modo3d() && cena(); as c3) {
+      <app-mapa-3d [cena]="c3" [imagemUrl]="imagemUrl()" [tokens]="tokensVisiveis()" [paredes]="paredesVisiveis()"
+                   [selecionadoId]="selecionadoId()" [ehMestre]="ehMestre()" [retratoDe]="retratoDe3d" [infoDe]="info3d"
+                   [podeMover]="podeMover3d" [neblina]="neblinaCanvas()" [versaoNeblina]="versaoNeblina()"
+                   [alcance]="alcanceCanvas()" [versaoAlcance]="versaoAlcance()" [ferramenta]="ferramenta() === 'regua' ? 'regua' : 'mover'"
+                   [reguas]="reguas3d()" [custo]="custo3d()" [escuro]="escuro3d()"
+                   (selecionar)="selecionar($event)" (mover)="mover3d($event)" (arrastando)="arrastando3d($event)"
+                   (reguaPonto)="reguaDe3d($event)" (falhou)="falhou3d()" />
+    }
+
+    <!-- ferramentas flutuando sobre o mapa -->
+    <div class="barra" role="toolbar" aria-label="Ferramentas do mapa">
+      @if (cena(); as c) {
+        <div class="barra-grupo cena-atual">
+          @if (ehMestre()) {
+            <button type="button" class="barra-btn largo" (click)="menuCenas.set(!menuCenas())" [attr.aria-expanded]="menuCenas()" aria-haspopup="true">
+              <i class="bi bi-layers" aria-hidden="true"></i>
+              <span class="nome-cena">{{ c.nome }}</span>
+              @if (c.ativa) { <span class="selo-jogo" title="Esta cena está em jogo">Em jogo</span> }
+              <i class="bi bi-chevron-down" aria-hidden="true"></i>
+            </button>
+          } @else {
+            <span class="barra-titulo"><i class="bi bi-map" aria-hidden="true"></i> <span class="nome-cena">{{ c.nome }}</span></span>
+          }
+        </div>
+      }
+      <div class="barra-grupo">
+        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'mover'" (click)="escolherFerramenta('mover')"
+                title="Mover tokens e o mapa" aria-label="Mover" [attr.aria-pressed]="ferramenta() === 'mover'">
+          <i class="bi bi-arrows-move" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'regua'" (click)="escolherFerramenta('regua')"
+                title="Régua: mede a distância em quadrados e pés" aria-label="Régua" [attr.aria-pressed]="ferramenta() === 'regua'">
+          <i class="bi bi-rulers" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="barra-btn so-2d" [class.ativo]="ferramenta() === 'area'" (click)="escolherFerramenta('area')"
+                title="Área de magia: esfera, cone ou linha" aria-label="Área de magia" [attr.aria-pressed]="ferramenta() === 'area'">
+          <i class="bi bi-bullseye" aria-hidden="true"></i>
+        </button>
+      </div>
+      @if (ferramenta() === 'area') {
+        <div class="barra-grupo opcoes-area">
+          @for (f of formasDeArea; track f.valor) {
+            <button type="button" class="barra-btn largo" [class.ativo]="formaDeArea() === f.valor" (click)="formaDeArea.set(f.valor)">{{ f.nome }}</button>
+          }
+          <label class="pes">
+            <select [ngModel]="pesDaArea()" (ngModelChange)="pesDaArea.set(+$event)" aria-label="Tamanho da área em pés">
+              @for (n of temposDeArea; track n) { <option [ngValue]="n">{{ fmtM(pesParaMetros(n)) }} m</option> }
+            </select>
+          </label>
+        </div>
+      }
+      <div class="barra-grupo so-2d">
+        <button type="button" class="barra-btn" (click)="ampliar(1 / 1.25)" title="Afastar" aria-label="Afastar"><i class="bi bi-zoom-out" aria-hidden="true"></i></button>
+        <button type="button" class="barra-btn" (click)="ampliar(1.25)" title="Aproximar" aria-label="Aproximar"><i class="bi bi-zoom-in" aria-hidden="true"></i></button>
+        <button type="button" class="barra-btn" (click)="centralizar()" title="Ver o mapa inteiro" aria-label="Ver o mapa inteiro"><i class="bi bi-fullscreen" aria-hidden="true"></i></button>
+      </div>
+      @if (ferramenta() === 'regua') {
+        <div class="barra-grupo">
+          <button type="button" class="barra-btn largo" [class.ativo]="compartilharRegua()" (click)="alternarCompartilharRegua()"
+                  title="Mostrar a sua régua aos outros da mesa" [attr.aria-pressed]="compartilharRegua()">
+            <i class="bi bi-broadcast" aria-hidden="true"></i><span class="so-largo">Compartilhar</span>
+          </button>
+        </div>
+      }
+      @if (cena()) {
+        <div class="barra-grupo so-2d">
+          @if (ehMestre()) {
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'marcador'" (click)="escolherFerramenta('marcador')"
+                    title="Marcador: clique no mapa para fixar um ponto de interesse" aria-label="Marcador" [attr.aria-pressed]="ferramenta() === 'marcador'">
+              <i class="bi bi-geo-alt" aria-hidden="true"></i>
+            </button>
+          }
+          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'desenhar'" (click)="escolherFerramenta('desenhar')"
+                  title="Desenhar à mão livre sobre o mapa" aria-label="Desenhar" [attr.aria-pressed]="ferramenta() === 'desenhar'">
+            <i class="bi bi-pencil" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'borracha'" (click)="escolherFerramenta('borracha')"
+                  title="Borracha: clique sobre um traço (você apaga os seus; o Mestre apaga todos)" aria-label="Borracha" [attr.aria-pressed]="ferramenta() === 'borracha'">
+            <i class="bi bi-eraser-fill" aria-hidden="true"></i>
+          </button>
+        </div>
+      }
+      @if (ferramenta() === 'desenhar') {
+        <div class="barra-grupo opcoes-desenho">
+          <span class="cores-barra">
+            @for (c of cores; track c) {
+              <button type="button" [class]="'amostra pequena ' + corDe(c)" [class.ativo]="corDoTraco() === c" (click)="corDoTraco.set(c)"
+                      [attr.aria-label]="c" [attr.aria-pressed]="corDoTraco() === c"></button>
+            }
+          </span>
+          <span class="espessuras">
+            @for (e of espessurasDeTraco; track e) {
+              <button type="button" class="espessura" [class.ativo]="espessuraDoTraco() === e" (click)="espessuraDoTraco.set(e)"
+                      [attr.aria-label]="'Espessura ' + e" [attr.aria-pressed]="espessuraDoTraco() === e"><span [style.height.px]="e"></span></button>
+            }
+          </span>
+          @if (ehMestre()) {
+            <button type="button" class="barra-btn largo" (click)="limparTracos()" title="Apagar todos os desenhos do mapa">
+              <i class="bi bi-trash" aria-hidden="true"></i><span class="so-largo">Limpar</span>
+            </button>
+          }
+        </div>
+      }
+      @if (ehMestre() && cena()) {
+        <div class="barra-grupo so-2d">
+          <button type="button" class="barra-btn largo" [class.ativo]="neblinaAtiva()" (click)="alternarNeblina()"
+                  title="Névoa de guerra: os jogadores só veem o que você revelar" [attr.aria-pressed]="neblinaAtiva()">
+            <i class="bi bi-cloud-fog2" aria-hidden="true"></i><span class="so-largo">Névoa</span>
+          </button>
+          @if (neblinaAtiva()) {
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'revelar'" (click)="escolherFerramenta('revelar')"
+                    title="Revelar: arraste sobre os quadrados" aria-label="Revelar" [attr.aria-pressed]="ferramenta() === 'revelar'">
+              <i class="bi bi-brightness-high" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'cobrir'" (click)="escolherFerramenta('cobrir')"
+                    title="Cobrir: arraste sobre os quadrados" aria-label="Cobrir" [attr.aria-pressed]="ferramenta() === 'cobrir'">
+              <i class="bi bi-cloud-fill" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'parede'" (click)="escolherFerramenta('parede')"
+                    title="Parede: arraste de um canto da grade a outro; ela bloqueia a visão" aria-label="Parede" [attr.aria-pressed]="ferramenta() === 'parede'">
+              <i class="bi bi-bricks" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'porta'" (click)="escolherFerramenta('porta')"
+                    title="Porta: como a parede, mas abre e fecha com um clique (na ferramenta Mover)" aria-label="Porta" [attr.aria-pressed]="ferramenta() === 'porta'">
+              <i class="bi bi-door-closed" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'janela'" (click)="escolherFerramenta('janela')"
+                    title="Janela: bloqueia o movimento, mas não a visão" aria-label="Janela" [attr.aria-pressed]="ferramenta() === 'janela'">
+              <i class="bi bi-border-all" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'apagar'" (click)="escolherFerramenta('apagar')"
+                    title="Apagar parede ou porta: clique sobre ela" aria-label="Apagar parede" [attr.aria-pressed]="ferramenta() === 'apagar'">
+              <i class="bi bi-eraser" aria-hidden="true"></i>
+            </button>
+          }
+        </div>
+        <div class="barra-grupo">
+          <button type="button" class="barra-btn largo" (click)="abrirAdicionar()" title="Adicionar um token ao mapa">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i><span class="so-largo">Token</span>
+          </button>
+          @if (combate()) {
+            <button type="button" class="barra-btn largo" (click)="trazerCombatentes()" title="Colocar no mapa os combatentes que ainda não estão">
+              <i class="bi bi-people" aria-hidden="true"></i><span class="so-largo">Combatentes</span>
+            </button>
+          }
+        </div>
+      }
+      <div class="barra-grupo fim">
+        @if (cena()) {
+          <button type="button" class="barra-btn largo" [class.ativo]="modo3d()" (click)="alternar3d()" [attr.aria-pressed]="modo3d()"
+                  title="Ver o mapa em 3D (a grade e as regras são as mesmas)">
+            <i class="bi bi-badge-3d" aria-hidden="true"></i><span class="so-largo">3D</span>
+          </button>
+        }
+        @if (!conectado() && !carregando()) { <span class="offline" title="Sem conexão em tempo real"><i class="bi bi-wifi-off" aria-hidden="true"></i></span> }
+        <button type="button" class="barra-btn" (click)="painelAberto.set(!painelAberto())" [attr.aria-expanded]="painelAberto()"
+                title="Mostrar ou esconder o painel" aria-label="Painel de tokens">
+          <i class="bi bi-layout-sidebar-inset-reverse" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    @if (menuCenas() && ehMestre()) {
+      <div class="menu-cenas" role="menu" aria-label="Cenas">
+        <p class="eyebrow">Cenas da campanha</p>
+        <ul>
+          @for (item of cenasDoMenu(); track item.cena.cenaId) {
+            @let c = item.cena;
+            @if (item.titulo) { <li class="grupo" role="presentation">{{ item.titulo }}</li> }
+            <li [class.atual]="c.cenaId === cenaId()">
+              <button type="button" role="menuitem" class="cena-nome" (click)="escolherCena(c.cenaId)">{{ c.nome }}</button>
+              @if (c.ativa) {
+                <span class="selo-jogo">Em jogo</span>
+              } @else {
+                <button type="button" class="link" (click)="ativarCena(c)" title="Mostrar esta cena aos jogadores">Pôr em jogo</button>
+              }
+              <button type="button" class="link" (click)="duplicarCena(c)" [attr.aria-label]="'Duplicar ' + c.nome" title="Duplicar a cena"><i class="bi bi-copy" aria-hidden="true"></i></button>
+              <button type="button" class="link perigo" (click)="excluirCena(c)" [attr.aria-label]="'Excluir ' + c.nome"><i class="bi bi-trash" aria-hidden="true"></i></button>
+            </li>
+          }
+        </ul>
+        @if (cena()) {
+          <form class="grade-form" (ngSubmit)="salvarGrade()">
+            <p class="eyebrow">Esta cena</p>
+            <label>Nome <input type="text" name="nomeCena" [(ngModel)]="edicaoCena.nome" maxlength="80" required /></label>
+            <label>Quadrado da grade (px na imagem)
+              <input type="number" name="celulaCena" [(ngModel)]="edicaoCena.tamanhoCelula" min="16" max="1000" required />
+            </label>
+            @if (sessoes().length) {
+              <label>Sessão
+                <select name="sessaoCena" [(ngModel)]="edicaoCena.sessaoId">
+                  <option [ngValue]="null">Nenhuma</option>
+                  @for (s of sessoes(); track s.sessaoId) { <option [ngValue]="s.sessaoId">#{{ s.numeroSessao }} · {{ s.nome }}</option> }
+                </select>
+              </label>
+            }
+            <label>Metros por quadrado <input type="number" name="mpqCena" [(ngModel)]="edicaoCena.metrosPorQuadrado" min="0.1" step="0.1" /></label>
+            <label class="marcador"><input type="checkbox" name="limitarCena" [(ngModel)]="edicaoCena.limitarDeslocamento" /> No combate, limitar ao deslocamento da ficha</label>
+            <label class="marcador"><input type="checkbox" name="soTurnoCena" [(ngModel)]="edicaoCena.soNoTurno" /> Jogadores só movem na vez do combate</label>
+            <button type="submit" class="btn-secondary">Salvar</button>
+          </form>
+          @if (neblinaAtiva()) {
+            <div class="grade-form">
+              <p class="eyebrow">Névoa</p>
+              <div class="par-botoes">
+                <button type="button" class="btn-secondary" (click)="neblinaTudo('revelar')">Revelar tudo</button>
+                <button type="button" class="btn-secondary" (click)="neblinaTudo('cobrir')">Cobrir tudo</button>
+              </div>
+            </div>
+          }
+        }
+        <button type="button" class="btn-primary nova" (click)="abrirNovaCena()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nova cena</button>
+      </div>
+    }
+  </div>
+
+  <aside class="painel" aria-label="Tokens em cena">
+    @if (adicionando() && ehMestre()) {
+      <form class="painel-bloco" (ngSubmit)="adicionarToken()">
+        <header><h3>Novo token</h3><button type="button" class="link" (click)="adicionando.set(false)">Cancelar</button></header>
+        @if (neblinaAtiva()) {
+          <button type="button" class="btn-secondary" (click)="prepararFocoDeLuz()" title="Um token de luz que você move: a névoa abre numa área só">
+            <i class="bi bi-lightbulb" aria-hidden="true"></i> Foco de luz
+          </button>
+        }
+        @if (personagensLivres().length) {
+          <label>Da campanha
+            <select name="personagem" [(ngModel)]="novoToken.personagemId" (ngModelChange)="escolheuPersonagem()">
+              <option [ngValue]="null">Avulso (digitar o nome)</option>
+              @for (p of personagensLivres(); track p.personagemId) { <option [ngValue]="p.personagemId">{{ p.nome }}</option> }
+            </select>
+          </label>
+        }
+        <label>Nome <input type="text" name="nomeToken" [(ngModel)]="novoToken.nome" maxlength="60" required /></label>
+        <div class="campo">
+          <span class="campo-rotulo">Tamanho</span>
+          <div class="segmentos">
+            @for (n of tamanhos; track n) {
+              <button type="button" [class.ativo]="novoToken.tamanho === n" (click)="novoToken.tamanho = n">{{ n }}×{{ n }}</button>
+            }
+          </div>
+        </div>
+        <div class="campo">
+          <span class="campo-rotulo">Cor</span>
+          <div class="cores">
+            @for (c of cores; track c) {
+              <button type="button" class="amostra" [class]="'amostra ' + corDe(c)" [class.ativo]="novoToken.cor === c" (click)="novoToken.cor = c" [attr.aria-label]="c" [attr.aria-pressed]="novoToken.cor === c"></button>
+            }
+          </div>
+        </div>
+        <label>Visão (com névoa ligada)
+          <select name="visaoNovo" [(ngModel)]="novoToken.visao">
+            @for (v of opcoesDeVisao; track v) { <option [ngValue]="v">{{ v === 0 ? 'Não enxerga' : fmtM(pesParaMetros(v)) + ' m' }}</option> }
+          </select>
+        </label>
+        <label class="marcador"><input type="checkbox" name="inimigoNovo" [(ngModel)]="novoToken.inimigo" /> Inimigo</label>
+        <button type="submit" class="btn-primary" [disabled]="!novoToken.nome.trim()">Colocar no mapa</button>
+      </form>
+    } @else if (selecionadoMarcador(); as mk) {
+      <div class="painel-bloco detalhe">
+        <header>
+          <h3><i [class]="'bi ' + iconeDoMarcador(mk.icone)" aria-hidden="true"></i> {{ mk.titulo }}</h3>
+          <button type="button" class="link" (click)="selecionadoMarcadorId.set(null)" aria-label="Fechar detalhes"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </header>
+        @if (ehMestre()) {
+          <label>Título <input type="text" [ngModel]="mk.titulo" (change)="salvarMarcador(mk, { titulo: $any($event.target).value })" maxlength="80" /></label>
+          <div class="campo">
+            <span class="campo-rotulo">Ícone</span>
+            <div class="icones">
+              @for (i of iconesDeMarcador; track i.chave) {
+                <button type="button" class="icone-btn" [class.ativo]="mk.icone === i.chave" (click)="salvarMarcador(mk, { icone: i.chave })"
+                        [attr.aria-label]="i.nome" [title]="i.nome" [attr.aria-pressed]="mk.icone === i.chave"><i [class]="'bi ' + i.icone" aria-hidden="true"></i></button>
+              }
+            </div>
+          </div>
+          <label>Nota <textarea rows="4" maxlength="1000" [ngModel]="mk.nota" (change)="salvarMarcador(mk, { nota: $any($event.target).value })"></textarea></label>
+          <label class="marcador"><input type="checkbox" [ngModel]="mk.visivel" (change)="salvarMarcador(mk, { visivel: $any($event.target).checked })" /> Visível aos jogadores</label>
+          <p class="dica">Arraste o marcador no mapa para mudar de lugar.</p>
+          <button type="button" class="btn-danger" (click)="removerMarcador(mk)"><i class="bi bi-trash" aria-hidden="true"></i> Remover marcador</button>
+        } @else if (mk.nota) {
+          <p class="nota-marcador">{{ mk.nota }}</p>
+        }
+      </div>
+    } @else if (selecionado(); as t) {
+      @let inf = info(t);
+      <div class="painel-bloco detalhe">
+        <header>
+          <h3>{{ t.nome }}</h3>
+          <button type="button" class="link" (click)="selecionadoId.set(null)" aria-label="Fechar detalhes"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </header>
+        <p class="detalhe-linha">
+          <span class="chip" [class.chip-danger]="t.inimigo" [class.chip-hi]="!t.inimigo">{{ t.inimigo ? 'Inimigo' : 'Aliado' }}</span>
+          @if (inf?.turno) { <span class="chip chip-hi">Turno atual</span> }
+          @if (inf?.abatido) { <span class="chip chip-danger">Abatido</span> }
+          @if (t.oculto) { <span class="chip">Escondido</span> }
+        </p>
+        @if (inf?.vida; as v) { <p class="vida-texto num"><strong>{{ v.atual }}</strong> / {{ v.maxima }} PV</p> }
+        @if (inf && inf.condicoes.length) { <p class="detalhe-condicoes">{{ inf.condicoes.join(' · ') }}</p> }
+        @if (orcamentoDe(t); as o) {
+          <div class="deslocamento">
+            <span class="campo-rotulo">Deslocamento</span>
+            <p class="desloc-valor num"><strong>{{ fmtM(t.deslocamentoMetros!) }} m</strong> · {{ o.total }} {{ o.total === 1 ? 'quadrado' : 'quadrados' }}</p>
+            @if (o.emCombate) {
+              <div class="barra-movimento" role="img" [attr.aria-label]="o.restante + ' de ' + o.total + ' quadrados restantes'">
+                <span [style.width.%]="o.total ? (o.restante / o.total) * 100 : 0"></span>
+              </div>
+              <p class="dica">Restam {{ o.restante }} de {{ o.total }} nesta rodada ({{ metros(o.restante) }} m).</p>
+            }
+          </div>
+        }
+        @if (podeEditarCondicoes(t)) {
+          <div class="campo">
+            <span class="campo-rotulo">Condições</span>
+            <div class="condicoes-edicao">
+              @for (cond of condicoesPadrao; track cond) {
+                <button type="button" class="chip-btn" [class.ativo]="temCondicaoNoToken(t, cond)" [attr.aria-pressed]="temCondicaoNoToken(t, cond)"
+                        (click)="alternarCondicaoDoToken(t, cond)">{{ cond }}</button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (ehMestre()) {
+          <label>Nome <input type="text" [ngModel]="t.nome" (change)="alterarToken(t, { nome: $any($event.target).value })" maxlength="60" /></label>
+          <div class="campo">
+            <span class="campo-rotulo">Tamanho</span>
+            <div class="segmentos">
+              @for (n of tamanhos; track n) {
+                <button type="button" [class.ativo]="t.tamanho === n" (click)="alterarToken(t, { tamanho: n })">{{ n }}×{{ n }}</button>
+              }
+            </div>
+          </div>
+          <div class="campo">
+            <span class="campo-rotulo">Cor</span>
+            <div class="cores">
+              @for (c of cores; track c) {
+                <button type="button" [class]="'amostra ' + corDe(c)" [class.ativo]="t.cor === c" (click)="alterarToken(t, { cor: c })" [attr.aria-label]="c" [attr.aria-pressed]="t.cor === c"></button>
+              }
+            </div>
+          </div>
+          <div class="campo">
+            <span class="campo-rotulo">Retrato</span>
+            <div class="retrato-acoes">
+              <label class="btn-secondary arquivo-botao">
+                <input type="file" accept="image/png,image/jpeg,image/webp" (change)="trocarRetrato(t, $event)" />
+                <i class="bi bi-image" aria-hidden="true"></i> {{ t.imagemVersao ? 'Trocar' : 'Escolher imagem' }}
+              </label>
+              @if (t.imagemVersao) { <button type="button" class="link perigo" (click)="removerRetrato(t)">Remover</button> }
+            </div>
+          </div>
+          <label>Deslocamento (m)
+            <input type="number" min="0" step="0.5" [ngModel]="t.deslocamentoManual"
+                   (change)="alterarToken(t, { deslocamentoMetros: $any($event.target).value === '' ? null : +$any($event.target).value })"
+                   [attr.placeholder]="t.deslocamentoDaFicha !== null ? 'ficha: ' + fmtM(t.deslocamentoDaFicha) : 'sem limite'" />
+          </label>
+          @if (orcamentoDe(t)?.emCombate) {
+            <button type="button" class="btn-secondary" (click)="alterarToken(t, { restaurarMovimento: true })">Restaurar movimento da rodada</button>
+          }
+          <label>Visão (com névoa ligada)
+            <select [ngModel]="t.visao" (ngModelChange)="alterarToken(t, { visao: $event })">
+              @for (v of opcoesDeVisao; track v) { <option [ngValue]="v">{{ v === 0 ? 'Não enxerga' : fmtM(pesParaMetros(v)) + ' m' }}</option> }
+            </select>
+          </label>
+          @if (membros().length) {
+            <label>Quem controla
+              <select [ngModel]="t.controladoPorId" (ngModelChange)="alterarToken(t, { controladoPorId: $event })">
+                <option [ngValue]="null">{{ t.personagemId ? 'Dono do personagem' : 'Só o Mestre' }}</option>
+                @for (m of membros(); track m.usuarioId) { <option [ngValue]="m.usuarioId">{{ m.nome }}{{ m.ehVoce ? ' (você)' : '' }}</option> }
+              </select>
+            </label>
+          }
+          <label class="marcador"><input type="checkbox" [ngModel]="t.inimigo" (change)="alterarToken(t, { inimigo: $any($event.target).checked })" /> Inimigo</label>
+          <label class="marcador"><input type="checkbox" [ngModel]="t.oculto" (change)="alterarToken(t, { oculto: $any($event.target).checked })" /> Escondido dos jogadores</label>
+          <button type="button" class="btn-danger" (click)="removerToken(t)"><i class="bi bi-trash" aria-hidden="true"></i> Remover do mapa</button>
+        } @else if (!podeMover(t)) {
+          <p class="dica">{{ t.donosIds.includes(meuId) && !naVez(t) ? 'Aguarde a vez dele no combate para mover.' : 'Este token não é seu. Você pode olhar, mas só o dono e o Mestre o movem.' }}</p>
+        } @else {
+          <p class="dica">Arraste o token, ou use as setas do teclado com ele em foco.</p>
+        }
+      </div>
+    }
+
+    <div class="painel-bloco lista">
+      <header>
+        <h3>{{ combate() ? 'Ordem do combate' : 'Em cena' }}</h3>
+        <span class="contagem num">{{ tokensVisiveis().length }}</span>
+      </header>
+      @if (tokens().length === 0) {
+        <p class="dica">{{ ehMestre() ? 'Nenhum token ainda. Use “Token” ou “Combatentes” na barra do mapa.' : 'Nenhum token no mapa por enquanto.' }}</p>
+      } @else {
+        <ul>
+          @for (t of listaDoPainel(); track t.tokenId) {
+            @let inf = info(t);
+            <li>
+              <button type="button" class="linha" [class.selecionada]="selecionadoId() === t.tokenId" [class.turno]="inf?.turno"
+                      [class.abatida]="inf?.abatido" (click)="selecionar(t, true)">
+                <span class="ponto" [class]="'ponto ' + corDe(t.cor)" [class.inimigo]="t.inimigo"></span>
+                <span class="linha-nome">{{ t.nome }}</span>
+                @if (t.oculto) { <i class="bi bi-eye-slash" title="Escondido dos jogadores" aria-hidden="true"></i> }
+                @if (t.donosIds.includes(meuId)) { <span class="chip chip-hi">seu</span> }
+                @if (inf?.vida; as v) { <span class="linha-pv num" [class.baixa]="v.pct <= 25">{{ v.atual }}/{{ v.maxima }}</span> }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    @if (marcadores().length) {
+      <div class="painel-bloco lista">
+        <header><h3>Marcadores</h3><span class="contagem num">{{ marcadores().length }}</span></header>
+        <ul>
+          @for (m of marcadores(); track m.marcadorId) {
+            <li>
+              <button type="button" class="linha" [class.selecionada]="selecionadoMarcadorId() === m.marcadorId" (click)="selecionarMarcador(m, true)">
+                <i [class]="'bi ' + iconeDoMarcador(m.icone)" aria-hidden="true"></i>
+                <span class="linha-nome">{{ m.titulo }}</span>
+                @if (!m.visivel) { <i class="bi bi-eye-slash" title="Escondido dos jogadores" aria-hidden="true"></i> }
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </aside>
+</section>
+
+@if (modalCena()) {
+  <div class="fundo-modal" (click)="fecharNovaCena()"></div>
+  <form class="modal-cena" role="dialog" aria-modal="true" aria-labelledby="titulo-nova-cena" (ngSubmit)="criarCena()">
+    <header>
+      <div>
+        <p class="eyebrow">Mapa tático</p>
+        <h2 id="titulo-nova-cena">Nova cena</h2>
+      </div>
+      <button type="button" class="link" (click)="fecharNovaCena()" aria-label="Fechar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </header>
+
+    <label class="arquivo" [class.com-imagem]="previa()">
+      <input type="file" accept="image/png,image/jpeg,image/webp" (change)="escolherArquivo($event)" />
+      @if (previa(); as p) {
+        <span class="previa" [style.width.px]="p.largura * escalaDaPrevia()" [style.height.px]="p.altura * escalaDaPrevia()">
+          <img [src]="p.url" alt="Prévia do mapa" />
+          <span class="previa-grade" [style.background-size.px]="novaCena.tamanhoCelula * escalaDaPrevia()"></span>
+        </span>
+      } @else {
+        <span class="arquivo-vazio">
+          <i class="bi bi-image" aria-hidden="true"></i>
+          <strong>Escolha a imagem do mapa</strong>
+          <small>PNG, JPG ou WebP, até 8 MB</small>
+        </span>
+      }
+    </label>
+
+    @if (previa(); as p) {
+      <div class="calibragem">
+        <label>Nome <input type="text" name="nome" [(ngModel)]="novaCena.nome" maxlength="80" required /></label>
+        <label>Tamanho do quadrado
+          <span class="calibre">
+            <input type="range" name="celulaRange" [(ngModel)]="novaCena.tamanhoCelula" min="20" max="300" />
+            <input type="number" name="celula" [(ngModel)]="novaCena.tamanhoCelula" min="16" max="1000" class="num" />
+          </span>
+        </label>
+        <p class="dica">Ajuste até a grade acompanhar os quadrados do mapa. {{ p.largura }}×{{ p.altura }} px
+          · {{ (p.largura / novaCena.tamanhoCelula) | number: '1.0-0' }}×{{ (p.altura / novaCena.tamanhoCelula) | number: '1.0-0' }} quadrados.</p>
+      </div>
+    }
+
+    <footer>
+      <button type="button" class="btn-secondary" (click)="fecharNovaCena()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="!previa() || !novaCena.nome.trim() || enviando()">
+        {{ enviando() ? 'Enviando…' : 'Criar cena' }}
+      </button>
+    </footer>
+  </form>
+}

@@ -30,6 +30,22 @@ export class SessaoList implements OnInit {
     });
   }
 
+  /** Sessões agrupadas por campanha, a mais recente primeiro dentro de cada uma. */
+  get porCampanha(): { campanhaId: number; nome: string; sessoes: Sessao[] }[] {
+    const mapa = new Map<number, Sessao[]>();
+    for (const s of this.sessoes) mapa.set(s.campanhaId, [...(mapa.get(s.campanhaId) ?? []), s]);
+    return [...mapa.entries()].map(([campanhaId, sessoes]) => ({
+      campanhaId,
+      nome: sessoes[0].campanha?.nome || 'Campanha',
+      sessoes: sessoes.sort((a, b) => b.numeroSessao - a.numeroSessao),
+    }));
+  }
+
+  /** Agendada para o futuro? (as demais já aconteceram ou estão sem data marcada) */
+  agendada(s: Sessao): boolean {
+    return !!s.dataAgendada && +new Date(s.dataAgendada) > Date.now();
+  }
+
   loadSessoes() {
     this.sessaoService.getAll().subscribe({
       next: (data) => {

@@ -1,14 +1,93 @@
+// A mesa ocupa a tela inteira (como a Crônica): a barra lateral fica por baixo e o mapa/combate ganham todo o espaço.
+:host {
+  --lateral: 0px; // o botão da Mesa não precisa mais recuar para a barra lateral
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+}
+
 .play-session {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.carregando { padding: var(--spacing-lg); }
+
+/* faixa compacta: voltar, título e abas na mesma linha, para sobrar altura para o mapa */
+.barra-sessao {
+  display: flex;
+  flex: none;
+  align-items: center;
   gap: var(--spacing-md);
+  padding: 0.45rem clamp(0.75rem, 1.6vw, 1.5rem) 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
 
-.play-session .page-head {
-  margin-bottom: 0;
+.voltar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--fg);
+  font-size: 1.15rem;
+  text-decoration: none;
+
+  &:hover { border-color: var(--hi); color: var(--hi); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
 }
 
-.content-panel {
+.barra-titulo {
   min-width: 0;
-  padding-top: var(--spacing-sm);
+  padding-bottom: 0.45rem;
+
+  .eyebrow { margin: 0; color: var(--hi); font-size: 0.7rem; letter-spacing: 0.16em; }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.15rem, 1.6vw, 1.5rem);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.barra-num { font-size: 0.7em; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+
+.barra-sessao .top-nav-tabs { margin: 0 0 -1px auto; border-bottom: 0; }
+
+/* o painel ocupa o resto da altura; o mapa preenche sozinho, as outras abas rolam dentro dele */
+.content-panel {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+
+  &.rolavel {
+    overflow-y: auto;
+    padding: var(--spacing-md) clamp(0.75rem, 2.4vw, 2.75rem) 5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  // no celular o mapa fica em cima e o painel embaixo: a página rola
+  .content-panel { overflow-y: auto; }
+}
+
+@media (max-width: 560px) {
+  .barra-sessao { flex-wrap: wrap; row-gap: 0; }
+  .barra-sessao .top-nav-tabs { flex: 1 0 100%; margin-left: 0; }
 }

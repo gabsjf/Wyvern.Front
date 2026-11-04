@@ -1,46 +1,100 @@
 <div class="container animate-fade-in">
   <header class="page-head">
     <div>
+      <p class="eyebrow">Seu elenco</p>
       <h1>Personagens</h1>
-      <p class="sub">Seus heróis, NPCs e monstros.</p>
+      <p class="sub">Seus heróis, NPCs e monstros, de todas as campanhas.</p>
     </div>
     <a class="btn-primary" routerLink="/personagens/create">+ Novo personagem</a>
   </header>
 
-  @if (ehMestreEmAlguma) {
-    <div class="top-nav-tabs" role="tablist" aria-label="Tipo de personagem" style="margin-bottom: var(--spacing-lg);">
-      <button type="button" role="tab" class="tab-btn" [class.active]="activeTab === 'herois'" [attr.aria-selected]="activeTab === 'herois'" (click)="setTab('herois')">Heróis</button>
-      <button type="button" role="tab" class="tab-btn" [class.active]="activeTab === 'monstros'" [attr.aria-selected]="activeTab === 'monstros'" (click)="setTab('monstros')">Monstros e NPCs</button>
-    </div>
-  }
+  <!-- Barra de ferramentas: aba, busca e filtro por campanha na mesma faixa -->
+  <div class="barra">
+    @if (ehMestreEmAlguma) {
+      <div class="abas" role="tablist" aria-label="Tipo de personagem">
+        <button type="button" role="tab" class="aba" [class.ativa]="activeTab === 'herois'" [attr.aria-selected]="activeTab === 'herois'" (click)="setTab('herois')">
+          Heróis <span class="num aba-n">{{ contar('herois') }}</span>
+        </button>
+        <button type="button" role="tab" class="aba" [class.ativa]="activeTab === 'monstros'" [attr.aria-selected]="activeTab === 'monstros'" (click)="setTab('monstros')">
+          Monstros e NPCs <span class="num aba-n">{{ contar('monstros') }}</span>
+        </button>
+      </div>
+    }
 
-  <table class="premium-table table-stack">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Descrição</th>
-        <th>Campanha</th>
-        <th><span class="visually-hidden">Ações</span></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (personagem of filteredPersonagens; track personagem.personagemId) {
-        <tr>
-          <td data-label="Nome" class="nome-cel">{{ personagem.nome }}</td>
-          <td data-label="Descrição">{{ personagem.descricao || '—' }}</td>
-          <td data-label="Campanha">{{ nomeDaCampanha(personagem.campanhaId) }}</td>
-          <td class="acoes-cel">
-            <a class="btn-secondary btn-sm" [routerLink]="['/personagens', personagem.personagemId, 'edit']">Editar</a>
+    <label class="busca">
+      <span class="visually-hidden">Buscar personagem</span>
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" class="form-control" placeholder="Buscar por nome ou descrição" [value]="busca" (input)="busca = $any($event.target).value" />
+    </label>
+
+    @if (campanhasDosPersonagens.length > 1) {
+      <div class="filtros" role="group" aria-label="Filtrar por campanha">
+        @for (c of campanhasDosPersonagens; track c.id) {
+          <button type="button" class="filtro" [class.ativo]="campanhaFiltro === c.id" [attr.aria-pressed]="campanhaFiltro === c.id" (click)="alternarCampanha(c.id)">{{ c.nome }}</button>
+        }
+      </div>
+    }
+  </div>
+
+  <ul class="galeria">
+    @for (personagem of filteredPersonagens; track personagem.personagemId) {
+      <li>
+        <article class="carta" [class.carta-inimigo]="personagem.tipoId !== 1">
+          <a class="carta-retrato" [routerLink]="['/ficha', personagem.personagemId]" [attr.aria-label]="'Abrir a ficha de ' + personagem.nome">
+            <app-emblema [nome]="personagem.nome" [tamanho]="96" />
+          </a>
+          <div class="carta-corpo">
+            <p class="carta-tipo">
+              <span class="chip" [class.chip-hi]="personagem.tipoId === 1" [class.chip-danger]="personagem.tipoId !== 1">{{ rotuloTipo(personagem) }}</span>
+            </p>
+            <h2>{{ personagem.nome }}</h2>
+            <p class="carta-campanha">{{ nomeDaCampanha(personagem.campanhaId) }}</p>
+            <p class="carta-desc" [class.vazio]="!personagem.descricao">{{ personagem.descricao || 'Sem descrição.' }}</p>
+          </div>
+          <div class="carta-acoes">
             <a class="btn-primary btn-sm" [routerLink]="['/ficha', personagem.personagemId]">Abrir ficha</a>
-          </td>
-        </tr>
-      } @empty {
-        <tr>
-          <td colspan="4" class="vazio-cel">
-            Nenhum personagem aqui ainda. Use “Novo personagem” para criar o primeiro.
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+            <a class="btn-secondary btn-sm" [routerLink]="['/personagens', personagem.personagemId, 'edit']">Editar</a>
+            @if (campanhasDoMestre.length > 0) {
+              <button type="button" class="btn-secondary btn-sm" (click)="abrirDuplicar(personagem)" [attr.aria-label]="'Duplicar ' + personagem.nome">Duplicar</button>
+            }
+          </div>
+        </article>
+      </li>
+    } @empty {
+      <li class="galeria-vazia">
+        <h2>{{ busca || campanhaFiltro !== null ? 'Ninguém encontrado' : 'O elenco está vazio' }}</h2>
+        <p>{{ busca || campanhaFiltro !== null ? 'Tente outro nome ou limpe os filtros.' : 'Use “Novo personagem” para criar o primeiro.' }}</p>
+      </li>
+    }
+  </ul>
 </div>
+
+@if (duplicando) {
+  <div class="modal-overlay" (click)="fecharDuplicar()">
+    <div class="modal-content duplicar" role="dialog" aria-modal="true" aria-labelledby="tit-duplicar" (click)="$event.stopPropagation()">
+      <h2 id="tit-duplicar">Duplicar {{ duplicando.nome }}</h2>
+      <p class="duplicar-ajuda">A cópia leva a ficha inteira: atributos, ataques, ações e itens. Mudar a cópia não muda o original.</p>
+
+      <div class="form-group">
+        <label class="form-label" for="dup-campanha">Campanha da cópia</label>
+        <select id="dup-campanha" class="form-control" [(ngModel)]="destinoId">
+          @for (c of campanhasDoMestre; track c.campanhaId) {
+            <option [ngValue]="c.campanhaId">{{ c.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dup-nome">Nome da cópia <span class="text-muted">(opcional)</span></label>
+        <input id="dup-nome" type="text" class="form-control" [(ngModel)]="nomeCopia" [placeholder]="duplicando.nome + (destinoId === duplicando.campanhaId ? ' (cópia)' : '')" maxlength="100" />
+      </div>
+
+      <div class="duplicar-acoes">
+        <button type="button" class="btn-secondary" (click)="fecharDuplicar()" [disabled]="duplicandoAgora">Cancelar</button>
+        <button type="button" class="btn-primary" (click)="confirmarDuplicar()" [disabled]="duplicandoAgora || destinoId === null">
+          {{ duplicandoAgora ? 'Copiando...' : 'Duplicar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

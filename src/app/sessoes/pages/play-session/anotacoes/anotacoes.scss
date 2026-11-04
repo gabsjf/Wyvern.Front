@@ -331,3 +331,57 @@
   .titulo-leitura, .titulo-input { font-size: 1.5rem; }
   .editor-acoes { width: 100%; }
 }
+
+/* ---- recursos de caderno ---- */
+.lista-acoes { display: inline-flex; flex-wrap: wrap; gap: var(--spacing-xs); }
+
+.ferramentas {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+}
+
+.mencao-select {
+  min-height: 36px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  &:hover { border-color: var(--hi); }
+}
+
+.markdown-content {
+  // caixas de tarefa: clicáveis e focáveis
+  .tarefa {
+    display: inline-block;
+    min-width: 1.5rem;
+    margin-right: 0.25rem;
+    font-size: 1.15em;
+    line-height: 1;
+    color: var(--hi);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.12s;
+
+    &:hover { transform: scale(1.2); }
+    &[aria-checked='true'] { color: var(--ok); }
+  }
+
+  // menções
+  a[href^='/ficha/'] {
+    padding: 0 0.3em;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--hi) 16%, transparent);
+    color: var(--hi);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover { background: color-mix(in srgb, var(--hi) 30%, transparent); }
+  }
+}

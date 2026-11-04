@@ -1,44 +1,47 @@
 <div class="container animate-fade-in">
   <header class="page-head">
     <div>
+      <p class="eyebrow">Diário de mesa</p>
       <h1>Sessões</h1>
-      <p class="sub">O histórico das suas campanhas.</p>
+      <p class="sub">{{ sessoes.length }} {{ sessoes.length === 1 ? 'sessão registrada' : 'sessões registradas' }} nas suas campanhas.</p>
     </div>
     @if (podeCriarSessao) {
       <a class="btn-primary" routerLink="/sessoes/create">+ Nova sessão</a>
     }
   </header>
 
-  <table class="premium-table table-stack">
-    <thead>
-      <tr>
-        <th>Sessão</th>
-        <th>Título</th>
-        <th>Data</th>
-        <th>Campanha</th>
-        <th><span class="visually-hidden">Ações</span></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (sessao of sessoes; track sessao.sessaoId) {
-        <tr>
-          <td data-label="Sessão" class="num">#{{ sessao.numeroSessao }}</td>
-          <td data-label="Título" class="titulo-cel">{{ sessao.nome }}</td>
-          <td data-label="Data">{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</td>
-          <td data-label="Campanha">{{ sessao.campanha?.nome || 'Campanha' }}</td>
-          <td class="acoes-cel">
-            <a class="btn-primary btn-sm" [routerLink]="['/play', sessao.sessaoId]">Jogar</a>
-            <a class="btn-secondary btn-sm" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</a>
-          </td>
-        </tr>
-      } @empty {
-        <tr>
-          <td colspan="5" class="vazio-cel">
-            Nenhuma sessão registrada ainda.
-            @if (podeCriarSessao) { Use “Nova sessão” para criar a primeira. }
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+  @for (grupo of porCampanha; track grupo.campanhaId) {
+    <section class="grupo" [attr.aria-label]="grupo.nome">
+      <h2 class="rotulo-secao">{{ grupo.nome }} <span class="rotulo-extra">{{ grupo.sessoes.length }} {{ grupo.sessoes.length === 1 ? 'sessão' : 'sessões' }}</span></h2>
+
+      <ul class="mural">
+        @for (sessao of grupo.sessoes; track sessao.sessaoId; let primeira = $first) {
+          <li [class.destaque]="primeira">
+            <article class="folha" [class.agendada]="agendada(sessao)">
+              <span class="folha-numero num" aria-hidden="true">{{ sessao.numeroSessao }}</span>
+              <div class="folha-corpo">
+                <p class="folha-sobre">
+                  Sessão <span class="num">{{ sessao.numeroSessao }}</span>
+                  @if (agendada(sessao)) { <span class="chip chip-hi">Agendada</span> }
+                  @else if (primeira) { <span class="chip">Mais recente</span> }
+                </p>
+                <h3>{{ sessao.nome }}</h3>
+                <p class="folha-data num">{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</p>
+                @if (sessao.obs) { <p class="folha-obs">{{ sessao.obs }}</p> }
+              </div>
+              <div class="folha-acoes">
+                <a class="btn-primary btn-sm" [routerLink]="['/play', sessao.sessaoId]">Jogar</a>
+                <a class="btn-secondary btn-sm" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</a>
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+    </section>
+  } @empty {
+    <div class="vazio">
+      <h2>O diário está em branco</h2>
+      <p>Nenhuma sessão registrada ainda.@if (podeCriarSessao) { Use “Nova sessão” para criar a primeira. }</p>
+    </div>
+  }
 </div>

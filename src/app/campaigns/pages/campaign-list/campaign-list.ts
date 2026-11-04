@@ -1,36 +1,69 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CampaignService } from '../../services/campaign';
 import { Campaign } from '../../models/campaign';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { SessaoService } from '../../../sessoes/services/sessao.service';
+import { PersonagemService } from '../../../personagens/services/personagem.service';
+import { Emblema, matizDoNome } from '../../../shared/ui/emblema/emblema';
 
 @Component({
   selector: 'app-campaign-list',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, Emblema],
   templateUrl: './campaign-list.html',
   styleUrl: './campaign-list.scss',
 })
 export class CampaignList implements OnInit {
   private campaignService = inject(CampaignService);
-   private cdr = inject(ChangeDetectorRef);
-  private authService = inject(AuthService);
-  campaigns: Campaign[] = [];
+  private sessaoService = inject(SessaoService);
+  private personagemService = inject(PersonagemService);
+  private cdr = inject(ChangeDetectorRef);
 
+  campaigns: Campaign[] = [];
+  carregando = true;
+  private sessoesPor = new Map<number, number>();
+  private heroisPor = new Map<number, number>();
 
   ngOnInit(): void {
-  this.loadCampaigns();
-}
+    this.campaignService.getAll().subscribe({
+      next: (response: Campaign[]) => {
+        this.campaigns = [...response];
+        this.carregando = false;
+        this.cdr.detectChanges();
+      },
+      error: (error: unknown) => {
+        console.error('Erro ao buscar campanhas:', error);
+        this.carregando = false;
+        this.cdr.detectChanges();
+      },
+    });
 
-private loadCampaigns(): void {
-  this.campaignService.getAll().subscribe({
-    next: (response: Campaign[]) => {
-      this.campaigns = [...response];
-      this.cdr.detectChanges();
-    },
-    error: (error: unknown) => {
-      console.error('Erro ao buscar campanhas:', error);
-    },
-  });
-}
+    // Os números do rodapé de cada capa; se falharem, a lista continua funcionando
+    this.sessaoService.getAll().subscribe({
+      next: lista => {
+        lista.forEach(s => this.sessoesPor.set(s.campanhaId, (this.sessoesPor.get(s.campanhaId) ?? 0) + 1));
+        this.cdr.detectChanges();
+      },
+    });
+    this.personagemService.getAll().subscribe({
+      next: lista => {
+        lista.filter(p => p.tipoId === 1).forEach(p => this.heroisPor.set(p.campanhaId, (this.heroisPor.get(p.campanhaId) ?? 0) + 1));
+        this.cdr.detectChanges();
+      },
+    });
+  }
 
+  sessoes(c: Campaign): number {
+    return this.sessoesPor.get(c.campanhaId!) ?? 0;
+  }
+
+  herois(c: Campaign): number {
+    return this.heroisPor.get(c.campanhaId!) ?? 0;
+  }
+
+  /** Fundo da capa: o mesmo matiz do brasão, em tons escuros. */
+  capa(c: Campaign): string {
+    const h = matizDoNome(c.nome);
+    return `radial-gradient(ellipse 80% 120% at 85% 0%, hsl(${h} 45% 30% / 0.9), transparent 70%), linear-gradient(160deg, hsl(${h} 38% 16%), hsl(${h} 30% 8%))`;
+  }
 }

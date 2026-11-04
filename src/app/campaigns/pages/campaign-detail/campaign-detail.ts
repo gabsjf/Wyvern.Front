@@ -6,10 +6,15 @@ import { CampaignService } from '../../services/campaign';
 import { Campaign, Membro } from '../../models/campaign';
 import { ConfirmService } from '../../../shared/ui/confirm/confirm.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { SessaoService } from '../../../sessoes/services/sessao.service';
+import { Sessao } from '../../../sessoes/models/sessao';
+import { PersonagemService } from '../../../personagens/services/personagem.service';
+import { Personagem } from '../../../personagens/models/personagem';
+import { Emblema, matizDoNome } from '../../../shared/ui/emblema/emblema';
 
 @Component({
   selector: 'app-campaign-detail',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, Emblema],
   templateUrl: './campaign-detail.html',
   styleUrl: './campaign-detail.scss',
 })
@@ -20,6 +25,8 @@ export class CampaignDetail implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private confirm = inject(ConfirmService);
   private toast = inject(ToastService);
+  private sessaoService = inject(SessaoService);
+  private personagemService = inject(PersonagemService);
 
   campaign: Campaign | null = null;
   isLoading = true;
@@ -37,6 +44,7 @@ export class CampaignDetail implements OnInit {
           this.campaign = data;
           this.isLoading = false;
           this.loadMembros();
+          this.loadConteudo(id);
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -49,6 +57,31 @@ export class CampaignDetail implements OnInit {
       this.isLoading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  // ----- Conteúdo da campanha (sessões e heróis) -----
+  sessoes: Sessao[] = [];
+  herois: Personagem[] = [];
+
+  private loadConteudo(id: number) {
+    this.sessaoService.getAll().subscribe({
+      next: lista => {
+        this.sessoes = lista.filter(s => s.campanhaId === id).sort((a, b) => b.numeroSessao - a.numeroSessao);
+        this.cdr.detectChanges();
+      },
+    });
+    this.personagemService.getAll().subscribe({
+      next: lista => {
+        this.herois = lista.filter(p => p.campanhaId === id && p.tipoId === 1);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /** Fundo da faixa de abertura: o mesmo matiz do brasão. */
+  get capa(): string {
+    const h = matizDoNome(this.campaign?.nome ?? '');
+    return `radial-gradient(ellipse 60% 140% at 90% 0%, hsl(${h} 45% 30% / 0.85), transparent 70%), linear-gradient(160deg, hsl(${h} 38% 15%), hsl(${h} 30% 8%))`;
   }
 
   async deleteCampaign() {

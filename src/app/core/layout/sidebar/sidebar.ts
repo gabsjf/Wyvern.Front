@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
+import { LayoutService } from '../layout.service';
 
 interface Destino {
   rota: string;
@@ -23,6 +24,7 @@ export class Sidebar {
   private authService = inject(AuthService);
   private router = inject(Router);
   private theme = inject(ThemeService);
+  layout = inject(LayoutService);
 
   readonly destinos: Destino[] = [
     { rota: '/dashboard', rotulo: 'Painel', icone: 'bi-house-door' },

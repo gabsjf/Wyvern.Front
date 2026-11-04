@@ -6,11 +6,11 @@
       <span class="stat-value num">{{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
       <span class="stat-caption">Classe de armadura</span>
     </div>
-    <div class="stat">
+    <button type="button" class="stat stat-roll" (click)="rolarIniciativa()" aria-label="Rolar iniciativa" title="Rolar iniciativa">
       <span class="stat-label">Inic.</span>
       <span class="stat-value num">{{ getIniciativaStr() }}</span>
-      <span class="stat-caption">Iniciativa</span>
-    </div>
+      <span class="stat-caption">Rolar iniciativa</span>
+    </button>
     <div class="stat">
       <span class="stat-label">Desl.</span>
       <span class="stat-value num">{{ personagem?.personagemCombate?.deslocamento || '9m' }}</span>
@@ -30,10 +30,29 @@
         <span class="stat-label">Pontos de vida</span>
         <span class="hp-max num">máx. {{ vidaMaxima }}</span>
       </div>
-      <div class="hp-now num" aria-live="polite">{{ vidaAtual }}</div>
+      <div class="hp-linha">
+        <div class="hp-now num" aria-live="polite">{{ vidaAtual }}</div>
+        @if (vidaTemporaria > 0) { <span class="hp-temp num" title="Pontos de vida temporários">+{{ vidaTemporaria }} temp.</span> }
+      </div>
       <div class="bar" role="img" [attr.aria-label]="'Vida em ' + vidaPct + '%'">
         <i [style.width.%]="vidaPct"></i>
       </div>
+
+      @if (combate) {
+        <div class="hp-controles">
+          <label class="visually-hidden" for="hp-qtd">Quantidade de dano ou cura</label>
+          <input id="hp-qtd" type="number" min="1" class="form-control num hp-qtd" placeholder="Qtd" [value]="quantidade ?? ''"
+                 (input)="quantidade = $any($event.target).value === '' ? null : +$any($event.target).value"
+                 (keyup.enter)="aplicarDano()" />
+          <button type="button" class="btn-danger" (click)="aplicarDano()" [disabled]="!quantidade">Dano</button>
+          <button type="button" class="btn-secondary hp-cura" (click)="aplicarCura()" [disabled]="!quantidade">Cura</button>
+          <span class="hp-temp-ctl" role="group" aria-label="PV temporários">
+            <button type="button" (click)="ajustarTemporarios(-1)" [disabled]="vidaTemporaria <= 0" aria-label="Um PV temporário a menos">−</button>
+            <span class="num">T {{ vidaTemporaria }}</span>
+            <button type="button" (click)="ajustarTemporarios(1)" aria-label="Um PV temporário a mais">+</button>
+          </span>
+        </div>
+      }
     </div>
 
     <div class="vital-card">
@@ -41,6 +60,12 @@
         <span class="stat-label">Dados de vida</span>
       </div>
       <div class="hd-now num">{{ dadoVida }}</div>
+      @if (combate) {
+        <button type="button" class="inspiracao" [class.on]="inspiracao" [attr.aria-pressed]="inspiracao" (click)="alternarInspiracao()">
+          <i class="bi" [class.bi-star-fill]="inspiracao" [class.bi-star]="!inspiracao" aria-hidden="true"></i>
+          Inspiração heroica
+        </button>
+      }
     </div>
 
     <div class="vital-card saves">
@@ -49,14 +74,20 @@
       </div>
       <div class="save-row">
         <span class="save-lbl">Sucessos</span>
-        <span class="dots" [attr.aria-label]="sucessosMorte + ' de 3 sucessos'">
-          <i [class.on]="sucessosMorte >= 1"></i><i [class.on]="sucessosMorte >= 2"></i><i [class.on]="sucessosMorte >= 3"></i>
+        <span class="dots" role="group" aria-label="Sucessos nas salvaguardas de morte">
+          @for (n of [1, 2, 3]; track n) {
+            <button type="button" [class.on]="sucessosMorte >= n" [attr.aria-pressed]="sucessosMorte >= n"
+                    [attr.aria-label]="'Sucesso ' + n" [disabled]="!combate" (click)="marcarSalvaguarda('sucesso', n)"></button>
+          }
         </span>
       </div>
       <div class="save-row">
         <span class="save-lbl">Falhas</span>
-        <span class="dots fail" [attr.aria-label]="falhasMorte + ' de 3 falhas'">
-          <i [class.on]="falhasMorte >= 1"></i><i [class.on]="falhasMorte >= 2"></i><i [class.on]="falhasMorte >= 3"></i>
+        <span class="dots fail" role="group" aria-label="Falhas nas salvaguardas de morte">
+          @for (n of [1, 2, 3]; track n) {
+            <button type="button" [class.on]="falhasMorte >= n" [attr.aria-pressed]="falhasMorte >= n"
+                    [attr.aria-label]="'Falha ' + n" [disabled]="!combate" (click)="marcarSalvaguarda('falha', n)"></button>
+          }
         </span>
       </div>
     </div>

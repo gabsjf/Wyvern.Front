@@ -116,7 +116,7 @@ export class CampaignDetail implements OnInit {
 
   // O link sempre aponta para o domínio de produção, mesmo quando o Mestre está em localhost.
   private buildInviteUrl(token: string) {
-    return `https://wyvern-kappa.vercel.app/invite/${token}`;
+    return `${window.location.origin}/invite/${token}`;
   }
 
   private showInviteMessage(message: string) {

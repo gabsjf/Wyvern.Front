@@ -2,10 +2,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
-RUN npm run build --configuration production
+# "ng build" já usa a configuração de produção por padrão.
+RUN npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/dist/wyvern-front/browser /usr/share/nginx/html

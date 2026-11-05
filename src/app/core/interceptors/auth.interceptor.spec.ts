@@ -63,6 +63,23 @@ describe('authInterceptor', () => {
     req.flush([]);
   });
 
+  it('no app nativo a conexão SignalR pede um ticket novo à API em vez de levar o token da sessão na URL', async () => {
+    const auth = TestBed.inject(AuthService);
+    vi.spyOn(auth, 'nativo', 'get').mockReturnValue(true);
+    vi.spyOn(auth, 'tokenParaApi').mockReturnValue('sessao-longa');
+
+    const opcoes = auth.opcoesDoHub();
+    expect(opcoes.withCredentials).toBeUndefined();
+
+    const pedido = (opcoes.accessTokenFactory as () => Promise<string>)();
+    const req = controller.expectOne(`${environment.apiUrl}/Auth/hub-ticket`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer sessao-longa');
+    req.flush({ ticket: 'ticket-curto' });
+
+    expect(await pedido).toBe('ticket-curto');
+  });
+
   it('401 da API faz logout e volta ao login guardando a página atual', () => {
     const auth = TestBed.inject(AuthService);
     auth.login({}).subscribe();

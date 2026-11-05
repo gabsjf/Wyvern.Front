@@ -87,11 +87,19 @@ export class AuthService {
     return this.tokenNativo;
   }
 
-  /** Como cada conexão SignalR se autentica: pelo cookie na web, pelo token no app nativo (o WebSocket não manda cabeçalho). */
+  /**
+   * Como cada conexão SignalR se autentica: pelo cookie na web; no app nativo (o WebSocket não manda cabeçalho) por um
+   * ticket de ~60 s que a API emite a cada conexão, para o token da sessão nunca ir na URL.
+   */
   opcoesDoHub(): IHttpConnectionOptions {
     return this.nativo
-      ? { accessTokenFactory: () => this.tokenNativo ?? '' }
+      ? { accessTokenFactory: () => this.pedirTicketDoHub() }
       : { withCredentials: true };
+  }
+
+  private async pedirTicketDoHub(): Promise<string> {
+    const { ticket } = await firstValueFrom(this.http.post<{ ticket: string }>(`${this.apiUrl}/hub-ticket`, null));
+    return ticket;
   }
 
   private iniciarSessao(resposta: RespostaAuth): void {

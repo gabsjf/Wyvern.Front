@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../environments/environments';
 import { DiceService, ResultadoDados } from '../../core/services/dice.service';
+import { AuthService } from '../../core/services/auth.service';
 
 export interface RolagemMesa {
   id: string;
@@ -24,6 +25,7 @@ const LIMITE_NA_TELA = 40;
 @Injectable({ providedIn: 'root' })
 export class MesaService {
   private dados = inject(DiceService);
+  private auth = inject(AuthService);
 
   /** Da mais antiga para a mais recente. */
   readonly rolagens = signal<RolagemMesa[]>([]);
@@ -70,7 +72,7 @@ export class MesaService {
       if (!this.conexao) {
         const url = environment.apiUrl.replace(/\/api$/, '') + '/mesahub';
         this.conexao = new signalR.HubConnectionBuilder()
-          .withUrl(url, { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
+          .withUrl(url, this.auth.opcoesDoHub())
           .withAutomaticReconnect()
           .build();
 

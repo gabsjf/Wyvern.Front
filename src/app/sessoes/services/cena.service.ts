@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../environments/environments';
+import { AuthService } from '../../core/services/auth.service';
 import { Cena, Marcador, MarcadorForm, MovimentoToken, Parede, ParedeForm, Traco, TokenCena, TokenForm } from '../models/cena';
 
 export interface PingDoMapa {
@@ -61,6 +62,7 @@ export interface OuvintesDoMapa {
 @Injectable({ providedIn: 'root' })
 export class CenaService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
   private apiUrl = `${environment.apiUrl}/Campanha`;
 
   private conexao: signalR.HubConnection | undefined;
@@ -212,8 +214,7 @@ export class CenaService {
     this.campanhaId = campanhaId;
 
     const conexao = new signalR.HubConnectionBuilder()
-      // O WebSocket não envia o header Authorization: o token vai na query (?access_token=)
-      .withUrl(environment.apiUrl.replace(/\/api$/, '') + '/cenahub', { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
+      .withUrl(environment.apiUrl.replace(/\/api$/, '') + '/cenahub', this.auth.opcoesDoHub())
       .withAutomaticReconnect()
       .build();
     this.conexao = conexao;

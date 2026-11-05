@@ -9,14 +9,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // O token só vai para a nossa API, nunca para outras origens (CDNs, assets etc.).
+  // A sessão só vai para a nossa API, nunca para outras origens (CDNs, assets etc.).
   const ehApi = req.url.startsWith(environment.apiUrl);
   // Em login/cadastro um 401 significa credencial errada: a própria tela mostra o erro.
   const ehAuth = req.url.startsWith(`${environment.apiUrl}/Auth/`);
-  const token = authService.getToken();
 
-  if (ehApi && token) {
-    req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+  if (ehApi) {
+    const token = authService.tokenParaApi();
+    req = req.clone({
+      // Na web a sessão é o cookie HttpOnly; o cabeçalho X-Requested-With é a defesa anti-CSRF da API (força o preflight de CORS).
+      // O app nativo não tem cookie: manda o token guardado no aparelho.
+      withCredentials: !authService.nativo,
+      setHeaders: token
+        ? { 'X-Requested-With': 'wyvern', Authorization: `Bearer ${token}` }
+        : { 'X-Requested-With': 'wyvern' },
+    });
   }
 
   return next(req).pipe(

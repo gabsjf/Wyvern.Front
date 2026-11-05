@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environments';
 import * as signalR from '@microsoft/signalr';
+import { AuthService } from '../../core/services/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,14 +13,16 @@ export class CombateService {
   private hubConnection: signalR.HubConnection | undefined;
   private iniciando: Promise<void> | undefined;
 
+  private auth = inject(AuthService);
+
   constructor(private http: HttpClient) {}
 
   private async ensureConnection(): Promise<void> {
     const hubUrl = environment.apiUrl.replace(/\/api$/, '') + '/combathub';
     if (!this.hubConnection) {
       this.hubConnection = new signalR.HubConnectionBuilder()
-        // O hub exige login: o WebSocket não envia o header Authorization, então o token vai na query (?access_token=)
-        .withUrl(hubUrl, { accessTokenFactory: () => localStorage.getItem('token') ?? '' })
+        // O hub exige login: na web vale o cookie da sessão (withCredentials), sem token na URL
+        .withUrl(hubUrl, this.auth.opcoesDoHub())
         .withAutomaticReconnect()
         .build();
     }

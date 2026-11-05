@@ -30,7 +30,11 @@ export class CombateService {
     // Dois componentes podem pedir a conexão ao mesmo tempo: todos esperam a mesma promessa de início,
     // senão o segundo tenta enviar enquanto a conexão ainda está abrindo.
     if (this.hubConnection.state === signalR.HubConnectionState.Disconnected && !this.iniciando) {
-      this.iniciando = this.hubConnection.start().finally(() => (this.iniciando = undefined));
+      const conexao = this.hubConnection;
+      this.iniciando = (async () => {
+        await this.auth.garantirSessaoParaHub();
+        await conexao.start();
+      })().finally(() => (this.iniciando = undefined));
     }
     if (this.iniciando) {
       await this.iniciando;

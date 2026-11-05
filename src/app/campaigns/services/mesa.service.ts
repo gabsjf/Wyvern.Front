@@ -85,7 +85,10 @@ export class MesaService {
         this.conexao.onclose(() => this.conectada.set(false));
       }
 
-      if (this.conexao.state === signalR.HubConnectionState.Disconnected) await this.conexao.start();
+      if (this.conexao.state === signalR.HubConnectionState.Disconnected) {
+        await this.auth.garantirSessaoParaHub();
+        await this.conexao.start();
+      }
       await this.entrarNoGrupo(campanhaId);
     } catch (erro) {
       console.warn('Mesa ao vivo indisponível; as rolagens continuam funcionando só para você.', erro);

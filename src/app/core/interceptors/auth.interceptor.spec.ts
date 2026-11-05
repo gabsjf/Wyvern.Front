@@ -15,6 +15,7 @@ describe('authInterceptor', () => {
   let router: { url: string; navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    localStorage.clear(); // o carimbo de "outra aba renovou agora" não pode vazar de um teste para o outro
     router = { url: '/campaigns/3', navigate: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -80,19 +81,101 @@ describe('authInterceptor', () => {
     expect(await pedido).toBe('ticket-curto');
   });
 
-  it('401 da API faz logout e volta ao login guardando a página atual', () => {
+  const NAO_AUTORIZADO = { status: 401, statusText: 'Unauthorized' };
+  const tick = () => new Promise<void>(resolver => setTimeout(resolver));
+
+  it('401 da API com refresh recusado faz logout e volta ao login guardando a página atual', async () => {
     const auth = TestBed.inject(AuthService);
     auth.login({}).subscribe();
     controller.expectOne(`${environment.apiUrl}/Auth/login`).flush(USUARIO);
     expect(auth.isLoggedIn()).toBe(true);
 
     http.get(`${environment.apiUrl}/Campanha`).subscribe({ error: () => {} });
-    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', { status: 401, statusText: 'Unauthorized' });
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', NAO_AUTORIZADO);
+    await tick();
+    // antes de desistir, tenta renovar a sessão; o servidor recusa
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush('', NAO_AUTORIZADO);
+    await tick();
 
     expect(auth.isLoggedIn()).toBe(false);
     expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/campaigns/3' } });
     // o logout também avisa o servidor, que apaga o cookie
     controller.expectOne(`${environment.apiUrl}/Auth/logout`).flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('401 por access token vencido: renova a sessão e repete a requisição sem deslogar', async () => {
+    const auth = TestBed.inject(AuthService);
+    const resultado: unknown[] = [];
+
+    http.get(`${environment.apiUrl}/Campanha`).subscribe(r => resultado.push(r));
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', NAO_AUTORIZADO);
+    await tick();
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush(USUARIO);
+    await tick();
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush([{ campanhaId: 1 }]);
+
+    expect(resultado).toEqual([[{ campanhaId: 1 }]]);
+    expect(auth.isLoggedIn()).toBe(true);
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('várias requisições com 401 ao mesmo tempo dividem uma só troca de refresh token', async () => {
+    http.get(`${environment.apiUrl}/Campanha`).subscribe({ error: () => {} });
+    http.get(`${environment.apiUrl}/Personagem`).subscribe({ error: () => {} });
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', NAO_AUTORIZADO);
+    controller.expectOne(`${environment.apiUrl}/Personagem`).flush('', NAO_AUTORIZADO);
+    await tick();
+
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush(USUARIO);
+    await tick();
+
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush([]);
+    controller.expectOne(`${environment.apiUrl}/Personagem`).flush([]);
+  });
+
+  it('se a requisição ainda dá 401 com a sessão recém-renovada, faz logout (sem renovar de novo)', async () => {
+    http.get(`${environment.apiUrl}/Campanha`).subscribe({ error: () => {} });
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', NAO_AUTORIZADO);
+    await tick();
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush(USUARIO);
+    await tick();
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', NAO_AUTORIZADO);
+    await tick();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/campaigns/3' } });
+    controller.expectNone(`${environment.apiUrl}/Auth/refresh`);
+    controller.expectOne(`${environment.apiUrl}/Auth/logout`).flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('servidor fora do ar na hora de renovar não desloga o usuário', async () => {
+    const erros: unknown[] = [];
+    http.get(`${environment.apiUrl}/Campanha`).subscribe({ error: e => erros.push(e) });
+    controller.expectOne(`${environment.apiUrl}/Campanha`).flush('', NAO_AUTORIZADO);
+    await tick();
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush('', { status: 503, statusText: 'Unavailable' });
+    await tick();
+
+    expect(erros.length).toBe(1);
+    expect(router.navigate).not.toHaveBeenCalled();
+    controller.expectNone(`${environment.apiUrl}/Auth/logout`);
+  });
+
+  it('/Auth/me sem sessão tenta renovar, mas não redireciona para o login (é só a checagem inicial)', async () => {
+    http.get(`${environment.apiUrl}/Auth/me`).subscribe({ error: () => {} });
+    controller.expectOne(`${environment.apiUrl}/Auth/me`).flush('', NAO_AUTORIZADO);
+    await tick();
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush('', NAO_AUTORIZADO);
+    await tick();
+
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('401 no refresh em si não dispara outra renovação', async () => {
+    http.post(`${environment.apiUrl}/Auth/refresh`, null).subscribe({ error: () => {} });
+    controller.expectOne(`${environment.apiUrl}/Auth/refresh`).flush('', NAO_AUTORIZADO);
+    await tick();
+
+    controller.expectNone(`${environment.apiUrl}/Auth/refresh`);
   });
 
   it('401 no login (credencial errada) não redireciona', () => {

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environments';
 import { SessaoService } from '../../sessoes/services/sessao.service';
+import { AuthService } from '../../core/services/auth.service';
 import { EventoCampanha, EventoCampanhaApi, EventoForm, SessaoResumo } from '../models/evento-campanha';
 
 /** A crônica da campanha: os eventos escritos pelos membros e os que o sistema registra sozinho. */
@@ -10,6 +11,7 @@ import { EventoCampanha, EventoCampanhaApi, EventoForm, SessaoResumo } from '../
 export class LinhaDoTempoService {
   private http = inject(HttpClient);
   private sessoes = inject(SessaoService);
+  private auth = inject(AuthService);
 
   private url(campanhaId: number) {
     return `${environment.apiUrl}/Campanha/${campanhaId}/Eventos`;
@@ -43,12 +45,7 @@ export class LinhaDoTempoService {
   }
 
   private completar(e: EventoCampanhaApi): EventoCampanha {
-    let usuarioId: number | null = null;
-    try {
-      usuarioId = Number(localStorage.getItem('usuarioId')) || null;
-    } catch {
-      // sem armazenamento: ninguém é "você" (o servidor continua validando tudo)
-    }
+    const usuarioId = this.auth.usuarioLogado()?.usuarioId ?? null;
     return { ...e, autorEhVoce: usuarioId !== null && e.autorId === usuarioId };
   }
 }

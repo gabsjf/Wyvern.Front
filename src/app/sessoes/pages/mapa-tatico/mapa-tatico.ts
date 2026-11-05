@@ -29,6 +29,7 @@ import { PapelCampanha, PapelService } from '../../../campaigns/services/papel.s
 import { PersonagemService } from '../../../personagens/services/personagem.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { ConfirmService } from '../../../shared/ui/confirm/confirm.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { CONDICOES, alternarCondicao, lerCondicoes, temCondicao } from '../../../personagens/utils/condicoes';
 
 type Ferramenta = 'mover' | 'regua' | 'revelar' | 'cobrir' | 'area' | 'parede' | 'porta' | 'janela' | 'apagar' | 'marcador' | 'desenhar' | 'borracha';
@@ -79,6 +80,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
   private confirm = inject(ConfirmService);
   private campanhas = inject(CampaignService);
   private sessaoService = inject(SessaoService);
+  private auth = inject(AuthService);
 
   readonly campanhaId = input.required<number>();
   readonly sessaoId = input.required<number>();
@@ -89,7 +91,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
 
   readonly cores = CORES_TOKEN;
   readonly tamanhos = [1, 2, 3, 4];
-  readonly meuId = Number(localStorage.getItem('usuarioId')) || 0;
+  readonly meuId = this.auth.usuarioLogado()?.usuarioId ?? 0;
 
   // ---------- estado ----------
   readonly papel = signal<PapelCampanha>('Jogador');

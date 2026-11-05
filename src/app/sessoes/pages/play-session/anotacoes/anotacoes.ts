@@ -62,7 +62,7 @@ export class Anotacoes implements OnInit, OnChanges {
   newPastaPublic = false;
 
   ngOnInit() {
-    this.currentUserId = this.authService.currentUserValue?.usuarioId;
+    this.currentUserId = this.authService.usuarioLogado()?.usuarioId ?? 0;
     this.carregarPapel();
     this.carregarDados();
   }

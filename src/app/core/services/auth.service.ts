@@ -1,84 +1,134 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Capacitor } from '@capacitor/core';
+import type { IHttpConnectionOptions } from '@microsoft/signalr';
+import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
+import { Observable, catchError, firstValueFrom, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environments';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
 
+export interface UsuarioLogado {
+  usuarioId: number;
+  nome: string;
+  email: string;
+  papel: string;
+}
+
+/** Resposta de login/cadastro: o `token` só vem para o app nativo; na web ele fica num cookie HttpOnly. */
+type RespostaAuth = UsuarioLogado & { token?: string };
+
+const CHAVE_TOKEN_NATIVO = 'wyvern_token';
+// Antes de o token ir para o cookie ele ficava aqui, ao alcance de qualquer script da página.
+const CHAVES_ANTIGAS = ['token', 'usuarioId', 'papel'];
+
+/**
+ * Na web a sessão é um cookie HttpOnly que só o servidor enxerga: o front descobre quem está logado perguntando
+ * à API (`/Auth/me`). No app Android (outra origem, sem cookie) o token vem no corpo do login e fica no
+ * armazenamento seguro do aparelho.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  /** O app Android usa Bearer; a web usa o cookie. */
+  get nativo(): boolean {
+    return Capacitor.isNativePlatform();
+  }
+
   private apiUrl = `${environment.apiUrl}/Auth`;
-  private currentUserSubject = new BehaviorSubject<any>(null);
+  private usuario = signal<UsuarioLogado | null>(null);
+  private tokenNativo: string | null = null;
 
-  constructor(private http: HttpClient) {
-    const token = localStorage.getItem('token');
-    const usuarioIdStr = localStorage.getItem('usuarioId');
-    if (token) {
-      this.currentUserSubject.next({ 
-        token,
-        usuarioId: usuarioIdStr ? parseInt(usuarioIdStr, 10) : undefined 
-      });
+  readonly usuarioLogado = this.usuario.asReadonly();
+
+  constructor(private http: HttpClient) {}
+
+  /** Roda antes de a primeira rota abrir (provideAppInitializer), para o guard e a navbar já saberem se há sessão. */
+  async carregarSessao(): Promise<void> {
+    this.limparChavesAntigas();
+
+    if (this.nativo) {
+      this.tokenNativo = await this.lerTokenNativo();
+      if (!this.tokenNativo) return;
     }
+
+    const usuario = await firstValueFrom(this.http.get<RespostaAuth>(`${this.apiUrl}/me`).pipe(catchError(() => of(null))));
+    this.usuario.set(usuario ? this.semToken(usuario) : null);
+    if (!usuario && this.nativo) this.esquecerTokenNativo();
   }
 
-  public get currentUserValue(): any {
-    return this.currentUserSubject.value;
-  }
-
-  login(credentials: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(response => {
-        if (response && response.token) {
-          localStorage.setItem('token', response.token);
-          if (response.usuarioId) localStorage.setItem('usuarioId', response.usuarioId.toString());
-          this.currentUserSubject.next(response);
-        }
-      })
+  login(credentials: unknown): Observable<RespostaAuth> {
+    return this.http.post<RespostaAuth>(`${this.apiUrl}/login`, credentials, { headers: this.cabecalhosDeEntrada() }).pipe(
+      tap(resposta => this.iniciarSessao(resposta))
     );
   }
 
-  register(credentials: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/register`, credentials).pipe(
-      tap(response => {
-        if (response && response.token) {
-          localStorage.setItem('token', response.token);
-          if (response.usuarioId) localStorage.setItem('usuarioId', response.usuarioId.toString());
-          this.currentUserSubject.next(response);
-        }
-      })
+  register(credentials: unknown): Observable<RespostaAuth> {
+    return this.http.post<RespostaAuth>(`${this.apiUrl}/register`, credentials, { headers: this.cabecalhosDeEntrada() }).pipe(
+      tap(resposta => this.iniciarSessao(resposta))
     );
   }
 
-  logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('papel');
-    localStorage.removeItem('usuarioId');
-    this.currentUserSubject.next(null);
+  logout(): void {
+    const tinhaSessao = this.usuario() !== null || this.tokenNativo !== null;
+    this.usuario.set(null);
+    if (!tinhaSessao) return;
+
+    // O servidor apaga o cookie; se a chamada falhar, a sessão local já foi encerrada.
+    this.http.post(`${this.apiUrl}/logout`, null).pipe(catchError(() => of(null))).subscribe();
+    if (this.nativo) this.esquecerTokenNativo();
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
-  // Logado = existe token e ele ainda não expirou (o servidor continua sendo quem valida de verdade).
   isLoggedIn(): boolean {
-    const token = this.getToken();
-    if (!token) return false;
-
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return false;
-    }
-    return true;
+    return this.usuario() !== null;
   }
 
-  private isTokenExpired(token: string): boolean {
-    try {
-      const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const { exp } = JSON.parse(atob(payload));
-      return typeof exp === 'number' && exp * 1000 <= Date.now();
-    } catch {
-      return true;
+  /** Token para o cabeçalho Authorization. Só existe no app nativo; na web a API lê o cookie. */
+  tokenParaApi(): string | null {
+    return this.tokenNativo;
+  }
+
+  /** Como cada conexão SignalR se autentica: pelo cookie na web, pelo token no app nativo (o WebSocket não manda cabeçalho). */
+  opcoesDoHub(): IHttpConnectionOptions {
+    return this.nativo
+      ? { accessTokenFactory: () => this.tokenNativo ?? '' }
+      : { withCredentials: true };
+  }
+
+  private iniciarSessao(resposta: RespostaAuth): void {
+    if (this.nativo && resposta.token) {
+      this.tokenNativo = resposta.token;
+      void SecureStoragePlugin.set({ key: CHAVE_TOKEN_NATIVO, value: resposta.token }).catch(() => {});
     }
+    this.usuario.set(this.semToken(resposta));
+  }
+
+  private semToken(resposta: RespostaAuth): UsuarioLogado {
+    const { usuarioId, nome, email, papel } = resposta;
+    return { usuarioId, nome, email, papel };
+  }
+
+  private cabecalhosDeEntrada(): HttpHeaders {
+    return this.nativo ? new HttpHeaders({ 'X-Wyvern-Client': 'native' }) : new HttpHeaders();
+  }
+
+  private limparChavesAntigas(): void {
+    try {
+      for (const chave of CHAVES_ANTIGAS) localStorage.removeItem(chave);
+    } catch {
+      // sem armazenamento: não há o que limpar
+    }
+  }
+
+  private async lerTokenNativo(): Promise<string | null> {
+    try {
+      return (await SecureStoragePlugin.get({ key: CHAVE_TOKEN_NATIVO })).value || null;
+    } catch {
+      return null; // a chave ainda não existe
+    }
+  }
+
+  private esquecerTokenNativo(): void {
+    this.tokenNativo = null;
+    void SecureStoragePlugin.remove({ key: CHAVE_TOKEN_NATIVO }).catch(() => {});
   }
 }

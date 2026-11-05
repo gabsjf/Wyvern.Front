@@ -238,6 +238,7 @@ export class CenaService {
       ouvintes.reconectou?.();
     });
 
+    await this.auth.garantirSessaoParaHub();
     await conexao.start();
     await conexao.invoke('EntrarNaCena', campanhaId);
     return () => this.desconectar();

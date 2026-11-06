@@ -9,7 +9,12 @@
       {{ errorMessage }}
     </div>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <div *ngIf="mensagemEnviado" class="alert-ok" role="status">
+      <p>{{ mensagemEnviado }}</p>
+      <p>Depois de confirmar, <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }" class="text-accent">entre na sua conta</a>.</p>
+    </div>
+
+    <form *ngIf="!mensagemEnviado" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
         <label class="form-label" for="nome">Nome ou Apelido</label>
         <input 

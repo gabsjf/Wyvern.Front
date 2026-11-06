@@ -72,10 +72,24 @@ export class AuthService {
     );
   }
 
-  register(credentials: unknown): Observable<RespostaAuth> {
-    return this.http.post<RespostaAuth>(`${this.apiUrl}/register`, credentials, { headers: this.cabecalhosDeEntrada() }).pipe(
-      tap(resposta => this.iniciarSessao(resposta))
-    );
+  /** O cadastro não abre sessão e responde igual com e-mail novo ou já usado; o resultado chega por e-mail. */
+  register(credentials: unknown): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/register`, credentials, { headers: this.cabecalhosDeEntrada() });
+  }
+
+  /** Esqueci a senha: responde igual exista a conta ou não; o link chega por e-mail. */
+  esqueciSenha(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/esqueci-senha`, { email }, { headers: this.cabecalhosDeEntrada() });
+  }
+
+  /** Troca a senha com o token do link; o servidor encerra as sessões abertas da conta. */
+  redefinirSenha(token: string, novaSenha: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/redefinir-senha`, { token, novaSenha }, { headers: this.cabecalhosDeEntrada() });
+  }
+
+  /** Confirma o e-mail com o token do link enviado; depois disso o login funciona. */
+  confirmarEmail(token: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/confirmar-email`, { token }, { headers: this.cabecalhosDeEntrada() });
   }
 
   logout(): void {

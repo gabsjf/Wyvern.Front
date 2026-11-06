@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -15,10 +15,11 @@ export class Register implements OnInit {
   registerForm: FormGroup;
   loading = false;
   errorMessage = '';
+  /** Preenchida depois do cadastro: troca o formulário pelo aviso de "verifique seu e-mail". */
+  mensagemEnviado = '';
   returnUrl: string = '/campaigns';
 
   private authService = inject(AuthService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
@@ -43,8 +44,9 @@ export class Register implements OnInit {
     this.errorMessage = '';
 
     this.authService.register(this.registerForm.value).subscribe({
-      next: () => {
-        this.router.navigateByUrl(this.returnUrl);
+      next: res => {
+        this.mensagemEnviado = res.message;
+        this.loading = false;
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Erro ao realizar registro';

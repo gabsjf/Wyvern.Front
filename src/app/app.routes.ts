@@ -13,11 +13,17 @@ import { PlaySession } from './sessoes/pages/play-session/play-session';
 import { authGuard } from './core/guards/auth.guard';
 import { Login } from './core/pages/login/login';
 import { Register } from './core/pages/register/register';
+import { ConfirmarEmail } from './core/pages/confirmar-email/confirmar-email';
+import { EsqueciSenha } from './core/pages/esqueci-senha/esqueci-senha';
+import { RedefinirSenha } from './core/pages/redefinir-senha/redefinir-senha';
 
 export const routes: Routes = [
     {path: '', loadComponent: () => import('./core/pages/landing/landing').then(m => m.LandingComponent)},
     {path: 'login', component: Login},
     {path: 'register', component: Register},
+    {path: 'confirmar-email', component: ConfirmarEmail},
+    {path: 'esqueci-senha', component: EsqueciSenha},
+    {path: 'redefinir-senha', component: RedefinirSenha},
     {
       path: '',
       canActivate: [authGuard],

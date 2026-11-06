@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -18,6 +18,7 @@ export class Login implements OnInit {
   returnUrl: string = '/campaigns';
 
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef); // o app é zoneless: o callback do HTTP não redesenha a tela sozinho
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
@@ -48,6 +49,7 @@ export class Login implements OnInit {
       error: (err) => {
         this.errorMessage = err.error?.message || 'Erro ao realizar login';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

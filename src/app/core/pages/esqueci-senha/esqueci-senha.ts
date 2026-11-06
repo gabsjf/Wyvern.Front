@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -19,6 +19,7 @@ export class EsqueciSenha {
   mensagemEnviado = '';
 
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef); // o app é zoneless: o callback do HTTP não redesenha a tela sozinho
   private fb = inject(FormBuilder);
 
   constructor() {
@@ -35,10 +36,12 @@ export class EsqueciSenha {
       next: res => {
         this.mensagemEnviado = res.message;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: err => {
         this.errorMessage = err.error?.message || 'Não foi possível enviar o link agora. Tente de novo em instantes.';
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }

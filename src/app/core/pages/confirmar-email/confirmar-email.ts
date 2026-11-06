@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -18,6 +18,7 @@ export class ConfirmarEmail implements OnInit {
   errorMessage = '';
 
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef); // o app é zoneless: o callback do HTTP não redesenha a tela sozinho
   private route = inject(ActivatedRoute);
 
   ngOnInit() {
@@ -28,7 +29,10 @@ export class ConfirmarEmail implements OnInit {
     }
 
     this.authService.confirmarEmail(token).subscribe({
-      next: () => (this.estado = 'ok'),
+      next: () => {
+        this.estado = 'ok';
+        this.cdr.markForCheck();
+      },
       error: err => this.falhar(err.error?.message || 'Não foi possível confirmar o e-mail.'),
     });
   }
@@ -36,5 +40,6 @@ export class ConfirmarEmail implements OnInit {
   private falhar(mensagem: string) {
     this.errorMessage = mensagem;
     this.estado = 'erro';
+    this.cdr.markForCheck();
   }
 }

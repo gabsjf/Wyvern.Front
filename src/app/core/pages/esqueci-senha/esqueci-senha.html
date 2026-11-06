@@ -1,31 +1,27 @@
-<div class="auth-container">
-  <div class="glass-panel auth-card animate-fade-in">
-    <div class="auth-header">
-      <h1 class="title-glow">Esqueci a senha</h1>
-      <p class="text-secondary">Enviaremos um link para você criar outra.</p>
-    </div>
+<app-auth-shell>
+  <h1 class="auth-titulo">Esqueci a senha</h1>
+  <p class="auth-sub">Informe seu e-mail e enviaremos um link para você criar outra.</p>
 
-    <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
+  <div *ngIf="errorMessage" class="alert-error" role="alert">{{ errorMessage }}</div>
 
-    <div *ngIf="mensagemEnviado" class="alert-ok" role="status">
-      <p>{{ mensagemEnviado }}</p>
-    </div>
-
-    <form *ngIf="!mensagemEnviado" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label class="form-label" for="email">E-mail</label>
-        <input id="email" type="email" class="form-control" formControlName="email" placeholder="exemplo@email.com" autocomplete="email">
-        <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="text-error">E-mail inválido.</div>
-      </div>
-
-      <button type="submit" class="btn-primary auth-submit" [disabled]="form.invalid || loading">
-        <span *ngIf="!loading">Enviar link</span>
-        <span *ngIf="loading">Enviando...</span>
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      <p><a [routerLink]="['/login']" class="text-accent">Voltar para o login</a></p>
-    </div>
+  <div *ngIf="mensagemEnviado" class="alert-ok" role="status">
+    <p>{{ mensagemEnviado }}</p>
   </div>
-</div>
+
+  <form *ngIf="!mensagemEnviado" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label class="form-label" for="email">E-mail</label>
+      <input id="email" type="email" class="form-control" formControlName="email" placeholder="exemplo@email.com" autocomplete="email">
+      <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="text-error">E-mail inválido.</div>
+    </div>
+
+    <button type="submit" class="btn-primary auth-submit" [disabled]="form.invalid || loading">
+      <span *ngIf="!loading">Enviar link</span>
+      <span *ngIf="loading">Enviando...</span>
+    </button>
+  </form>
+
+  <div class="auth-footer">
+    <p><a [routerLink]="['/login']">&larr; Voltar para o login</a></p>
+  </div>
+</app-auth-shell>

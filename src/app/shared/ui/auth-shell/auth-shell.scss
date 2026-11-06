@@ -1,0 +1,150 @@
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* ---- ilustração: ocupa a metade esquerda inteira e se dissolve no fundo ---- */
+.auth-art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.75rem, 4vw, 4rem);
+  background: #14110f url('/assets/images/auth-taverna.jpg') center / cover no-repeat;
+  color: #f4ebdc; /* a ilustração é escura nos dois temas */
+}
+.auth-art-veu {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(20, 17, 15, 0.6) 0%, rgba(20, 17, 15, 0) 25%),
+    linear-gradient(to top, rgba(20, 17, 15, 0.88) 0%, rgba(20, 17, 15, 0) 50%),
+    linear-gradient(to right, rgba(20, 17, 15, 0) 55%, var(--bg) 100%);
+}
+.auth-art > :not(.auth-art-veu) { position: relative; }
+
+.auth-brand,
+.auth-brand-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f4ebdc;
+
+  img { height: 2rem; width: auto; }
+}
+.auth-art-frase {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.6vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  max-width: 16ch;
+}
+
+/* ---- lado do formulário: só o fundo da página, sem cartão ---- */
+.auth-painel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 4vw, 4rem);
+}
+.auth-conteudo { width: 100%; max-width: 360px; }
+.auth-brand-mobile { display: none; color: var(--fg); margin-bottom: 2.5rem; }
+
+/* ---- peças compartilhadas pelas telas ---- */
+.auth-titulo {
+  margin: 0 0 0.5rem;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  line-height: 1;
+}
+.auth-sub { color: var(--muted); margin: 0 0 2.5rem; }
+
+/* campos só com a linha de baixo */
+.auth-shell .form-group { margin-bottom: 1.5rem; }
+.auth-shell .form-control {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--muted);
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+
+  &:hover { border-bottom-color: var(--fg); }
+  &:focus { outline: 0; border-bottom: 2px solid var(--hi); margin-bottom: -1px; }
+  &.ng-invalid.ng-touched { border-bottom-color: var(--danger); }
+}
+
+/* avisos: só texto colorido */
+.auth-shell .alert-error,
+.auth-shell .alert-ok {
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+
+  p { margin: 0 0 0.5rem; }
+  p:last-child { margin-bottom: 0; }
+}
+.auth-shell .alert-error { color: var(--danger); }
+.auth-shell .alert-ok { color: var(--ok); }
+
+.auth-shell .auth-submit {
+  width: 100%;
+  margin-top: 1rem;
+  min-height: 52px;
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.auth-shell .auth-footer {
+  margin-top: 2rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+
+  p { margin: 0 0 0.5rem; }
+  a { font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+.auth-linha-senha {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+
+  a { font-size: 0.82rem; color: var(--hi); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+/* estado da confirmação de e-mail */
+.auth-selo {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 1.75rem;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  font-size: 1.6rem;
+  color: var(--muted);
+
+  &.ok { border-color: var(--ok); color: var(--ok); }
+  &.erro { border-color: var(--danger); color: var(--danger); }
+  &.carregando { border-top-color: var(--hi); animation: auth-gira 0.9s linear infinite; }
+}
+@keyframes auth-gira { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .auth-shell { grid-template-columns: 1fr; }
+  .auth-art { display: none; }
+  .auth-brand-mobile { display: inline-flex; }
+  .auth-painel { justify-content: flex-start; padding-top: 3rem; }
+}

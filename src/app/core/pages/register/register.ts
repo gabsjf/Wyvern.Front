@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthShell } from '../../../shared/ui/auth-shell/auth-shell';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, AuthShell],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })

@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthShell } from '../../../shared/ui/auth-shell/auth-shell';
 
 type Estado = 'confirmando' | 'ok' | 'erro';
 
@@ -9,7 +10,7 @@ type Estado = 'confirmando' | 'ok' | 'erro';
 @Component({
   selector: 'app-confirmar-email',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AuthShell],
   templateUrl: './confirmar-email.html',
   styleUrl: './confirmar-email.scss',
 })

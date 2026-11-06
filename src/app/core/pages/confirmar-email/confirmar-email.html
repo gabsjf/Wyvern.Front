@@ -1,21 +1,23 @@
-<div class="auth-container">
-  <div class="glass-panel auth-card animate-fade-in">
-    <div class="auth-header">
-      <h1 class="title-glow">Confirmar e-mail</h1>
+<app-auth-shell>
+  <ng-container *ngIf="estado === 'confirmando'">
+    <div class="auth-selo carregando" aria-hidden="true"></div>
+    <h1 class="auth-titulo">Confirmando</h1>
+    <p class="auth-sub" role="status">Só um instante, estamos validando seu e-mail...</p>
+  </ng-container>
+
+  <ng-container *ngIf="estado === 'ok'">
+    <div class="auth-selo ok" aria-hidden="true">&#10003;</div>
+    <h1 class="auth-titulo">E-mail confirmado</h1>
+    <p class="auth-sub" role="status">Sua conta está ativa. Já pode entrar e começar a aventura.</p>
+    <a [routerLink]="['/login']" class="btn-primary auth-submit">Entrar</a>
+  </ng-container>
+
+  <ng-container *ngIf="estado === 'erro'">
+    <div class="auth-selo erro" aria-hidden="true">!</div>
+    <h1 class="auth-titulo">Não deu certo</h1>
+    <div class="alert-error" role="alert">{{ errorMessage }}</div>
+    <div class="auth-footer">
+      <p>Link vencido? <a [routerLink]="['/register']">Cadastre-se de novo</a> para receber outro.</p>
     </div>
-
-    <p *ngIf="estado === 'confirmando'" class="text-secondary" style="text-align: center">Confirmando...</p>
-
-    <ng-container *ngIf="estado === 'ok'">
-      <div class="alert-ok" role="status"><p>E-mail confirmado! Sua conta está ativa.</p></div>
-      <a [routerLink]="['/login']" class="btn-primary auth-submit" style="display: block; text-align: center">Entrar</a>
-    </ng-container>
-
-    <ng-container *ngIf="estado === 'erro'">
-      <div class="alert-error">{{ errorMessage }}</div>
-      <div class="auth-footer">
-        <p>Link vencido? <a [routerLink]="['/register']" class="text-accent">Cadastre-se de novo</a> para receber outro.</p>
-      </div>
-    </ng-container>
-  </div>
-</div>
+  </ng-container>
+</app-auth-shell>

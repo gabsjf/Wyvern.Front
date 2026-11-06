@@ -1,0 +1,20 @@
+<div class="auth-shell">
+  <aside class="auth-art" aria-hidden="true">
+    <div class="auth-art-veu"></div>
+    <a routerLink="/" class="auth-brand" tabindex="-1">
+      <img src="assets/images/logo-dragao.png" alt="" />
+      <span>Wyvern</span>
+    </a>
+    <p class="auth-art-frase">Toda grande aventura começa numa taverna cheia.</p>
+  </aside>
+
+  <main class="auth-painel">
+    <a routerLink="/" class="auth-brand-mobile">
+      <img src="assets/images/logo-dragao.png" alt="" />
+      <span>Wyvern</span>
+    </a>
+    <div class="auth-conteudo animate-fade-in">
+      <ng-content />
+    </div>
+  </main>
+</div>

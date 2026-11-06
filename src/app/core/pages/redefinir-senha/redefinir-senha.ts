@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthShell } from '../../../shared/ui/auth-shell/auth-shell';
 
 /** Destino do link do e-mail de "esqueci a senha": /redefinir-senha?token=... */
 @Component({
   selector: 'app-redefinir-senha',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, AuthShell],
   templateUrl: './redefinir-senha.html',
   styleUrl: './redefinir-senha.scss',
 })

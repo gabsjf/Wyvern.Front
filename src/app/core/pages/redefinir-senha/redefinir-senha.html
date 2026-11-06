@@ -1,31 +1,28 @@
-<div class="auth-container">
-  <div class="glass-panel auth-card animate-fade-in">
-    <div class="auth-header">
-      <h1 class="title-glow">Nova senha</h1>
+<app-auth-shell>
+  <h1 class="auth-titulo">Nova senha</h1>
+  <p class="auth-sub" *ngIf="!concluido">Escolha uma senha nova para a sua conta.</p>
+
+  <div *ngIf="errorMessage" class="alert-error" role="alert">{{ errorMessage }}</div>
+
+  <ng-container *ngIf="concluido">
+    <div class="alert-ok" role="status"><p>Senha alterada! Por segurança, você foi desconectado de todos os aparelhos.</p></div>
+    <a [routerLink]="['/login']" class="btn-primary auth-submit">Entrar</a>
+  </ng-container>
+
+  <form *ngIf="!concluido && !semToken" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label class="form-label" for="novaSenha">Nova senha</label>
+      <input id="novaSenha" type="password" class="form-control" formControlName="novaSenha" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
+      <div *ngIf="form.get('novaSenha')?.invalid && form.get('novaSenha')?.touched" class="text-error">A senha deve ter pelo menos 6 caracteres.</div>
     </div>
 
-    <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
+    <button type="submit" class="btn-primary auth-submit" [disabled]="form.invalid || loading">
+      <span *ngIf="!loading">Salvar senha</span>
+      <span *ngIf="loading">Salvando...</span>
+    </button>
+  </form>
 
-    <ng-container *ngIf="concluido">
-      <div class="alert-ok" role="status"><p>Senha alterada! Por segurança, você foi desconectado de todos os aparelhos.</p></div>
-      <a [routerLink]="['/login']" class="btn-primary auth-submit" style="display: block; text-align: center">Entrar</a>
-    </ng-container>
-
-    <form *ngIf="!concluido && !semToken" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label class="form-label" for="novaSenha">Nova senha</label>
-        <input id="novaSenha" type="password" class="form-control" formControlName="novaSenha" placeholder="Sua nova senha" autocomplete="new-password">
-        <div *ngIf="form.get('novaSenha')?.invalid && form.get('novaSenha')?.touched" class="text-error">A senha deve ter pelo menos 6 caracteres.</div>
-      </div>
-
-      <button type="submit" class="btn-primary auth-submit" [disabled]="form.invalid || loading">
-        <span *ngIf="!loading">Salvar senha</span>
-        <span *ngIf="loading">Salvando...</span>
-      </button>
-    </form>
-
-    <div class="auth-footer" *ngIf="!concluido">
-      <p>Link vencido? <a [routerLink]="['/esqueci-senha']" class="text-accent">Peça outro</a></p>
-    </div>
+  <div class="auth-footer" *ngIf="!concluido">
+    <p>Link vencido? <a [routerLink]="['/esqueci-senha']">Peça outro</a></p>
   </div>
-</div>
+</app-auth-shell>

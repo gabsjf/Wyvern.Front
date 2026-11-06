@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
@@ -20,6 +20,7 @@ export class Register implements OnInit {
   returnUrl: string = '/campaigns';
 
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef); // o app é zoneless: o callback do HTTP não redesenha a tela sozinho
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
@@ -47,10 +48,12 @@ export class Register implements OnInit {
       next: res => {
         this.mensagemEnviado = res.message;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Erro ao realizar registro';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

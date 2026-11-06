@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -20,6 +20,7 @@ export class RedefinirSenha implements OnInit {
   private token = '';
 
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef); // o app é zoneless: o callback do HTTP não redesenha a tela sozinho
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
@@ -46,10 +47,12 @@ export class RedefinirSenha implements OnInit {
       next: () => {
         this.concluido = true;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: err => {
         this.errorMessage = err.error?.message || 'Não foi possível redefinir a senha.';
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }

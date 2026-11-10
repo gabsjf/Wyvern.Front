@@ -7,6 +7,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { provideMonitoramento } from './core/monitoramento';
 
 import { routes } from './app.routes';
 
@@ -22,5 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     // A sessão é um cookie que o JavaScript não lê: pergunta à API antes de abrir a primeira rota.
     provideAppInitializer(() => inject(AuthService).carregarSessao()),
+    // Erros do Angular vão para o Sentry quando há DSN (core/monitoramento.ts).
+    ...provideMonitoramento(),
   ],
 };

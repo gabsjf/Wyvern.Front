@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { identificarUsuario } from './core/monitoramento';
 import { RouterOutlet, Router } from '@angular/router';
 import { Sidebar } from './core/layout/sidebar/sidebar';
 import { AuthService } from './core/services/auth.service';
@@ -19,6 +20,11 @@ export class App implements OnInit {
   authService = inject(AuthService);
   router = inject(Router);
   layout = inject(LayoutService);
+
+  constructor() {
+    // Os erros enviados ao Sentry levam só o id da conta logada.
+    effect(() => identificarUsuario(this.authService.usuarioLogado()?.usuarioId ?? null));
+  }
 
   /** Largura da barra lateral, para elementos flutuantes não ficarem por cima dela (no celular ela não existe). */
   get larguraLateral(): string {

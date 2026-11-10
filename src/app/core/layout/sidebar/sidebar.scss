@@ -127,6 +127,40 @@ $ponto: 900px;
   gap: 0.15rem;
 }
 
+/* Link para "Meu perfil": avatar com nome e um subtítulo; recolhida, fica só o avatar */
+.rail-perfil {
+  min-height: 52px;
+  margin-bottom: 0.25rem;
+
+  &.active {
+    background: var(--surface-2);
+    color: var(--fg);
+    box-shadow: inset 3px 0 0 var(--hi);
+  }
+}
+
+.rail-perfil-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.rail-perfil-nome {
+  color: var(--fg);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rail-perfil-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.rail.recolhida .rail-perfil-texto { display: none; }
+
 /* ---------- celular: barra de topo e barra inferior ---------- */
 .mobile-bar,
 .bottom-nav {
@@ -168,6 +202,9 @@ $ponto: 900px;
     color: var(--muted);
     font-size: 1.25rem;
     cursor: pointer;
+    text-decoration: none;
+
+    &.perfil-mobile.active { box-shadow: inset 0 -2px 0 var(--hi); }
 
     &:hover {
       background: var(--surface-2);

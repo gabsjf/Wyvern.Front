@@ -10,6 +10,7 @@ import { Personagem } from '../../../personagens/models/personagem';
 import { SessaoService } from '../../../sessoes/services/sessao.service';
 import { Sessao } from '../../../sessoes/models/sessao';
 import { Emblema } from '../../../shared/ui/emblema/emblema';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,6 +25,8 @@ export class DashboardComponent implements OnInit {
   private personagemService = inject(PersonagemService);
   private sessaoService = inject(SessaoService);
   private cdr = inject(ChangeDetectorRef);
+  /** Só mostra "Nova campanha" para quem pode criar (conta Mestre com vaga, ou qualquer conta no beta). */
+  readonly usuario = inject(AuthService).usuarioLogado;
 
   summary: DashboardSummary | null = null;
   loading: boolean = true;

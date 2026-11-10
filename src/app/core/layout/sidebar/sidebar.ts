@@ -3,6 +3,7 @@ import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { LayoutService } from '../layout.service';
+import { Avatar } from '../../../shared/ui/avatar/avatar';
 
 interface Destino {
   rota: string;
@@ -16,7 +17,7 @@ interface Destino {
  */
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterModule],
+  imports: [RouterModule, Avatar],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -25,6 +26,7 @@ export class Sidebar {
   private router = inject(Router);
   private theme = inject(ThemeService);
   layout = inject(LayoutService);
+  readonly usuario = this.authService.usuarioLogado;
 
   readonly destinos: Destino[] = [
     { rota: '/dashboard', rotulo: 'Painel', icone: 'bi-house-door' },

@@ -35,6 +35,13 @@
         />
       </div>
 
+      @if (erro()) {
+        <p class="field-error" role="alert">
+          {{ erro() }}
+          @if (bloqueadoPeloPlano()) { <a routerLink="/perfil">Ver meu plano</a> }
+        </p>
+      }
+
       <div style="margin-top: var(--spacing-lg); text-align: right;">
         <button type="submit" class="btn-primary" [disabled]="!campaignForm.valid || isSaving">
           {{ isSaving ? 'Salvando...' : 'Criar Campanha' }}

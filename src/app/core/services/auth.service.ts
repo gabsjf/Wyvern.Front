@@ -11,6 +11,10 @@ export interface UsuarioLogado {
   nome: string;
   email: string;
   papel: string;
+  /** 0 = sem foto; sobe a cada foto nova. */
+  fotoVersao: number;
+  /** Conta Mestre com vaga no plano (ou qualquer conta no beta). O servidor confere de novo ao criar. */
+  podeCriarCampanha: boolean;
 }
 
 /** Resposta de login/cadastro: o `token` só vem para o app nativo; na web ele fica num cookie HttpOnly. */
@@ -88,6 +92,16 @@ export class AuthService {
   }
 
   /** Confirma o e-mail com o token do link enviado; depois disso o login funciona. */
+  /** Link enviado ao e-mail novo pela tela de perfil; funciona com ou sem sessão aberta. */
+  confirmarTrocaEmail(token: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/confirmar-troca-email`, { token }, { headers: this.cabecalhosDeEntrada() });
+  }
+
+  /** Depois de salvar algo no perfil: a barra lateral e o resto do app veem o nome e a foto novos na hora. */
+  atualizarUsuario(mudancas: Partial<Omit<UsuarioLogado, 'usuarioId'>>): void {
+    this.usuario.update(atual => (atual ? { ...atual, ...mudancas } : atual));
+  }
+
   confirmarEmail(token: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/confirmar-email`, { token }, { headers: this.cabecalhosDeEntrada() });
   }
@@ -199,8 +213,8 @@ export class AuthService {
   }
 
   private semToken(resposta: RespostaAuth): UsuarioLogado {
-    const { usuarioId, nome, email, papel } = resposta;
-    return { usuarioId, nome, email, papel };
+    const { usuarioId, nome, email, papel, fotoVersao, podeCriarCampanha } = resposta;
+    return { usuarioId, nome, email, papel, fotoVersao: fotoVersao ?? 0, podeCriarCampanha: podeCriarCampanha ?? true };
   }
 
   private cabecalhosDeEntrada(): HttpHeaders {

@@ -24,11 +24,14 @@ export const routes: Routes = [
     {path: 'confirmar-email', component: ConfirmarEmail},
     {path: 'esqueci-senha', component: EsqueciSenha},
     {path: 'redefinir-senha', component: RedefinirSenha},
+    // Pública: o link do e-mail pode abrir em outro aparelho, sem sessão.
+    {path: 'confirmar-troca-email', loadComponent: () => import('./core/pages/confirmar-troca-email/confirmar-troca-email').then(m => m.ConfirmarTrocaEmail)},
     {
       path: '',
       canActivate: [authGuard],
       children: [
         {path: 'dashboard', loadComponent: () => import('./core/pages/dashboard/dashboard').then(m => m.DashboardComponent)},
+        {path: 'perfil', loadComponent: () => import('./core/pages/perfil/perfil').then(m => m.PerfilComponent)},
         {path: 'campaigns', component: CampaignList},
     {path: 'campaigns/create', component: CampaignCreate},
     {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},

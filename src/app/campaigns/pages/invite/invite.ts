@@ -53,9 +53,9 @@ export class InviteComponent implements OnInit {
       case 404:
         return 'Este convite não é mais válido. Peça ao Mestre um novo link.';
       case 400:
-        return typeof err.error === 'string' && err.error
-          ? err.error
-          : 'Não foi possível usar este convite.';
+        // campanha cheia (limite do plano do Mestre) ou "você já é Mestre": a API explica no ProblemDetails
+        if (typeof err.error === 'string' && err.error) return err.error;
+        return err.error?.detail || err.error?.message || 'Não foi possível usar este convite.';
       case 429:
         return 'Muitas tentativas seguidas. Aguarde um minuto e tente de novo.';
       default:

@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { SessaoService } from '../../../sessoes/services/sessao.service';
 import { PersonagemService } from '../../../personagens/services/personagem.service';
 import { Emblema, matizDoNome } from '../../../shared/ui/emblema/emblema';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-campaign-list',
@@ -18,6 +19,8 @@ export class CampaignList implements OnInit {
   private sessaoService = inject(SessaoService);
   private personagemService = inject(PersonagemService);
   private cdr = inject(ChangeDetectorRef);
+  /** Decide entre "Nova campanha", o aviso de conta Jogador e o aviso de limite do plano. */
+  readonly usuario = inject(AuthService).usuarioLogado;
 
   campaigns: Campaign[] = [];
   carregando = true;

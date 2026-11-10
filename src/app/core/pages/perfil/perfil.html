@@ -1,0 +1,259 @@
+<div class="container perfil animate-fade-in">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Sua conta</p>
+      <h1>Meu perfil</h1>
+    </div>
+  </header>
+
+  @if (perfil(); as p) {
+    <div class="grade">
+      <!-- Foto e nome -->
+      <section class="panel cartao identidade" aria-labelledby="tit-identidade">
+        <h2 class="rotulo-secao" id="tit-identidade">Foto e nome</h2>
+
+        <div class="identidade-corpo">
+          <div class="foto">
+            <app-avatar [nome]="p.nome" [versao]="p.fotoVersao" [tamanho]="112" />
+            <div class="foto-acoes">
+              <label class="btn-secondary" [class.ocupado]="enviandoFoto()">
+                <i class="bi bi-camera" aria-hidden="true"></i>
+                {{ p.fotoVersao > 0 ? 'Trocar foto' : 'Enviar foto' }}
+                <input type="file" class="visually-hidden" accept="image/png,image/jpeg,image/webp"
+                       [disabled]="enviandoFoto()" (change)="escolherFoto($event)" />
+              </label>
+              @if (p.fotoVersao > 0) {
+                <button type="button" class="btn-link-perigo" [disabled]="enviandoFoto()" (click)="removerFoto()">Remover</button>
+              }
+            </div>
+            <p class="dica">PNG, JPG ou WebP, até 2 MB.</p>
+          </div>
+
+          <form class="nome" (ngSubmit)="salvarNome()">
+            <div class="form-group">
+              <label class="form-label" for="perfil-nome">Nome</label>
+              <input id="perfil-nome" name="nome" class="form-control" maxlength="80" autocomplete="name"
+                     [(ngModel)]="nome" required />
+            </div>
+            <button type="submit" class="btn-primary" [disabled]="!nomeMudou || salvandoNome()">
+              {{ salvandoNome() ? 'Salvando...' : 'Salvar nome' }}
+            </button>
+            <p class="membro-desde">Na guilda desde {{ p.criadoEm | date: "MMMM 'de' y" }}</p>
+          </form>
+        </div>
+      </section>
+
+      <!-- Plano -->
+      <section class="panel cartao plano" aria-labelledby="tit-plano">
+        <h2 class="rotulo-secao" id="tit-plano">Plano</h2>
+        @if (p.conta.beta) {
+          <div class="plano-atual">
+            <span class="plano-nome">Beta</span>
+            <span class="chip chip-hi">Mestre</span>
+          </div>
+          <p class="texto">Durante o beta você tem acesso completo de Mestre: campanhas e jogadores sem limite. Os planos chegam quando o beta acabar.</p>
+        } @else if (p.conta.tipo === 'Jogador') {
+          <div class="plano-atual">
+            <span class="plano-nome">Jogador</span>
+            <span class="chip chip-ok">Gratuito</span>
+          </div>
+          <p class="texto">Você entra nas campanhas pelo convite do Mestre e cria os seus personagens. Quer mestrar a sua própria mesa?</p>
+          <button type="button" class="btn-primary" [disabled]="virandoMestre()" (click)="virarMestre()">
+            {{ virandoMestre() ? 'Ativando...' : 'Virar Mestre (Free)' }}
+          </button>
+        } @else {
+          <div class="plano-atual">
+            <span class="plano-nome">{{ p.conta.nomePlano }}</span>
+            <span class="chip chip-hi">Mestre</span>
+          </div>
+          <dl class="limites">
+            <div>
+              <dt>Campanhas</dt>
+              <dd class="num">{{ p.conta.campanhasCriadas }} de {{ p.conta.maxCampanhas ?? '∞' }}</dd>
+            </div>
+            <div>
+              <dt>Jogadores por campanha</dt>
+              <dd class="num">{{ p.conta.maxJogadoresPorCampanha ?? 'Sem limite' }}</dd>
+            </div>
+          </dl>
+          @if (p.conta.motivoBloqueio) { <p class="texto">{{ p.conta.motivoBloqueio }}</p> }
+        }
+        <div class="pagamento">
+          <i class="bi bi-credit-card" aria-hidden="true"></i>
+          <div>
+            <strong>Pagamento</strong>
+            <p>Nenhuma forma de pagamento cadastrada. Planos pagos chegam em breve.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- E-mail -->
+      <section class="panel cartao" aria-labelledby="tit-email">
+        <h2 class="rotulo-secao" id="tit-email">E-mail</h2>
+        <p class="valor-atual"><i class="bi bi-envelope" aria-hidden="true"></i> {{ p.email }}</p>
+        @if (p.emailPendente) {
+          <p class="pendente" role="status">
+            <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+            Aguardando confirmação em <strong>{{ p.emailPendente }}</strong>. Abra o link enviado para concluir a troca.
+          </p>
+        }
+
+        <form (ngSubmit)="pedirTrocaDeEmail()">
+          <div class="form-group">
+            <label class="form-label" for="perfil-novo-email">Novo e-mail</label>
+            <input id="perfil-novo-email" name="novoEmail" type="email" class="form-control" autocomplete="email"
+                   [(ngModel)]="novoEmail" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="perfil-senha-email">Senha atual</label>
+            <input id="perfil-senha-email" name="senhaParaEmail" type="password" class="form-control" autocomplete="current-password"
+                   [(ngModel)]="senhaParaEmail" />
+          </div>
+          @if (erroEmail()) { <p class="field-error" role="alert">{{ erroEmail() }}</p> }
+          <button type="submit" class="btn-primary" [disabled]="enviandoEmail()">
+            {{ enviandoEmail() ? 'Enviando...' : 'Enviar link de confirmação' }}
+          </button>
+          <p class="dica">A troca só vale depois que você clicar no link enviado ao novo endereço.</p>
+        </form>
+      </section>
+
+      <!-- Senha -->
+      <section class="panel cartao" aria-labelledby="tit-senha">
+        <h2 class="rotulo-secao" id="tit-senha">Senha</h2>
+        <form (ngSubmit)="trocarSenha()">
+          <!-- ajuda o gerenciador de senhas a saber de qual conta é a senha -->
+          <input type="email" name="usuario" class="visually-hidden" autocomplete="username" [value]="p.email" tabindex="-1" aria-hidden="true" readonly />
+          <div class="form-group">
+            <label class="form-label" for="perfil-senha-atual">Senha atual</label>
+            <input id="perfil-senha-atual" name="senhaAtual" type="password" class="form-control" autocomplete="current-password"
+                   [(ngModel)]="senhaAtual" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="perfil-nova-senha">Nova senha</label>
+            <input id="perfil-nova-senha" name="novaSenha" type="password" class="form-control" autocomplete="new-password" minlength="6"
+                   [(ngModel)]="novaSenha" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="perfil-confirmar-senha">Confirmar nova senha</label>
+            <input id="perfil-confirmar-senha" name="confirmacaoSenha" type="password" class="form-control" autocomplete="new-password"
+                   [(ngModel)]="confirmacaoSenha" />
+          </div>
+          @if (erroSenha()) { <p class="field-error" role="alert">{{ erroSenha() }}</p> }
+          <button type="submit" class="btn-primary" [disabled]="trocandoSenha()">
+            {{ trocandoSenha() ? 'Trocando...' : 'Trocar senha' }}
+          </button>
+          <p class="dica">Os outros aparelhos conectados saem da conta; este continua.</p>
+        </form>
+      </section>
+
+      <!-- Aparelhos conectados -->
+      <section class="panel cartao aparelhos" aria-labelledby="tit-aparelhos">
+        <h2 class="rotulo-secao" id="tit-aparelhos">Aparelhos conectados</h2>
+
+        @if (sessoes(); as lista) {
+          <ul class="lista-aparelhos">
+            @for (s of lista; track s.id) {
+              <li [class.atual]="s.atual">
+                <i class="bi {{ iconeDoAparelho(s.dispositivo) }} icone" aria-hidden="true"></i>
+                <div class="aparelho-info">
+                  <span class="aparelho-nome">
+                    {{ s.dispositivo }}
+                    @if (s.atual) { <span class="chip chip-hi">Este aparelho</span> }
+                  </span>
+                  <span class="aparelho-meta">
+                    Entrou em {{ utc(s.iniciadaEm) | date: "d 'de' MMM, HH:mm" }}
+                    · ativo em {{ utc(s.ultimaAtividadeEm) | date: "d 'de' MMM, HH:mm" }}
+                  </span>
+                </div>
+                @if (!s.atual) {
+                  <button type="button" class="btn-secondary btn-pequeno" [disabled]="encerrando() !== null"
+                          (click)="encerrar(s)" [attr.aria-label]="'Encerrar a sessão em ' + s.dispositivo">
+                    {{ encerrando() === s.id ? 'Encerrando...' : 'Encerrar' }}
+                  </button>
+                }
+              </li>
+            } @empty {
+              <li class="vazio">Nenhuma sessão encontrada.</li>
+            }
+          </ul>
+
+          @if (outrasSessoes() > 0) {
+            <button type="button" class="btn-danger" [disabled]="encerrando() !== null" (click)="encerrarOutras()">
+              {{ encerrando() === 'outras' ? 'Encerrando...' : 'Encerrar todas as outras' }}
+            </button>
+          }
+        } @else {
+          <p class="carregando" role="status">Carregando aparelhos...</p>
+        }
+      </section>
+
+      <!-- Excluir conta -->
+      <section class="panel cartao perigo" aria-labelledby="tit-perigo">
+        <h2 class="rotulo-secao" id="tit-perigo">Zona de perigo</h2>
+
+        @if (!exclusaoAberta()) {
+          <div class="perigo-resumo">
+            <p class="texto">Excluir a conta apaga os seus dados pessoais, a sua foto e as suas anotações privadas, e encerra todas as sessões. Não dá para desfazer.</p>
+            <button type="button" class="btn-danger" (click)="abrirExclusao()">Excluir minha conta</button>
+          </div>
+        } @else {
+          <div class="exclusao">
+            <h3>O que acontece se você excluir a conta</h3>
+            <ul class="consequencias">
+              <li>Nome, e-mail, senha, foto e aparelhos conectados são apagados. O e-mail fica livre para um cadastro novo.</li>
+              <li>As suas anotações privadas são apagadas. As públicas ficam na campanha, sem o seu nome.</li>
+              <li>Os personagens que você criou continuam nas campanhas dos seus grupos.</li>
+              <li>Você sai de todas as campanhas de que participa.</li>
+            </ul>
+
+            @if (previa(); as pv) {
+              @if (pv.transferidas.length > 0) {
+                <p class="aviso-campanhas"><strong>Passam para outro Mestre:</strong></p>
+                <ul class="lista-campanhas">
+                  @for (t of pv.transferidas; track t.campanha) { <li>{{ t.campanha }} <span class="text-muted">→ {{ t.novoDono }}</span></li> }
+                </ul>
+              }
+              @if (pv.encerradas.length > 0) {
+                <p class="aviso-campanhas perigo-texto"><strong>São encerradas para todos (não têm outro Mestre):</strong></p>
+                <ul class="lista-campanhas">
+                  @for (nome of pv.encerradas; track nome) { <li>{{ nome }}</li> }
+                </ul>
+                <p class="dica">Para manter uma delas, promova um jogador a Mestre na campanha antes de excluir a conta.</p>
+              }
+            } @else {
+              <p class="carregando" role="status">Verificando as suas campanhas...</p>
+            }
+
+            <form (ngSubmit)="excluirConta()">
+              <input type="email" name="usuario-excluir" class="visually-hidden" autocomplete="username" [value]="p.email" tabindex="-1" aria-hidden="true" readonly />
+              <div class="form-group">
+                <label class="form-label" for="perfil-senha-excluir">Sua senha</label>
+                <input id="perfil-senha-excluir" name="senhaParaExcluir" type="password" class="form-control" autocomplete="current-password"
+                       [(ngModel)]="senhaParaExcluir" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="perfil-confirmar-excluir">Digite EXCLUIR para confirmar</label>
+                <input id="perfil-confirmar-excluir" name="confirmacaoExclusao" class="form-control" autocomplete="off" autocapitalize="characters"
+                       [(ngModel)]="confirmacaoExclusao" />
+              </div>
+              @if (erroExclusao()) { <p class="field-error" role="alert">{{ erroExclusao() }}</p> }
+              <div class="acoes-exclusao">
+                <button type="button" class="btn-secondary" [disabled]="excluindo()" (click)="fecharExclusao()">Cancelar</button>
+                <button type="submit" class="btn-danger" [disabled]="!confirmacaoOk || excluindo() || !previa()">
+                  {{ excluindo() ? 'Excluindo...' : 'Excluir conta definitivamente' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      </section>
+    </div>
+  } @else if (erroAoCarregar()) {
+    <div class="panel cartao erro" role="alert">
+      <p>Não foi possível carregar o seu perfil.</p>
+      <button type="button" class="btn-secondary" (click)="carregar()">Tentar de novo</button>
+    </div>
+  } @else {
+    <p class="carregando" role="status">Carregando perfil...</p>
+  }
+</div>

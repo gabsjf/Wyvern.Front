@@ -2,6 +2,9 @@
 <header class="mobile-bar">
   <a class="brand" routerLink="/dashboard" aria-label="Wyvern, ir para o painel">Wyvern</a>
   <div class="mobile-actions">
+    <a class="icon-btn perfil-mobile" routerLink="/perfil" routerLinkActive="active" ariaCurrentWhenActive="page" aria-label="Meu perfil">
+      <app-avatar [nome]="usuario()?.nome ?? ''" [versao]="usuario()?.fotoVersao ?? 0" [tamanho]="32" />
+    </a>
     <button type="button" class="icon-btn" (click)="alternarTema()"
             [attr.aria-label]="temaAtual === 'escuro' ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'">
       <i class="bi" [class.bi-sun]="temaAtual === 'escuro'" [class.bi-moon-stars]="temaAtual === 'claro'" aria-hidden="true"></i>
@@ -29,6 +32,14 @@
     }
   </ul>
   <div class="rail-foot">
+    <a class="rail-btn rail-perfil" routerLink="/perfil" routerLinkActive="active" ariaCurrentWhenActive="page"
+       [attr.title]="layout.recolhida() ? 'Meu perfil' : null" [attr.aria-label]="layout.recolhida() ? 'Meu perfil' : null">
+      <app-avatar [nome]="usuario()?.nome ?? ''" [versao]="usuario()?.fotoVersao ?? 0" [tamanho]="30" />
+      <span class="rail-perfil-texto">
+        <span class="rail-perfil-nome">{{ usuario()?.nome }}</span>
+        <span class="rail-perfil-sub">Meu perfil</span>
+      </span>
+    </a>
     <button type="button" class="rail-btn" (click)="alternarTema()" [attr.title]="layout.recolhida() ? (temaAtual === 'escuro' ? 'Tema claro' : 'Tema escuro') : null">
       <i class="bi" [class.bi-sun]="temaAtual === 'escuro'" [class.bi-moon-stars]="temaAtual === 'claro'" aria-hidden="true"></i>
       <span>{{ temaAtual === 'escuro' ? 'Tema claro' : 'Tema escuro' }}</span>

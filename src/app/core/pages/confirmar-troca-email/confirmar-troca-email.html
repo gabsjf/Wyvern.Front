@@ -1,0 +1,27 @@
+<app-auth-shell>
+  @switch (estado()) {
+    @case ('confirmando') {
+      <div class="auth-selo carregando" aria-hidden="true"></div>
+      <h1 class="auth-titulo">Confirmando</h1>
+      <p class="auth-sub" role="status">Só um instante, estamos validando o novo e-mail...</p>
+    }
+    @case ('ok') {
+      <div class="auth-selo ok" aria-hidden="true">&#10003;</div>
+      <h1 class="auth-titulo">E-mail trocado</h1>
+      <p class="auth-sub" role="status">Pronto! A partir de agora, entre na sua conta com o novo e-mail.</p>
+      @if (logado) {
+        <a routerLink="/perfil" class="btn-primary auth-submit">Voltar ao perfil</a>
+      } @else {
+        <a routerLink="/login" class="btn-primary auth-submit">Entrar</a>
+      }
+    }
+    @case ('erro') {
+      <div class="auth-selo erro" aria-hidden="true">!</div>
+      <h1 class="auth-titulo">Não deu certo</h1>
+      <div class="alert-error" role="alert">{{ erro() }}</div>
+      <div class="auth-footer">
+        <p>Link vencido? Peça a troca de novo na tela <a routerLink="/perfil">Meu perfil</a>.</p>
+      </div>
+    }
+  }
+</app-auth-shell>

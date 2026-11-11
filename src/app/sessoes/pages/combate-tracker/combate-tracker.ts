@@ -352,7 +352,8 @@ export class CombateTracker implements OnInit, OnChanges {
     this.combateService.startCombate(payload).subscribe({
       next: (res) => {
         this.combateAtivo = res;
-        this.participantesCombate = res.participantes?.sort((a:any, b:any) => b.iniciativa - a.iniciativa) || [];
+        // mesma ordem da API: maior iniciativa primeiro e, no empate, quem entrou antes
+        this.participantesCombate = res.participantes?.sort((a: any, b: any) => b.iniciativa - a.iniciativa || a.participanteId - b.participanteId) || [];
         this.participantesSelecionados = [];
         this.cdr.detectChanges();
       },

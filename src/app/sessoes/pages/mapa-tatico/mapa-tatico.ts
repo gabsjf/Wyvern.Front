@@ -173,9 +173,10 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     this.paredes().filter(p => !(p.porta && p.aberta)).map(p => ({ x1: p.x1, y1: p.y1, x2: p.x2, y2: p.y2 })));
 
   readonly metrosPorQuadrado = computed(() => this.cena()?.metrosPorQuadrado || 1.5);
+  /** O turno em andamento, no mesmo formato da API (Combate.CarimboDoTurno): o deslocamento gasto vale só nele. */
   private carimboAtual = computed(() => {
     const c = this.combate();
-    return c ? c.combateId + ':' + c.rodadaAtual : null;
+    return c ? `${c.combateId}:${c.rodadaAtual}:${this.participanteDoTurno() ?? ''}` : null;
   });
 
   /**
@@ -823,7 +824,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     if (destino.coluna === token.coluna && destino.linha === token.linha) return;
 
     if (!this.ehMestre()) {
-      // o caminho é de verdade (contorna paredes) e, em combate, custa do deslocamento da rodada; o servidor confere de novo
+      // o caminho é de verdade (contorna paredes) e, em combate, custa do deslocamento do turno; o servidor confere de novo
       const orcamento = this.orcamentoDe(token);
       const limite = orcamento?.emCombate ? orcamento.restante : Number.POSITIVE_INFINITY;
       const grade = { colunas: Math.max(1, Math.floor(cena.largura / cena.tamanhoCelula)), linhas: Math.max(1, Math.floor(cena.altura / cena.tamanhoCelula)) };
@@ -1213,7 +1214,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
 
   // ---------- deslocamento ----------
 
-  /** Quanto o token pode andar: o total (do token ou da ficha) e, em combate, o que resta na rodada. */
+  /** Quanto o token pode andar: o total (do token ou da ficha) e, em combate, o que resta neste turno. */
   orcamentoDe(token: TokenCena): { total: number; gasto: number; restante: number; emCombate: boolean } | null {
     const cena = this.cena();
     if (!cena || token.deslocamentoMetros === null) return null;

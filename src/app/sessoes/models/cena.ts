@@ -17,7 +17,7 @@ export interface Cena {
   soNoTurno: boolean;
   /** Metros que vale um quadrado da grade (5 pés = 1,5 m). */
   metrosPorQuadrado: number;
-  /** No combate, o jogador só anda o deslocamento da ficha por rodada. */
+  /** No combate, o jogador só anda o deslocamento da ficha por turno. */
   limitarDeslocamento: boolean;
 }
 
@@ -47,9 +47,9 @@ export interface TokenCena {
   deslocamentoManual: number | null;
   /** O que a ficha do personagem diz, em metros. */
   deslocamentoDaFicha: number | null;
-  /** Quadrados já andados na rodada indicada por `movimentoTurno`. */
+  /** Quadrados já andados no turno indicado por `movimentoTurno`. */
   movimentoGasto: number;
-  /** "combateId:rodada" a que o gasto se refere. */
+  /** "combateId:rodada:participanteDaVez" a que o gasto se refere. */
   movimentoTurno: string | null;
   personagemId: number | null;
   participanteId: number | null;
@@ -62,7 +62,7 @@ export type TokenForm = Pick<TokenCena, 'nome' | 'coluna' | 'linha' | 'tamanho' 
   Partial<Pick<TokenCena, 'personagemId' | 'participanteId' | 'controladoPorId'>> & {
     /** Deslocamento à mão em metros; nulo usa o da ficha. */
     deslocamentoMetros?: number | null;
-    /** Zera o que o token já andou na rodada. */
+    /** Zera o que o token já andou no turno. */
     restaurarMovimento?: boolean;
   };
 

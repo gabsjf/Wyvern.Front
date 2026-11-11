@@ -482,7 +482,7 @@
               <div class="barra-movimento" role="img" [attr.aria-label]="o.restante + ' de ' + o.total + ' quadrados restantes'">
                 <span [style.width.%]="o.total ? (o.restante / o.total) * 100 : 0"></span>
               </div>
-              <p class="dica">Restam {{ o.restante }} de {{ o.total }} nesta rodada ({{ metros(o.restante) }} m).</p>
+              <p class="dica">Restam {{ o.restante }} de {{ o.total }} neste turno ({{ metros(o.restante) }} m).</p>
             }
           </div>
         }
@@ -532,7 +532,7 @@
                    [attr.placeholder]="t.deslocamentoDaFicha !== null ? 'ficha: ' + fmtM(t.deslocamentoDaFicha) : 'sem limite'" />
           </label>
           @if (orcamentoDe(t)?.emCombate) {
-            <button type="button" class="btn-secondary" (click)="alterarToken(t, { restaurarMovimento: true })">Restaurar movimento da rodada</button>
+            <button type="button" class="btn-secondary" (click)="alterarToken(t, { restaurarMovimento: true })">Restaurar movimento do turno</button>
           }
           <label>Visão (com névoa ligada)
             <select [ngModel]="t.visao" (ngModelChange)="alterarToken(t, { visao: $event })">

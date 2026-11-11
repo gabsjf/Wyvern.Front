@@ -80,11 +80,17 @@
     overflow-y: auto;
     padding: var(--spacing-md) clamp(0.75rem, 2.4vw, 2.75rem) 5rem;
   }
+
+  // anotações: o caderno ocupa a altura toda e cada coluna rola sozinha (a folha já deixa folga para o botão da Mesa)
+  &.caderno {
+    padding: 0.75rem clamp(0.5rem, 1.2vw, 1rem);
+  }
 }
 
 @media (max-width: 900px) {
   // no celular o mapa fica em cima e o painel embaixo: a página rola
   .content-panel { overflow-y: auto; }
+  .content-panel.caderno { padding-bottom: 5rem; }
 }
 
 @media (max-width: 560px) {

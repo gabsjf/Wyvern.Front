@@ -19,6 +19,9 @@
 
       <div class="acoes">
         <a class="btn-primary" [routerLink]="['/campaigns', campaign.campanhaId, 'timeline']">Abrir a crônica</a>
+        <a class="btn-secondary" routerLink="/anotacoes" [queryParams]="{ campanha: campaign.campanhaId }">
+          <i class="bi bi-journal-text" aria-hidden="true"></i> Anotações
+        </a>
         @if (ehMestre) {
           <button type="button" class="btn-secondary" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
           <button type="button" class="btn-danger" (click)="deleteCampaign()">Excluir</button>

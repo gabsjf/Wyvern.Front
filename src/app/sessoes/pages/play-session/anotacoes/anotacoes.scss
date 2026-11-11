@@ -1,9 +1,26 @@
+// Caderno de anotações: ocupa a altura toda da aba. A lista e a nota rolam cada uma por conta própria,
+// e o texto fica numa folha centralizada, com largura confortável de leitura.
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
 .anotacoes {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-  gap: var(--spacing-md);
-  align-items: start;
-  min-height: 560px;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg);
+
+  // modo foco: só a nota
+  &.foco {
+    grid-template-columns: minmax(0, 1fr);
+    .lista { display: none; }
+  }
 }
 
 .btn-sm {
@@ -12,88 +29,133 @@
   font-size: 0.95rem;
 }
 
-/* ---------- lista ---------- */
-.lista {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100dvh - 15rem);
-  min-height: 0;
-
-  .panel-head h2 { font-size: 1.25rem; }
-}
-
-.lista-corpo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  overflow-y: auto;
-}
-
-.nova-pasta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
+.btn-icone {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
   border-radius: var(--radius-sm);
-}
+  color: var(--muted);
+  font-size: 1.05rem;
+  cursor: pointer;
 
-.acoes-linha {
-  display: flex;
-  gap: var(--spacing-sm);
+  &:hover { background: var(--tint-2); color: var(--fg); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -2px; }
+  &.perigo:hover { color: var(--danger); }
 }
 
 .check {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  min-height: 44px;
+  min-height: 40px;
   color: var(--muted);
   font-size: 0.95rem;
   cursor: pointer;
 
-  input {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--hi);
-  }
+  input { width: 20px; height: 20px; accent-color: var(--hi); }
 }
 
-.grupo {
+/* ---------- lista ---------- */
+.lista {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
 }
 
-.grupo-cabeca {
+.lista-topo {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
+  padding: 1rem 0.75rem 0.25rem 1.25rem;
+
+  h2 { margin: 0; font-size: 1.2rem; }
+}
+
+.lista-acoes {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: 0.5rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--line);
+
+  .btn-primary { flex: 1; justify-content: center; }
+}
+
+.lista-corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1rem 0.75rem 2rem;
+}
+
+.nova-pasta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin: 0 0.5rem;
+  padding: var(--spacing-md);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.acoes-linha { display: flex; gap: var(--spacing-sm); }
+
+.grupo { display: flex; flex-direction: column; gap: 0.25rem; }
+
+.grupo-cabeca {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
 }
 
 .grupo-titulo {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 0;
-  font-size: 1rem;
+  min-height: 40px;
+  padding: 0 0.5rem;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
   color: var(--muted);
-  overflow-wrap: anywhere;
+  font: 600 0.8rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { color: var(--fg); background: var(--tint-1); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -2px; }
+
+  .seta { font-size: 0.75rem; width: 0.9rem; }
+  .chip { letter-spacing: 0.04em; }
 }
+
+.grupo-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grupo-total { margin-left: auto; font-size: 0.8rem; font-weight: 400; letter-spacing: 0; opacity: 0.8; }
 
 .notas {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  margin-left: 0.4rem;
-  padding-left: 0.6rem;
-  border-left: 1px solid var(--line);
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 1.1rem;
 }
+
+.notas-vazio { padding: 0.35rem 0.75rem; color: var(--muted); font-size: 0.9rem; font-style: italic; }
 
 .nota {
   display: flex;
@@ -101,10 +163,12 @@
   border-radius: var(--radius-sm);
 
   &:hover { background: var(--tint-1); }
+  &:hover .nota-excluir, .nota-excluir:focus-visible { opacity: 1; }
 
   &.ativa {
-    background: var(--surface-2);
-    box-shadow: inset 3px 0 0 var(--hi);
+    background: color-mix(in srgb, var(--hi) 14%, transparent);
+    .nota-abrir { color: var(--fg); font-weight: 600; }
+    i { color: var(--hi); }
   }
 }
 
@@ -113,118 +177,58 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  padding: 0.4rem 0.6rem;
+  gap: 0.65rem;
+  min-height: 42px;
+  padding: 0.45rem 0.75rem;
   background: transparent;
   border: 0;
-  color: var(--fg);
+  border-radius: var(--radius-sm);
+  color: color-mix(in srgb, var(--fg) 85%, var(--muted));
   font: inherit;
+  font-size: 0.98rem;
   text-align: left;
   cursor: pointer;
 
-  i { color: var(--muted); flex: none; }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -2px; }
+  i { color: var(--muted); flex: none; font-size: 0.9rem; }
 }
 
-.nota-titulo {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.nota-titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.btn-icone {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: 1.1rem;
-  cursor: pointer;
+// a lixeira só aparece ao passar o mouse (ou com o foco), para a lista não ficar cheia de ícones
+.nota-excluir { opacity: 0; transition: opacity 0.12s; }
+@media (hover: none) { .nota-excluir { opacity: 1; } }
 
-  &:hover { background: var(--tint-2); color: var(--fg); }
-  &.perigo:hover { color: var(--danger); }
-}
-
-.adicionar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  margin: 0.2rem 0 0 1rem;
-  padding: 0.4rem 0.8rem;
-  background: transparent;
-  border: 1px dashed var(--muted);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font: inherit;
-  cursor: pointer;
-
-  &:hover { border-color: var(--hi); color: var(--fg); }
-}
-
-/* ---------- editor ---------- */
+/* ---------- nota ---------- */
 .editor {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
   min-width: 0;
-  min-height: 480px;
-  padding: var(--spacing-lg);
+  min-height: 0;
 }
 
-.vazio {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  text-align: center;
-  color: var(--muted);
-
-  i { font-size: 3rem; opacity: 0.6; }
-  h3 { margin: 0.25rem 0 0; color: var(--fg); }
-  p { margin: 0; }
-}
-
-.editor-topo {
+.barra-nota {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-sm) var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 2px solid var(--accent);
+  gap: 0.5rem 0.75rem;
+  min-height: 60px;
+  padding: 0.6rem clamp(0.75rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
 
-.titulo-area { flex: 1 1 240px; min-width: 0; }
-
-.titulo-leitura {
-  margin: 0;
-  font-size: 1.8rem;
-  overflow-wrap: anywhere;
-}
-
-.titulo-input {
-  width: 100%;
-  min-height: 48px;
-  padding: 0.3rem 0;
-  background: transparent;
-  border: 0;
-  border-bottom: 2px solid var(--line);
-  color: var(--fg);
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-
-  &:focus { outline: none; border-bottom-color: var(--hi); }
-  &::placeholder { color: var(--muted); }
+.caminho {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .editor-acoes {
@@ -232,6 +236,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-sm);
+  margin-left: auto;
 }
 
 /* o botão "Anotações" só aparece no celular, onde lista e nota não cabem lado a lado */
@@ -239,20 +244,19 @@
 
 .modos {
   display: inline-flex;
-  align-self: flex-start;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .modo {
-  min-height: 40px;
-  padding: 0 1.1rem;
+  min-height: 36px;
+  padding: 0 0.9rem;
   background: transparent;
   border: 0;
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -263,84 +267,7 @@
   &.ativo { background: var(--surface-2); color: var(--hi); }
 }
 
-.texto-md {
-  flex: 1;
-  min-height: 320px;
-  width: 100%;
-  padding: var(--spacing-md);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  color: var(--fg);
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  line-height: 1.6;
-  resize: vertical;
-
-  &:focus { outline: 2px solid var(--hi); outline-offset: 0; }
-}
-
-.markdown-content {
-  flex: 1;
-  min-width: 0;
-  line-height: 1.7;
-  color: var(--fg);
-  overflow-wrap: anywhere;
-
-  h1, h2, h3, h4 { margin: 1.4em 0 0.5em; }
-  :first-child { margin-top: 0; }
-  p { margin-bottom: 1em; }
-  ul, ol { margin: 0 0 1em 1.4rem; }
-  code {
-    padding: 0.1em 0.4em;
-    background: var(--surface-2);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-  }
-  pre {
-    padding: var(--spacing-md);
-    background: var(--surface-2);
-    border-radius: var(--radius-sm);
-    overflow-x: auto;
-    code { padding: 0; background: transparent; }
-  }
-  blockquote {
-    margin: 0 0 1em;
-    padding-left: var(--spacing-md);
-    border-left: 4px solid var(--accent);
-    color: var(--muted);
-    font-style: italic;
-  }
-}
-
-/* ---------- celular: lista e nota alternam, em vez de empilhar ---------- */
-@media (max-width: 900px) {
-  .anotacoes {
-    grid-template-columns: 1fr;
-    min-height: 0;
-  }
-
-  .lista { max-height: none; }
-
-  .anotacoes.tem-selecao .lista { display: none; }
-  .anotacoes:not(.tem-selecao) .editor { display: none; }
-
-  .voltar { display: inline-flex; flex: none; align-items: center; gap: 0.4rem; }
-
-  .editor { padding: var(--spacing-md); }
-  .titulo-leitura, .titulo-input { font-size: 1.5rem; }
-  .editor-acoes { width: 100%; }
-}
-
-/* ---- recursos de caderno ---- */
-.lista-acoes { display: inline-flex; flex-wrap: wrap; gap: var(--spacing-xs); }
-
-.ferramentas {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  margin-left: auto;
-}
+.ferramentas { display: inline-flex; align-items: center; gap: var(--spacing-xs); }
 
 .mencao-select {
   min-height: 36px;
@@ -356,7 +283,125 @@
   &:hover { border-color: var(--hi); }
 }
 
+.rolagem {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+// A folha: uma coluna de leitura (~70 caracteres por linha), com margens generosas.
+.folha {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 6vh, 3.5rem) clamp(1.25rem, 5vw, 3.5rem) 6rem;
+}
+
+.titulo-leitura, .titulo-input {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.2vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.titulo-input {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+
+  &:focus { outline: none; }
+  &::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+}
+
+.folha-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  margin: 0 0 2.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+
+  .chip { display: inline-flex; align-items: center; gap: 0.35rem; }
+}
+
+// Escrever e ler ficam no mesmo tamanho e na mesma coluna: o texto não "pula" ao trocar de modo.
+.texto-md, .markdown-content {
+  font-size: 1.08rem;
+  line-height: 1.8;
+  color: var(--fg);
+}
+
+.texto-md {
+  display: block;
+  width: 100%;
+  min-height: 55vh;
+  field-sizing: content; // cresce com o texto (Chrome/Edge); nos outros fica com a altura mínima e rola
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font-family: var(--font-body);
+  resize: none;
+
+  &:focus { outline: none; }
+  &::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+}
+
+.sem-texto { color: var(--muted); font-style: italic; }
+
 .markdown-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  > :first-child { margin-top: 0; }
+  h1, h2, h3, h4 { margin: 2em 0 0.6em; line-height: 1.2; }
+  h1 { font-size: 1.9rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.2rem; }
+  h4 { font-size: 1.05rem; }
+  p { margin: 0 0 1.15em; }
+  ul, ol { margin: 0 0 1.15em; padding-left: 1.5rem; }
+  li { margin: 0.3em 0; }
+  li::marker { color: var(--hi); }
+  hr { margin: 2.5em 0; border: 0; border-top: 1px solid var(--line); }
+  img { max-width: 100%; border-radius: var(--radius-md); }
+  a { text-underline-offset: 0.2em; }
+  strong { color: var(--fg); }
+
+  code {
+    padding: 0.1em 0.4em;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+  pre {
+    margin: 0 0 1.15em;
+    padding: var(--spacing-md);
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    line-height: 1.55;
+    code { padding: 0; background: transparent; }
+  }
+  blockquote {
+    margin: 0 0 1.15em;
+    padding: 0.2em 0 0.2em 1.1rem;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+    font-style: italic;
+  }
+  table { width: 100%; margin: 0 0 1.15em; border-collapse: collapse; font-size: 0.95em; }
+  th, td { padding: 0.5em 0.7em; border-bottom: 1px solid var(--line); text-align: left; }
+
   // caixas de tarefa: clicáveis e focáveis
   .tarefa {
     display: inline-block;
@@ -384,4 +429,53 @@
 
     &:hover { background: color-mix(in srgb, var(--hi) 30%, transparent); }
   }
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--muted);
+
+  i { font-size: 3rem; opacity: 0.55; }
+  h3 { margin: 0.25rem 0 0; color: var(--fg); }
+  p { margin: 0 0 0.75rem; line-height: 1.6; }
+}
+
+/* ---------- celular: lista e nota alternam, em vez de empilhar ---------- */
+@media (max-width: 900px) {
+  :host { height: auto; }
+
+  .anotacoes {
+    grid-template-columns: 1fr;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    &.foco { grid-template-columns: 1fr; }
+    &.foco .lista { display: flex; }
+  }
+
+  .so-largo { display: none; }
+  .lista { border-right: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .lista-corpo { overflow: visible; }
+  .rolagem { overflow: visible; }
+
+  .anotacoes.tem-selecao .lista { display: none; }
+  .anotacoes:not(.tem-selecao) .editor { display: none; }
+
+  .voltar { display: inline-flex; flex: none; align-items: center; gap: 0.4rem; }
+  .barra-nota { position: sticky; top: 0; z-index: 2; border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .editor-acoes { margin-left: 0; width: 100%; }
+  .folha { padding: 1.5rem 0.25rem 4rem; }
+  .titulo-leitura, .titulo-input { font-size: 1.7rem; }
+  .texto-md { min-height: 50vh; }
 }

@@ -219,7 +219,8 @@ $ponto: 900px;
     bottom: 0;
     z-index: 900;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr; // uma coluna por destino
     padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
     background: var(--surface);
     border-top: 1px solid var(--line);

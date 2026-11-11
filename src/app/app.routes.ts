@@ -27,6 +27,7 @@ export const routes: Routes = [
         {path: 'perfil', loadComponent: () => import('./core/pages/perfil/perfil').then(m => m.PerfilComponent)},
         {path: 'campaigns', loadComponent: () => import('./campaigns/pages/campaign-list/campaign-list').then(m => m.CampaignList)},
     {path: 'campaigns/create', loadComponent: () => import('./campaigns/pages/campaign-create/campaign-create').then(m => m.CampaignCreate)},
+    {path: 'anotacoes', title: 'Anotações · Wyvern', loadComponent: () => import('./campaigns/pages/anotacoes/anotacoes-pagina').then(m => m.AnotacoesPagina)},
     {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},
     {path: 'campaigns/:id', loadComponent: () => import('./campaigns/pages/campaign-detail/campaign-detail').then(m => m.CampaignDetail)},
     {path: 'personagens', loadComponent: () => import('./personagens/pages/personagem-list/personagem-list').then(m => m.PersonagemList)},

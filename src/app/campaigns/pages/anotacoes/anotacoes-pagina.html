@@ -1,0 +1,36 @@
+<header class="topo">
+  <div class="topo-titulo">
+    <p class="eyebrow">Caderno da campanha</p>
+    <h1>Anotações</h1>
+  </div>
+
+  @if (lista().length > 0) {
+    <div class="topo-campanha">
+      <label class="visually-hidden" for="campanha-caderno">Campanha</label>
+      <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
+      <select id="campanha-caderno" class="seletor" [value]="campanhaId()" (change)="trocar(+$any($event.target).value)">
+        @for (c of lista(); track c.campanhaId) {
+          <option [value]="c.campanhaId" [selected]="c.campanhaId === campanhaId()">{{ c.nome }}{{ c.papel === 'Mestre' ? ' · Mestre' : '' }}</option>
+        }
+      </select>
+      @if (campanha(); as c) {
+        <a class="btn-secondary btn-sm" [routerLink]="['/campaigns', c.campanhaId]">Abrir a campanha</a>
+      }
+    </div>
+  }
+</header>
+
+@if (carregando()) {
+  <p class="estado" role="status">Carregando as campanhas...</p>
+} @else if (erro()) {
+  <p class="estado alert-error" role="alert">Não foi possível carregar as suas campanhas.</p>
+} @else if (campanhaId(); as id) {
+  <app-anotacoes class="caderno" [campanhaId]="id" />
+} @else {
+  <div class="vazio">
+    <i class="bi bi-journal-text" aria-hidden="true"></i>
+    <h2>Nenhuma campanha ainda</h2>
+    <p>As anotações ficam dentro de uma campanha. Crie uma ou entre com o convite do seu Mestre.</p>
+    <a class="btn-primary" routerLink="/campaigns">Ir para as campanhas</a>
+  </div>
+}

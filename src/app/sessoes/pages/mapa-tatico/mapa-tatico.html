@@ -179,10 +179,12 @@
       <app-mapa-3d [cena]="c3" [imagemUrl]="imagemUrl()" [tokens]="tokensVisiveis()" [paredes]="paredesVisiveis()"
                    [selecionadoId]="selecionadoId()" [ehMestre]="ehMestre()" [retratoDe]="retratoDe3d" [infoDe]="info3d"
                    [podeMover]="podeMover3d" [neblina]="neblinaCanvas()" [versaoNeblina]="versaoNeblina()"
-                   [alcance]="alcanceCanvas()" [versaoAlcance]="versaoAlcance()" [ferramenta]="ferramenta() === 'regua' ? 'regua' : 'mover'"
+                   [alcance]="alcanceCanvas()" [versaoAlcance]="versaoAlcance()" [ferramenta]="ferramenta()"
                    [reguas]="reguas3d()" [custo]="custo3d()" [escuro]="escuro3d()"
+                   [tracos]="tracos3d()" [areaDeMagia]="area3d()" [pings]="pings3d()"
+                   [rascunhoDeParede]="rascunhoDeParede3d()" [retanguloDeNevoa]="retanguloDeNevoa3d()"
                    (selecionar)="selecionar($event)" (mover)="mover3d($event)" (arrastando)="arrastando3d($event)"
-                   (reguaPonto)="reguaDe3d($event)" (falhou)="falhou3d()" />
+                   (gesto)="gesto3d($event)" (ping)="ping3d($event)" (toque)="toque3d($event)" (falhou)="falhou3d()" />
     }
 
     <!-- ferramentas flutuando sobre o mapa -->
@@ -210,7 +212,7 @@
                 title="Régua: mede a distância em quadrados e pés" aria-label="Régua" [attr.aria-pressed]="ferramenta() === 'regua'">
           <i class="bi bi-rulers" aria-hidden="true"></i>
         </button>
-        <button type="button" class="barra-btn so-2d" [class.ativo]="ferramenta() === 'area'" (click)="escolherFerramenta('area')"
+        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'area'" (click)="escolherFerramenta('area')"
                 title="Área de magia: esfera, cone ou linha" aria-label="Área de magia" [attr.aria-pressed]="ferramenta() === 'area'">
           <i class="bi bi-bullseye" aria-hidden="true"></i>
         </button>
@@ -241,9 +243,9 @@
         </div>
       }
       @if (cena()) {
-        <div class="barra-grupo so-2d">
+        <div class="barra-grupo">
           @if (ehMestre()) {
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'marcador'" (click)="escolherFerramenta('marcador')"
+            <button type="button" class="barra-btn so-2d" [class.ativo]="ferramenta() === 'marcador'" (click)="escolherFerramenta('marcador')"
                     title="Marcador: clique no mapa para fixar um ponto de interesse" aria-label="Marcador" [attr.aria-pressed]="ferramenta() === 'marcador'">
               <i class="bi bi-geo-alt" aria-hidden="true"></i>
             </button>
@@ -280,7 +282,7 @@
         </div>
       }
       @if (ehMestre() && cena()) {
-        <div class="barra-grupo so-2d">
+        <div class="barra-grupo">
           <button type="button" class="barra-btn largo" [class.ativo]="neblinaAtiva()" (click)="alternarNeblina()"
                   title="Névoa de guerra: os jogadores só veem o que você revelar" [attr.aria-pressed]="neblinaAtiva()">
             <i class="bi bi-cloud-fog2" aria-hidden="true"></i><span class="so-largo">Névoa</span>

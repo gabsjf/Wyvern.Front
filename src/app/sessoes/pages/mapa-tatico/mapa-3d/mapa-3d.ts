@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
 import type {
-  AmbientLight, CanvasTexture, DirectionalLight, Group, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera,
+  AmbientLight, BufferGeometry, CanvasTexture, DirectionalLight, Group, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera,
   PointLight, Raycaster, Scene, Sprite, SpriteMaterial, WebGLRenderer,
 } from 'three';
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -40,10 +40,52 @@ export interface ArrastoDe3d {
   linha: number;
 }
 
-export interface PontoDeRegua3d {
-  fase: 'inicio' | 'mover';
-  coluna: number;
-  linha: number;
+/**
+ * Um gesto no chão com uma ferramenta que não é "mover" (régua, área, desenho, borracha, paredes, névoa).
+ * O ponto vem em quadrados, com fração, dentro do mapa; quem decide o que fazer é o mapa 2D.
+ */
+export interface GestoDe3d {
+  fase: 'inicio' | 'mover' | 'fim';
+  x: number;
+  z: number;
+}
+
+/** Um ponto do chão, em quadrados (com fração). */
+export interface PontoDe3d {
+  x: number;
+  z: number;
+}
+
+/** Um traço do desenho livre, com os pontos em pixels do mapa (como no 2D). */
+export interface Traco3d {
+  cor: CorToken;
+  espessura: number;
+  pontos: [number, number][];
+}
+
+/** O modelo de área de magia, em quadrados: círculo (esfera) ou polígono (cone e linha). */
+export type Area3d =
+  | { tipo: 'circulo'; cx: number; cz: number; r: number; texto: string; rx: number; rz: number }
+  | { tipo: 'poligono'; pontos: [number, number][]; texto: string; rx: number; rz: number };
+
+/** Um "olhem aqui" de alguém da mesa, em quadrados. */
+export interface Ping3d {
+  chave: number;
+  x: number;
+  z: number;
+  nome: string;
+}
+
+/** A parede, porta ou janela que o Mestre está puxando, de um canto da grade a outro. */
+export interface RascunhoDeParede3d {
+  tipo: 'parede' | 'porta' | 'janela';
+  x1: number; y1: number; x2: number; y2: number;
+}
+
+/** O retângulo de névoa que o Mestre está arrastando, em quadrados. */
+export interface RetanguloDeNevoa3d {
+  coluna: number; linha: number; largura: number; altura: number;
+  cobrindo: boolean;
 }
 
 export interface MovimentoDe3d {
@@ -69,6 +111,10 @@ const ALTURA_PORTA = 0.95;
 const INCLINACAO = 0.92; // ângulo polar da vista inclinada (rad, ~53°)
 const SOMBRAS_MAX = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 2 : 4; // sombras de luz pontual custam caro
 const LIMITE_ARRASTO = 0.15; // quadrados que o ponteiro precisa andar para contar como arrasto
+const LIMITE_TOQUE_PX = 6; // na tela: mais que isso já é arrastar a câmera, não um clique
+const TOQUE_LONGO_MS = 550; // segurar parado vira um ping, como no 2D
+const CICLO_DO_PING_MS = 1400;
+const LADO_MAXIMO_DOS_TRACOS = 2048; // a textura dos desenhos não passa disso, qualquer que seja o mapa
 
 interface VistaDoToken {
   grupo: Group;
@@ -82,6 +128,16 @@ interface VistaDoToken {
   chave: string;
   tamanho: number;
   textura: CanvasTexture | null;
+}
+
+interface ToqueNoChao {
+  ponteiro: number;
+  /** onde o ponteiro desceu, na tela */
+  x: number;
+  y: number;
+  moveu: boolean;
+  pingou: boolean;
+  timer?: ReturnType<typeof setTimeout>;
 }
 
 interface VistaDaParede {
@@ -117,7 +173,10 @@ interface VistaDaParede {
         <i class="bi bi-grid-3x3" aria-hidden="true"></i>
       </button>
     </div>
-    <p class="dica">Arraste o fundo para andar · botão direito gira · roda aproxima</p>
+    <p class="dica">
+      @if (ferramenta() === 'mover') { Arraste o fundo para andar · botão direito gira · roda aproxima · duplo clique chama a mesa }
+      @else { Arraste no chão para usar a ferramenta · botão direito gira · roda aproxima }
+    </p>
     @if (!pronto()) { <p class="carregando" role="status">Carregando o 3D…</p> }
   `,
   styleUrl: './mapa-3d.scss',
@@ -138,17 +197,27 @@ export class Mapa3d {
   /** A canvas do alcance azul que o mapa 2D desenha para o token selecionado. */
   readonly alcance = input<HTMLCanvasElement | null>(null);
   readonly versaoAlcance = input(0);
-  readonly ferramenta = input<'mover' | 'regua'>('mover');
+  /** A ferramenta do mapa. Com "mover", o chão leva a câmera e os tokens; com qualquer outra, o chão vira gesto. */
+  readonly ferramenta = input<string>('mover');
   readonly reguas = input<Regua3d[]>([]);
   readonly custo = input<CustoDoArrasto3d | null>(null);
   /** Sob névoa, os jogadores ficam no escuro e só a luz dos tokens ilumina. */
   readonly escuro = input(false);
+  readonly tracos = input<Traco3d[]>([]);
+  readonly areaDeMagia = input<Area3d | null>(null);
+  readonly pings = input<Ping3d[]>([]);
+  readonly rascunhoDeParede = input<RascunhoDeParede3d | null>(null);
+  readonly retanguloDeNevoa = input<RetanguloDeNevoa3d | null>(null);
 
   readonly selecionar = output<TokenCena>();
   readonly mover = output<MovimentoDe3d>();
   readonly falhou = output<void>();
   readonly arrastando = output<ArrastoDe3d | null>();
-  readonly reguaPonto = output<PontoDeRegua3d>();
+  readonly gesto = output<GestoDe3d>();
+  /** Duplo clique (ou segurar parado) no chão: "olhem aqui". */
+  readonly ping = output<PontoDe3d>();
+  /** Clique rápido no chão vazio, com a ferramenta "mover" (abre portas, desmarca o token). */
+  readonly toque = output<PontoDe3d>();
 
   protected readonly pronto = signal(false);
   protected readonly visaoDeCima = signal(false);
@@ -170,9 +239,15 @@ export class Mapa3d {
   private paredesGrupo!: Group;
   private readonly camadas = new Map<string, { malha: Mesh; textura: CanvasTexture; tamanho: string }>();
   private reguasGrupo!: Group;
+  private areaGrupo!: Group;
+  private rascunhoGrupo!: Group;
+  private readonly pingsVistos = new Map<number, { grupo: Group; aneis: Mesh[]; inicio: number }>();
+  private telaDosTracos: HTMLCanvasElement | null = null;
   private rotuloDoCusto: Sprite | null = null;
   private ambiente!: AmbientLight;
-  private gestoDeRegua = false;
+  private gestoAtivo = false;
+  /** Um clique no chão vazio que ainda pode virar toque, ping (segurando) ou arrasto da câmera. */
+  private toqueEmCurso: ToqueNoChao | null = null;
   private arrastoAvisado = false;
   private readonly paredesVistas: VistaDaParede[] = [];
   private readonly vistas = new Map<number, VistaDoToken>();
@@ -242,6 +317,28 @@ export class Mapa3d {
       const escuro = this.escuro() || this.escuroManual();
       untracked(() => this.aplicarAmbiente(escuro));
     });
+    effect(() => {
+      if (!this.pronto()) return;
+      const tracos = this.tracos();
+      const cena = this.cena();
+      untracked(() => this.desenharTracos(tracos, cena));
+    });
+    effect(() => {
+      if (!this.pronto()) return;
+      const area = this.areaDeMagia();
+      untracked(() => this.montarArea(area));
+    });
+    effect(() => {
+      if (!this.pronto()) return;
+      const pings = this.pings();
+      untracked(() => this.sincronizarPings(pings));
+    });
+    effect(() => {
+      if (!this.pronto()) return;
+      const parede = this.rascunhoDeParede();
+      const nevoa = this.retanguloDeNevoa();
+      untracked(() => this.montarRascunho(parede, nevoa));
+    });
   }
 
   // ---------- ciclo de vida ----------
@@ -270,7 +367,9 @@ export class Mapa3d {
       this.ambiente = new T.AmbientLight(0xffffff, 0.75);
       this.cenario.add(this.ambiente);
       this.reguasGrupo = new T.Group();
-      this.cenario.add(this.reguasGrupo);
+      this.areaGrupo = new T.Group();
+      this.rascunhoGrupo = new T.Group();
+      this.cenario.add(this.reguasGrupo, this.areaGrupo, this.rascunhoGrupo);
       const sol = new T.DirectionalLight(0xfff1dc, 1.6);
       sol.castShadow = true;
       sol.shadow.mapSize.set(2048, 2048);
@@ -294,7 +393,8 @@ export class Mapa3d {
       dom.addEventListener('pointerdown', e => this.aoApertar(e));
       dom.addEventListener('pointermove', e => this.aoMover(e));
       dom.addEventListener('pointerup', e => this.aoSoltar(e));
-      dom.addEventListener('pointercancel', e => this.aoSoltar(e));
+      dom.addEventListener('pointercancel', e => this.aoSoltar(e, true));
+      dom.addEventListener('dblclick', e => this.aoDuploClique(e));
 
       this.observador = new ResizeObserver(() => this.redimensionar());
       this.observador.observe(el);
@@ -310,6 +410,7 @@ export class Mapa3d {
 
   private destruir(): void {
     this.destruido = true;
+    clearTimeout(this.toqueEmCurso?.timer);
     this.observador?.disconnect();
     if (!this.renderizador) return;
     this.renderizador.setAnimationLoop(null);
@@ -352,6 +453,15 @@ export class Mapa3d {
       v.cartao.rotation.y = Math.atan2(alvo.x - v.grupo.position.x, alvo.z - v.grupo.position.z);
       v.vidaFundo.rotation.y = v.vidaBarra.rotation.y = v.cartao.rotation.y;
       if (v.turno.visible) v.turno.scale.setScalar(1 + Math.sin(this.pulso) * 0.06);
+    }
+    // o ping: dois anéis que crescem e somem, um atrás do outro, como no 2D
+    const agora = performance.now();
+    for (const p of this.pingsVistos.values()) {
+      p.aneis.forEach((anel, i) => {
+        const t = (((agora - p.inicio) / CICLO_DO_PING_MS) + i * 0.32) % 1;
+        anel.scale.setScalar(0.25 + t * 1.75);
+        (anel.material as MeshBasicMaterial).opacity = 1 - t;
+      });
     }
     this.renderizador.render(this.cenario, this.camera);
   }
@@ -774,7 +884,7 @@ export class Mapa3d {
 
   // ---------- ponteiro: selecionar e arrastar tokens ----------
 
-  private raio(evento: PointerEvent): Raycaster {
+  private raio(evento: MouseEvent): Raycaster {
     const T = this.T;
     const r = this.renderizador.domElement.getBoundingClientRect();
     const ndc = new T.Vector2(((evento.clientX - r.left) / r.width) * 2 - 1, -(((evento.clientY - r.top) / r.height) * 2 - 1));
@@ -783,7 +893,7 @@ export class Mapa3d {
     return raio;
   }
 
-  private tokenSob(evento: PointerEvent): { token: TokenCena; vista: VistaDoToken } | null {
+  private tokenSob(evento: MouseEvent): { token: TokenCena; vista: VistaDoToken } | null {
     const alvos: Object3D[] = [];
     for (const v of this.vistas.values()) alvos.push(v.cartao, v.base);
     const acertos = this.raio(evento).intersectObjects(alvos, false);
@@ -796,36 +906,38 @@ export class Mapa3d {
     return null;
   }
 
-  private pontoNoChao(evento: PointerEvent): { x: number; z: number } | null {
+  private pontoNoChao(evento: MouseEvent): { x: number; z: number } | null {
     const T = this.T;
     const ponto = new T.Vector3();
     const plano = new T.Plane(new T.Vector3(0, 1, 0), 0);
     return this.raio(evento).ray.intersectPlane(plano, ponto) ? { x: ponto.x, z: ponto.z } : null;
   }
 
-  /** O quadrado sob o ponteiro, dentro do mapa. */
-  private quadradoSob(evento: PointerEvent): { coluna: number; linha: number } | null {
+  /** O ponto do chão sob o ponteiro, em quadrados, sem sair do mapa (um pouco antes da borda, para cair num quadrado dele). */
+  private pontoNoMapa(evento: MouseEvent): PontoDe3d | null {
     const ponto = this.pontoNoChao(evento);
     if (!ponto) return null;
+    const borda = 0.001;
     return {
-      coluna: Math.min(Math.max(Math.floor(ponto.x), 0), Math.max(0, Math.ceil(this.largura()) - 1)),
-      linha: Math.min(Math.max(Math.floor(ponto.z), 0), Math.max(0, Math.ceil(this.altura()) - 1)),
+      x: Math.min(Math.max(ponto.x, 0), this.largura() - borda),
+      z: Math.min(Math.max(ponto.z, 0), this.altura() - borda),
     };
   }
 
   private aoApertar(evento: PointerEvent): void {
     if (evento.button !== 0) return;
-    if (this.ferramenta() === 'regua') {
-      const q = this.quadradoSob(evento);
-      if (!q) return;
-      this.gestoDeRegua = true;
+    if (this.ferramenta() !== 'mover') {
+      // régua, área, desenho, paredes e névoa: o gesto é da ferramenta, não da câmera
+      const p = this.pontoNoMapa(evento);
+      if (!p) return;
+      this.gestoAtivo = true;
       this.controles.enabled = false;
       this.renderizador.domElement.setPointerCapture(evento.pointerId);
-      this.reguaPonto.emit({ fase: 'inicio', ...q });
+      this.gesto.emit({ fase: 'inicio', ...p });
       return;
     }
     const sob = this.tokenSob(evento);
-    if (!sob) return;
+    if (!sob) { this.comecarToque(evento); return; }
     this.selecionar.emit(sob.token);
     if (!this.podeMover()(sob.token)) return;
     const ponto = this.pontoNoChao(evento);
@@ -841,11 +953,42 @@ export class Mapa3d {
     this.renderizador.domElement.setPointerCapture(evento.pointerId);
   }
 
+  /** Clique no chão vazio: se o ponteiro ficar parado, segurar vira ping; soltar logo vira toque. A câmera segue livre. */
+  private comecarToque(evento: PointerEvent): void {
+    this.cancelarToque();
+    const toque: ToqueNoChao = { ponteiro: evento.pointerId, x: evento.clientX, y: evento.clientY, moveu: false, pingou: false };
+    toque.timer = setTimeout(() => {
+      if (toque.moveu || this.toqueEmCurso !== toque) return;
+      const p = this.pontoNoMapa(evento);
+      if (!p) return;
+      toque.pingou = true;
+      this.ping.emit(p);
+    }, TOQUE_LONGO_MS);
+    this.toqueEmCurso = toque;
+  }
+
+  private cancelarToque(): void {
+    clearTimeout(this.toqueEmCurso?.timer);
+    this.toqueEmCurso = null;
+  }
+
+  private aoDuploClique(evento: MouseEvent): void {
+    if (this.ferramenta() !== 'mover' || this.tokenSob(evento)) return;
+    const p = this.pontoNoMapa(evento);
+    if (p) this.ping.emit(p);
+  }
+
   private aoMover(evento: PointerEvent): void {
-    if (this.gestoDeRegua) {
-      const q = this.quadradoSob(evento);
-      if (q) this.reguaPonto.emit({ fase: 'mover', ...q });
+    if (this.gestoAtivo) {
+      const p = this.pontoNoMapa(evento);
+      if (p) this.gesto.emit({ fase: 'mover', ...p });
       return;
+    }
+    const toque = this.toqueEmCurso;
+    if (toque && toque.ponteiro === evento.pointerId && !toque.moveu
+        && Math.hypot(evento.clientX - toque.x, evento.clientY - toque.y) > LIMITE_TOQUE_PX) {
+      toque.moveu = true; // virou arrasto da câmera
+      clearTimeout(toque.timer);
     }
     const a = this.arrasto;
     if (!a) {
@@ -870,12 +1013,22 @@ export class Mapa3d {
     }
   }
 
-  private aoSoltar(evento: PointerEvent): void {
-    if (this.gestoDeRegua) {
-      this.gestoDeRegua = false;
+  private aoSoltar(evento: PointerEvent, cancelado = false): void {
+    if (this.gestoAtivo) {
+      this.gestoAtivo = false;
       this.controles.enabled = true;
       if (this.renderizador.domElement.hasPointerCapture(evento.pointerId)) this.renderizador.domElement.releasePointerCapture(evento.pointerId);
+      const p = this.pontoNoMapa(evento);
+      if (p) this.gesto.emit({ fase: 'fim', ...p });
       return;
+    }
+    const toque = this.toqueEmCurso;
+    if (toque && toque.ponteiro === evento.pointerId) {
+      this.cancelarToque();
+      if (!cancelado && !toque.moveu && !toque.pingou) {
+        const p = this.pontoNoMapa(evento);
+        if (p) this.toque.emit(p);
+      }
     }
     const a = this.arrasto;
     this.arrasto = null;
@@ -1022,6 +1175,156 @@ export class Mapa3d {
       else filho.traverse(o => this.liberar(o));
     }
     grupo.clear();
+  }
+
+  // ---------- desenho livre ----------
+
+  /** Os traços vão para uma canvas do tamanho do mapa (reduzida se for grande) e ela vira uma camada sobre o chão. */
+  private desenharTracos(tracos: Traco3d[], cena: Cena): void {
+    if (!tracos.length) { this.atualizarCamada('tracos', null, 0.035, 6, 1); return; }
+    const escala = Math.min(1, LADO_MAXIMO_DOS_TRACOS / Math.max(cena.largura, cena.altura, 1));
+    const tela = this.telaDosTracos ?? (this.telaDosTracos = document.createElement('canvas'));
+    const largura = Math.max(1, Math.ceil(cena.largura * escala)), altura = Math.max(1, Math.ceil(cena.altura * escala));
+    if (tela.width !== largura || tela.height !== altura) { tela.width = largura; tela.height = altura; }
+    const c = tela.getContext('2d')!;
+    c.clearRect(0, 0, largura, altura);
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    c.shadowBlur = 2;
+    const cores = new Map<CorToken, string>();
+    for (const t of tracos) {
+      if (t.pontos.length < 2) continue;
+      if (!cores.has(t.cor)) cores.set(t.cor, '#' + this.corDoTema(COR_DO_TOKEN[t.cor] ?? COR_DO_TOKEN.ouro).toString(16).padStart(6, '0'));
+      c.strokeStyle = cores.get(t.cor)!;
+      c.lineWidth = Math.max(1, t.espessura * escala);
+      c.beginPath();
+      t.pontos.forEach(([x, y], i) => (i === 0 ? c.moveTo(x * escala, y * escala) : c.lineTo(x * escala, y * escala)));
+      c.stroke();
+    }
+    this.atualizarCamada('tracos', tela, 0.035, 6, 1);
+  }
+
+  // ---------- área de magia ----------
+
+  private montarArea(area: Area3d | null): void {
+    const T = this.T;
+    this.limparGrupo(this.areaGrupo);
+    if (!area) return;
+    const cor = this.corDoTema('var(--accent)');
+    const altura = 0.06;
+    const preenchimento = new T.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.28, depthTest: false, depthWrite: false, side: T.DoubleSide });
+    const contorno = new T.LineBasicMaterial({ color: cor, transparent: true, opacity: 0.95, depthTest: false });
+
+    let borda: [number, number][];
+    let geometria: BufferGeometry;
+    if (area.tipo === 'circulo') {
+      const { cx, cz, r } = area;
+      geometria = new T.CircleGeometry(r, 72);
+      geometria.rotateX(-Math.PI / 2);
+      geometria.translate(cx, 0, cz);
+      borda = Array.from({ length: 72 }, (_, i) => {
+        const a = (i / 72) * Math.PI * 2;
+        return [cx + Math.cos(a) * r, cz + Math.sin(a) * r] as [number, number];
+      });
+    } else {
+      // a forma é desenhada em (x, -z) e deitada no chão: assim cai em (x, 0, z)
+      const forma = new T.Shape(area.pontos.map(([x, z]) => new T.Vector2(x, -z)));
+      geometria = new T.ShapeGeometry(forma);
+      geometria.rotateX(-Math.PI / 2);
+      borda = area.pontos;
+    }
+    const malha = new T.Mesh(geometria, preenchimento);
+    malha.position.y = altura;
+    malha.renderOrder = 15;
+    const linha = new T.LineLoop(new T.BufferGeometry().setFromPoints(borda.map(([x, z]) => new T.Vector3(x, altura, z))), contorno);
+    linha.renderOrder = 16;
+    const rotulo = this.criarRotulo(area.texto, cor);
+    rotulo.position.set(area.rx, 0.8, area.rz);
+    this.areaGrupo.add(malha, linha, rotulo);
+  }
+
+  // ---------- pings ----------
+
+  private sincronizarPings(pings: Ping3d[]): void {
+    const T = this.T;
+    const vivos = new Set(pings.map(p => p.chave));
+    for (const [chave, p] of this.pingsVistos) {
+      if (vivos.has(chave)) continue;
+      this.limparGrupo(p.grupo);
+      this.cenario.remove(p.grupo);
+      this.pingsVistos.delete(chave);
+    }
+    const cor = this.corDoTema('var(--hi)');
+    for (const p of pings) {
+      if (this.pingsVistos.has(p.chave)) continue;
+      const grupo = new T.Group();
+      grupo.position.set(p.x, 0.07, p.z);
+      const aneis = [0, 1].map(() => {
+        const g = new T.RingGeometry(0.85, 1, 48);
+        g.rotateX(-Math.PI / 2);
+        const anel = new T.Mesh(g, new T.MeshBasicMaterial({ color: cor, transparent: true, depthTest: false, depthWrite: false }));
+        anel.renderOrder = 25;
+        grupo.add(anel);
+        return anel;
+      });
+      const pg = new T.CircleGeometry(0.16, 24);
+      pg.rotateX(-Math.PI / 2);
+      const ponto = new T.Mesh(pg, new T.MeshBasicMaterial({ color: cor, depthTest: false }));
+      ponto.renderOrder = 26;
+      // um pino em pé, para o ping ser visto de longe e de qualquer ângulo
+      const haste = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 1.1, 8), new T.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.85 }));
+      haste.position.y = 0.55;
+      const rotulo = this.criarRotulo(p.nome, cor);
+      rotulo.position.y = 1.45;
+      grupo.add(ponto, haste, rotulo);
+      this.cenario.add(grupo);
+      this.pingsVistos.set(p.chave, { grupo, aneis, inicio: performance.now() });
+    }
+  }
+
+  // ---------- o que o Mestre está puxando: parede e névoa ----------
+
+  private montarRascunho(parede: RascunhoDeParede3d | null, nevoa: RetanguloDeNevoa3d | null): void {
+    const T = this.T;
+    this.limparGrupo(this.rascunhoGrupo);
+    const cor = this.corDoTema('var(--hi)');
+    const material = () => new T.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.55, depthWrite: false });
+
+    if (parede) {
+      const dx = parede.x2 - parede.x1, dz = parede.y2 - parede.y1;
+      const comprimento = Math.hypot(dx, dz);
+      for (const [x, z] of [[parede.x1, parede.y1], [parede.x2, parede.y2]]) {
+        const g = new T.CircleGeometry(0.14, 20);
+        g.rotateX(-Math.PI / 2);
+        const ponta = new T.Mesh(g, material());
+        ponta.position.set(x, 0.05, z);
+        this.rascunhoGrupo.add(ponta);
+      }
+      if (comprimento > 0) {
+        const alto = parede.tipo === 'janela' ? 0.9 : parede.tipo === 'porta' ? ALTURA_PORTA : ALTURA_PAREDE;
+        const caixa = new T.Mesh(new T.BoxGeometry(comprimento, alto, 0.14), material());
+        caixa.position.set((parede.x1 + parede.x2) / 2, alto / 2, (parede.y1 + parede.y2) / 2);
+        caixa.rotation.y = -Math.atan2(dz, dx);
+        this.rascunhoGrupo.add(caixa);
+      }
+    }
+
+    if (nevoa) {
+      const corNevoa = nevoa.cobrindo ? this.corDoTema('var(--muted)') : cor;
+      const g = new T.PlaneGeometry(nevoa.largura, nevoa.altura);
+      g.rotateX(-Math.PI / 2);
+      const placa = new T.Mesh(g, new T.MeshBasicMaterial({ color: corNevoa, transparent: true, opacity: 0.3, depthTest: false, depthWrite: false }));
+      placa.position.set(nevoa.coluna + nevoa.largura / 2, 0.05, nevoa.linha + nevoa.altura / 2);
+      placa.renderOrder = 15;
+      const x0 = nevoa.coluna, z0 = nevoa.linha, x1 = x0 + nevoa.largura, z1 = z0 + nevoa.altura;
+      const borda = new T.LineLoop(
+        new T.BufferGeometry().setFromPoints([[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => new T.Vector3(x, 0.05, z))),
+        new T.LineBasicMaterial({ color: corNevoa, depthTest: false }),
+      );
+      borda.renderOrder = 16;
+      this.rascunhoGrupo.add(placa, borda);
+    }
   }
 
   // ---------- cores do tema ----------

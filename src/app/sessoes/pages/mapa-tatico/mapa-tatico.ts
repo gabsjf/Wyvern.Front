@@ -24,7 +24,9 @@ import {
   Vista, ajustarAoPalco, distanciaEmPes, distanciaEmQuadrados, iniciais, limitarAoMapa, limitarZoom, quadradoEm,
   telaParaMundo, zoomEmTorno,
 } from '../../utils/mapa-geometria';
-import { ArrastoDe3d, Mapa3d, MovimentoDe3d, PontoDeRegua3d, Regua3d } from './mapa-3d/mapa-3d';
+import {
+  Area3d, ArrastoDe3d, GestoDe3d, Mapa3d, MovimentoDe3d, Ping3d, PontoDe3d, RascunhoDeParede3d, Regua3d, RetanguloDeNevoa3d, Traco3d,
+} from './mapa-3d/mapa-3d';
 import { PapelCampanha, PapelService } from '../../../campaigns/services/papel.service';
 import { PersonagemService } from '../../../personagens/services/personagem.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -234,7 +236,8 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
   });
 
   // régua compartilhada
-  readonly compartilharRegua = signal(false);
+  /** Ligada por padrão: quem mede quase sempre quer mostrar à mesa (dá para desligar no botão "Compartilhar"). */
+  readonly compartilharRegua = signal(true);
   private reguasAlheias = signal<Record<number, ReguaDeOutro>>({});
   private reguaTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private ultimaReguaEnviada = 0;
@@ -364,7 +367,10 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     const pontos = forma === 'cone'
       ? [[a.ox, a.oy], [fx + nx * meia, fy + ny * meia], [fx - nx * meia, fy - ny * meia]]
       : [[a.ox + nx * meia, a.oy + ny * meia], [fx + nx * meia, fy + ny * meia], [fx - nx * meia, fy - ny * meia], [a.ox - nx * meia, a.oy - ny * meia]];
-    return { tipo: 'poligono' as const, pontos: pontos.map(([x, y]) => x + ',' + y).join(' '), rotulo: { x: (a.ox + fx) / 2, y: (a.oy + fy) / 2 } };
+    return {
+      tipo: 'poligono' as const, pontos: pontos.map(([x, y]) => x + ',' + y).join(' '), lista: pontos as [number, number][],
+      rotulo: { x: (a.ox + fx) / 2, y: (a.oy + fy) / 2 },
+    };
   });
 
   readonly medida = computed(() => {
@@ -940,7 +946,8 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     if (ferramenta === 'borracha') {
-      void this.apagarTracoEm(pos.x, pos.y);
+      const m = telaParaMundo(this.vista(), pos.x, pos.y);
+      void this.apagarTracoEm(m.x, m.y, 16 / this.vista().zoom);
       return;
     }
     if ((ferramenta === 'parede' || ferramenta === 'porta' || ferramenta === 'janela') && this.ehMestre()) {
@@ -952,14 +959,12 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     if (ferramenta === 'apagar' && this.ehMestre()) {
-      void this.apagarParedeEm(pos.x, pos.y);
+      void this.apagarParede(this.paredePerto(pos.x, pos.y, false));
       return;
     }
     if (ferramenta === 'area') {
       const m = telaParaMundo(this.vista(), pos.x, pos.y);
-      const ox = Math.round(m.x / cena.tamanhoCelula) * cena.tamanhoCelula;
-      const oy = Math.round(m.y / cena.tamanhoCelula) * cena.tamanhoCelula;
-      this.area.set({ ox, oy, px: this.formaDeArea() === 'esfera' ? ox : m.x, py: this.formaDeArea() === 'esfera' ? oy : m.y });
+      this.iniciarArea(m.x, m.y);
       this.gesto = { tipo: 'area', inicioX: pos.x, inicioY: pos.y, vistaInicial: this.vista(), moveu: false };
       return;
     }
@@ -1037,11 +1042,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
       this.arrasto.set({ tokenId: g.tokenId!, x: m.x - g.deslocX!, y: m.y - g.deslocY! });
     } else if (g.tipo === 'desenho') {
       const m = telaParaMundo(this.vista(), pos.x, pos.y);
-      this.tracoEmCurso.update(pontos => {
-        if (!pontos || pontos.length >= 600) return pontos;
-        const [ux, uy] = pontos[pontos.length - 1];
-        return Math.hypot(m.x - ux, m.y - uy) * this.vista().zoom >= 4 ? [...pontos, [m.x, m.y]] : pontos;
-      });
+      this.adicionarAoTraco(m.x, m.y, 4 / this.vista().zoom);
     } else if (g.tipo === 'marcador') {
       const m = telaParaMundo(this.vista(), pos.x, pos.y);
       this.arrastoMarcador.set({ marcadorId: g.marcadorId!, x: m.x, y: m.y });
@@ -1054,12 +1055,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
       this.retanguloNeblina.update(r => (r ? { ...r, c2: q.coluna, l2: q.linha } : r));
     } else if (g.tipo === 'area') {
       const m = telaParaMundo(this.vista(), pos.x, pos.y);
-      this.area.update(a => {
-        if (!a) return a;
-        if (this.formaDeArea() !== 'esfera') return { ...a, px: m.x, py: m.y };
-        const celula = cena.tamanhoCelula; // a esfera acompanha o ponteiro, de cruzamento em cruzamento
-        return { ...a, px: Math.round(m.x / celula) * celula, py: Math.round(m.y / celula) * celula };
-      });
+      this.moverArea(m.x, m.y);
     } else if (g.tipo === 'regua') {
       const m = telaParaMundo(this.vista(), pos.x, pos.y);
       const q = quadradoEm(m.x, m.y, cena.tamanhoCelula);
@@ -1093,13 +1089,9 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
         void this.moverToken(token, Math.round(arrasto.x / cena.tamanhoCelula), Math.round(arrasto.y / cena.tamanhoCelula));
       }
     } else if (g.tipo === 'neblina') {
-      const r = this.retanguloNeblina();
-      this.retanguloNeblina.set(null);
-      if (r) void this.aplicarNeblina(retanguloEntre(r.c1, r.l1, r.c2, r.l2), this.ferramenta() === 'revelar');
+      this.terminarNeblina();
     } else if (g.tipo === 'desenho') {
-      const pontos = this.tracoEmCurso();
-      this.tracoEmCurso.set(null);
-      if (pontos && pontos.length >= 2) void this.enviarTraco(pontos);
+      this.terminarTraco();
     } else if (g.tipo === 'marcador' && cena) {
       const arrasto = this.arrastoMarcador();
       const marcador = this.marcadores().find(m => m.marcadorId === g.marcadorId);
@@ -1110,15 +1102,63 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
         });
       }
     } else if (g.tipo === 'parede') {
-      const p = this.paredeEmCurso();
-      this.paredeEmCurso.set(null);
-      const f = this.ferramenta();
-      if (p && (p.x1 !== p.x2 || p.y1 !== p.y2)) void this.criarParede(p, f === 'porta' ? 'porta' : f === 'janela' ? 'janela' : 'parede');
+      this.terminarParede();
     } else if (g.tipo === 'pan' && !g.moveu) {
       // clique numa porta: o Mestre abre ou fecha; em qualquer outro vazio, desmarca
-      if (this.ehMestre() && this.ferramenta() === 'mover' && this.alternarPortaEm(g.inicioX, g.inicioY)) return;
+      if (this.ehMestre() && this.ferramenta() === 'mover' && this.alternarPorta(this.paredePerto(g.inicioX, g.inicioY, true))) return;
       this.selecionadoId.set(null);
     }
+  }
+
+  // ---------- gestos em coordenadas do mapa (o 2D e o 3D usam os mesmos) ----------
+
+  /** Começa o modelo de área: a origem cai no cruzamento da grade mais próximo. */
+  private iniciarArea(x: number, y: number): void {
+    const celula = this.cena()?.tamanhoCelula;
+    if (!celula) return;
+    const ox = Math.round(x / celula) * celula;
+    const oy = Math.round(y / celula) * celula;
+    const esfera = this.formaDeArea() === 'esfera';
+    this.area.set({ ox, oy, px: esfera ? ox : x, py: esfera ? oy : y });
+  }
+
+  private moverArea(x: number, y: number): void {
+    const celula = this.cena()?.tamanhoCelula;
+    if (!celula) return;
+    this.area.update(a => {
+      if (!a) return a;
+      if (this.formaDeArea() !== 'esfera') return { ...a, px: x, py: y };
+      // a esfera acompanha o ponteiro, de cruzamento em cruzamento
+      return { ...a, px: Math.round(x / celula) * celula, py: Math.round(y / celula) * celula };
+    });
+  }
+
+  /** Mais um ponto no traço em curso, se andou pelo menos `minimo` pixels do mapa desde o último. */
+  private adicionarAoTraco(x: number, y: number, minimo: number): void {
+    this.tracoEmCurso.update(pontos => {
+      if (!pontos || pontos.length >= 600) return pontos;
+      const [ux, uy] = pontos[pontos.length - 1];
+      return Math.hypot(x - ux, y - uy) >= minimo ? [...pontos, [x, y]] : pontos;
+    });
+  }
+
+  private terminarTraco(): void {
+    const pontos = this.tracoEmCurso();
+    this.tracoEmCurso.set(null);
+    if (pontos && pontos.length >= 2) void this.enviarTraco(pontos);
+  }
+
+  private terminarParede(): void {
+    const p = this.paredeEmCurso();
+    this.paredeEmCurso.set(null);
+    const f = this.ferramenta();
+    if (p && (p.x1 !== p.x2 || p.y1 !== p.y2)) void this.criarParede(p, f === 'porta' ? 'porta' : f === 'janela' ? 'janela' : 'parede');
+  }
+
+  private terminarNeblina(): void {
+    const r = this.retanguloNeblina();
+    this.retanguloNeblina.set(null);
+    if (r) void this.aplicarNeblina(retanguloEntre(r.c1, r.l1, r.c2, r.l2), this.ferramenta() === 'revelar');
   }
 
   aoCancelarPonteiro(evento: PointerEvent): void {
@@ -1174,20 +1214,24 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
 
   /** A parede ou porta mais perto do ponto da tela (tolerância fixa na tela, qualquer que seja o zoom). */
   private paredePerto(telaX: number, telaY: number, apenasPortas: boolean): Parede | null {
+    const m = telaParaMundo(this.vista(), telaX, telaY);
+    return this.paredeNoMapa(m.x, m.y, apenasPortas, 16 / this.vista().zoom);
+  }
+
+  /** A parede ou porta mais perto de um ponto do mapa (em pixels do mapa), até `tolerancia`. */
+  private paredeNoMapa(x: number, y: number, apenasPortas: boolean, tolerancia: number): Parede | null {
     const cena = this.cena();
     if (!cena) return null;
-    const m = telaParaMundo(this.vista(), telaX, telaY);
     const celula = cena.tamanhoCelula;
     const candidatos = this.paredes()
       .filter(p => !apenasPortas || p.porta)
       .map(p => ({ ...p, x1: p.x1 * celula, y1: p.y1 * celula, x2: p.x2 * celula, y2: p.y2 * celula }));
-    const achada = maisProximo(m.x, m.y, candidatos, 16 / this.vista().zoom);
+    const achada = maisProximo(x, y, candidatos, tolerancia);
     return achada ? this.paredes().find(p => p.paredeId === achada.paredeId) ?? null : null;
   }
 
-  private async apagarParedeEm(telaX: number, telaY: number): Promise<void> {
+  private async apagarParede(parede: Parede | null): Promise<void> {
     const cena = this.cena();
-    const parede = this.paredePerto(telaX, telaY, false);
     if (!cena || !parede) return;
     try {
       await this.cenaService.excluirParede(this.campanhaId(), cena.cenaId, parede.paredeId);
@@ -1197,9 +1241,8 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private alternarPortaEm(telaX: number, telaY: number): boolean {
+  private alternarPorta(porta: Parede | null): boolean {
     const cena = this.cena();
-    const porta = this.paredePerto(telaX, telaY, true);
     if (!cena || !porta) return false;
     const aberta = !porta.aberta;
     this.paredes.update(l => l.map(p => (p.paredeId === porta.paredeId ? { ...p, aberta } : p)));
@@ -1386,12 +1429,11 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  /** Apaga o traço mais perto do ponto da tela: cada um apaga o seu; o Mestre, qualquer um. */
-  private async apagarTracoEm(telaX: number, telaY: number): Promise<void> {
+  /** Apaga o traço mais perto do ponto do mapa (em pixels do mapa): cada um apaga o seu; o Mestre, qualquer um. */
+  private async apagarTracoEm(x: number, y: number, tolerancia: number): Promise<void> {
     const cena = this.cena();
     if (!cena) return;
-    const m = telaParaMundo(this.vista(), telaX, telaY);
-    const tolerancia = 16 / this.vista().zoom;
+    const m = { x, y };
     let alvo: Traco | null = null;
     let menor = tolerancia;
     for (const t of this.tracos()) {
@@ -1726,14 +1768,110 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
   /** Sob névoa, quem não é o Mestre fica no escuro e só a luz dos tokens ilumina. */
   readonly escuro3d = computed(() => this.neblinaAtiva() && !this.ehMestre());
 
-  reguaDe3d(p: PontoDeRegua3d): void {
-    if (p.fase === 'inicio') {
-      this.regua.set({ c1: p.coluna, l1: p.linha, c2: p.coluna, l2: p.linha });
-      this.compartilharAMinhaRegua(true);
-    } else {
-      this.regua.update(r => (r ? { ...r, c2: p.coluna, l2: p.linha } : r));
-      this.compartilharAMinhaRegua();
+  /** Os desenhos (e o que está sendo desenhado agora) para o 3D. */
+  readonly tracos3d = computed<Traco3d[]>(() => {
+    const lista: Traco3d[] = this.tracos().map(t => ({ cor: t.cor, espessura: t.espessura, pontos: t.pontos }));
+    const emCurso = this.tracoEmCurso();
+    if (emCurso && emCurso.length >= 2) lista.push({ cor: this.corDoTraco(), espessura: this.espessuraDoTraco(), pontos: emCurso });
+    return lista;
+  });
+
+  /** O modelo de área de magia em quadrados, para o 3D. */
+  readonly area3d = computed<Area3d | null>(() => {
+    const f = this.formaDesenhada();
+    const cena = this.cena();
+    if (!f || !cena) return null;
+    const c = cena.tamanhoCelula;
+    const texto = `${this.fmtM(this.pesParaMetros(this.pesDaArea()))} m · ${this.formasDeArea.find(x => x.valor === this.formaDeArea())?.nome ?? ''}`;
+    const rx = f.rotulo.x / c, rz = f.rotulo.y / c;
+    return f.tipo === 'circulo'
+      ? { tipo: 'circulo', cx: f.cx / c, cz: f.cy / c, r: f.r / c, texto, rx, rz }
+      : { tipo: 'poligono', pontos: f.lista.map(([x, y]) => [x / c, y / c] as [number, number]), texto, rx, rz };
+  });
+
+  readonly pings3d = computed<Ping3d[]>(() => {
+    const c = this.cena()?.tamanhoCelula;
+    return c ? this.pings().map(p => ({ chave: p.chave, x: p.x / c, z: p.y / c, nome: p.nome })) : [];
+  });
+
+  readonly rascunhoDeParede3d = computed<RascunhoDeParede3d | null>(() => {
+    const p = this.paredeEmCurso();
+    if (!p) return null;
+    const f = this.ferramenta();
+    return { ...p, tipo: f === 'porta' ? 'porta' : f === 'janela' ? 'janela' : 'parede' };
+  });
+
+  readonly retanguloDeNevoa3d = computed<RetanguloDeNevoa3d | null>(() => {
+    const r = this.retanguloNeblina();
+    return r ? { ...retanguloEntre(r.c1, r.l1, r.c2, r.l2), cobrindo: this.ferramenta() === 'cobrir' } : null;
+  });
+
+  /**
+   * Um gesto no chão do 3D. O ponto vem em quadrados; daqui em diante é o mesmo caminho do 2D (régua, área, desenho,
+   * borracha, paredes e névoa), com as mesmas permissões.
+   */
+  gesto3d(g: GestoDe3d): void {
+    const cena = this.cena();
+    if (!cena) return;
+    const celula = cena.tamanhoCelula;
+    const x = g.x * celula, y = g.z * celula;
+    const q = quadradoEm(x, y, celula);
+    const mestre = this.ehMestre();
+    const tolerancia = celula * 0.3;
+
+    switch (this.ferramenta()) {
+      case 'regua':
+        if (g.fase === 'inicio') {
+          this.regua.set({ c1: q.coluna, l1: q.linha, c2: q.coluna, l2: q.linha });
+          this.compartilharAMinhaRegua(true);
+        } else if (g.fase === 'mover') {
+          this.regua.update(r => (r ? { ...r, c2: q.coluna, l2: q.linha } : r));
+          this.compartilharAMinhaRegua();
+        }
+        break;
+      case 'area':
+        if (g.fase === 'inicio') this.iniciarArea(x, y);
+        else if (g.fase === 'mover') this.moverArea(x, y);
+        break;
+      case 'desenhar':
+        if (g.fase === 'inicio') this.tracoEmCurso.set([[x, y]]);
+        else if (g.fase === 'mover') this.adicionarAoTraco(x, y, celula * 0.08);
+        else this.terminarTraco();
+        break;
+      case 'borracha':
+        if (g.fase === 'inicio') void this.apagarTracoEm(x, y, tolerancia);
+        break;
+      case 'parede': case 'porta': case 'janela':
+        if (!mestre) break;
+        if (g.fase === 'inicio') this.paredeEmCurso.set({ x1: Math.round(g.x), y1: Math.round(g.z), x2: Math.round(g.x), y2: Math.round(g.z) });
+        else if (g.fase === 'mover') this.paredeEmCurso.update(p => (p ? { ...p, x2: Math.round(g.x), y2: Math.round(g.z) } : p));
+        else this.terminarParede();
+        break;
+      case 'apagar':
+        if (mestre && g.fase === 'inicio') void this.apagarParede(this.paredeNoMapa(x, y, false, tolerancia));
+        break;
+      case 'revelar': case 'cobrir':
+        if (!mestre) break;
+        if (g.fase === 'inicio') this.retanguloNeblina.set({ c1: q.coluna, l1: q.linha, c2: q.coluna, l2: q.linha });
+        else if (g.fase === 'mover') this.retanguloNeblina.update(r => (r ? { ...r, c2: q.coluna, l2: q.linha } : r));
+        else this.terminarNeblina();
+        break;
     }
+  }
+
+  /** "Olhem aqui" pelo 3D (duplo clique ou segurar parado no chão). */
+  ping3d(p: PontoDe3d): void {
+    const cena = this.cena();
+    if (cena) this.cenaService.ping(cena.cenaId, p.x * cena.tamanhoCelula, p.z * cena.tamanhoCelula).catch(() => undefined);
+  }
+
+  /** Clique no chão vazio do 3D: o Mestre abre ou fecha a porta que estiver ali; senão, desmarca o token. */
+  toque3d(p: PontoDe3d): void {
+    const cena = this.cena();
+    if (!cena) return;
+    const celula = cena.tamanhoCelula;
+    if (this.ehMestre() && this.alternarPorta(this.paredeNoMapa(p.x * celula, p.z * celula, true, celula * 0.3))) return;
+    this.selecionadoId.set(null);
   }
 
   /** O arrasto no 3D alimenta o mesmo estado do 2D: daí saem o alcance azul, o custo e o círculo de visão em movimento. */

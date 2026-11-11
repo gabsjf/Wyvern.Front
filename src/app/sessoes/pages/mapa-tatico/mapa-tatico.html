@@ -176,7 +176,7 @@
     </div>
 
     @if (modo3d() && cena(); as c3) {
-      <app-mapa-3d [cena]="c3" [imagemUrl]="imagemUrl()" [tokens]="tokensVisiveis()" [paredes]="paredesVisiveis()"
+      <app-mapa-3d [cena]="c3" [imagemUrl]="imagemUrl()" [tokens]="tokensVisiveis()" [paredes]="paredes()"
                    [selecionadoId]="selecionadoId()" [ehMestre]="ehMestre()" [retratoDe]="retratoDe3d" [infoDe]="info3d"
                    [podeMover]="podeMover3d" [neblina]="neblinaCanvas()" [versaoNeblina]="versaoNeblina()"
                    [alcance]="alcanceCanvas()" [versaoAlcance]="versaoAlcance()" [ferramenta]="ferramenta()"

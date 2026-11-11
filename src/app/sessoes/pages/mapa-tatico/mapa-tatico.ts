@@ -128,7 +128,6 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
 
   /** Vista em 3D (Three.js): só desenha; as regras de movimento continuam as mesmas do 2D. */
   readonly modo3d = signal(false);
-  readonly paredesVisiveis = computed(() => this.ehMestre() ? this.paredes() : this.paredes().filter(w => w.porta || w.janela));
 
   // "olhem aqui"
   readonly pings = signal<(PingDoMapa & { chave: number })[]>([]);

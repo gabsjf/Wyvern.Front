@@ -8,6 +8,7 @@ import type {
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Cena, CorToken, Parede, TokenCena } from '../../../models/cena';
 import { iniciais } from '../../../utils/mapa-geometria';
+import { algumLadoRevelado, amostrasDosLados, dividirEmTrechos } from '../../../utils/paredes-3d';
 
 type Three = typeof import('three');
 
@@ -142,9 +143,8 @@ interface ToqueNoChao {
 
 interface VistaDaParede {
   grupo: Group;
-  /** centro em quadrados, para esconder portas e janelas que caem sob a névoa */
-  cx: number;
-  cy: number;
+  /** pontos (em quadrados) dos dois lados da peça: para os jogadores, ela só aparece se algum estiver revelado */
+  amostras: [number, number][];
   escondivel: boolean;
 }
 
@@ -598,9 +598,12 @@ export class Mapa3d {
     const madeira = new T.MeshStandardMaterial({ color: this.corDoTema('color-mix(in srgb, var(--hi) 55%, #3a2412)'), roughness: 0.7 });
     const vidro = new T.MeshStandardMaterial({ color: this.corDoTema('var(--muted)'), roughness: 0.2, transparent: true, opacity: 0.28 });
 
-    for (const p of paredes) {
-      // os jogadores só enxergam portas e janelas, como no mapa 2D
-      if (!mestre && !p.porta && !p.janela) continue;
+    // No 3D a parede é sólida para todos (no 2D dos jogadores ela já vem pintada na imagem do mapa): sem ela, a luz das
+    // tochas e da visão atravessava os cômodos. Para os jogadores, a parede é quebrada em trechos de um quadrado e cada
+    // trecho segue a névoa dos dois lados, para não entregar a planta do que ainda está escondido.
+    const pecas = paredes.flatMap(p => (!mestre && !p.porta && !p.janela ? dividirEmTrechos(p).map(t => ({ ...p, ...t })) : [p]));
+
+    for (const p of pecas) {
       const dx = p.x2 - p.x1, dz = p.y2 - p.y1;
       const comprimento = Math.hypot(dx, dz);
       if (comprimento === 0) continue;
@@ -638,7 +641,7 @@ export class Mapa3d {
         caixa(comprimento + 0.14, ALTURA_PAREDE, 0.14, pedra);
       }
       this.paredesGrupo.add(g);
-      this.paredesVistas.push({ grupo: g, cx: (p.x1 + p.x2) / 2, cy: (p.y1 + p.y2) / 2, escondivel: !mestre });
+      this.paredesVistas.push({ grupo: g, amostras: amostrasDosLados(p), escondivel: !mestre });
     }
     this.esconderSobNevoa(cena);
   }
@@ -685,17 +688,27 @@ export class Mapa3d {
     (camada.malha.material as MeshBasicMaterial).opacity = opacidade;
   }
 
-  /** Para os jogadores, portas e janelas cobertas pela névoa não aparecem (senão entregariam o que ela esconde). */
+  /**
+   * Para os jogadores, paredes, portas e janelas totalmente cobertas pela névoa não aparecem (senão entregariam o que ela
+   * esconde). Cada peça fica na divisa entre quadrados, então confere os dois lados: basta um revelado.
+   */
   private esconderSobNevoa(cena: Cena): void {
     const canvas = this.neblina();
     const contexto = canvas?.getContext('2d', { willReadFrequently: true }) ?? null;
-    for (const v of this.paredesVistas) {
-      if (!v.escondivel || !canvas || !contexto || canvas.width === 0) { v.grupo.visible = true; continue; }
-      const escala = canvas.width / cena.largura;
-      const px = Math.min(canvas.width - 1, Math.max(0, Math.floor(v.cx * cena.tamanhoCelula * escala)));
-      const py = Math.min(canvas.height - 1, Math.max(0, Math.floor(v.cy * cena.tamanhoCelula * escala)));
-      v.grupo.visible = contexto.getImageData(px, py, 1, 1).data[3] < 200;
+    if (!canvas || !contexto || canvas.width === 0 || canvas.height === 0) {
+      for (const v of this.paredesVistas) v.grupo.visible = true;
+      return;
     }
+    // a canvas da névoa cobre o mapa inteiro: converte quadrados em pixels dela
+    const escalaX = canvas.width / (cena.largura || canvas.width);
+    const escalaY = canvas.height / (cena.altura || canvas.height);
+    const dados = contexto.getImageData(0, 0, canvas.width, canvas.height).data;
+    const revelado = (x: number, y: number): boolean => {
+      const px = Math.min(canvas.width - 1, Math.max(0, Math.floor(x * cena.tamanhoCelula * escalaX)));
+      const py = Math.min(canvas.height - 1, Math.max(0, Math.floor(y * cena.tamanhoCelula * escalaY)));
+      return dados[(py * canvas.width + px) * 4 + 3] < 200;
+    };
+    for (const v of this.paredesVistas) v.grupo.visible = !v.escondivel || algumLadoRevelado(v.amostras, revelado);
   }
 
   // ---------- tokens ----------

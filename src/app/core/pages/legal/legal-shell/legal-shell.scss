@@ -1,0 +1,89 @@
+:host { display: block; min-height: 100dvh; background: var(--bg); color: var(--fg); }
+
+.legal { display: flex; flex-direction: column; min-height: 100dvh; }
+
+.legal-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 5%;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.legal-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--fg);
+  font: 700 1.3rem var(--font-display);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+
+  img { width: 34px; height: 34px; object-fit: contain; }
+}
+
+.legal-voltar, .legal-rodape a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  text-decoration: none;
+
+  &:hover, &.ativo { color: var(--fg); }
+}
+
+.legal-corpo {
+  flex: 1;
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 3rem;
+
+  h1 { margin: 0 0 1.5rem; font: 700 clamp(2rem, 5vw, 2.8rem) / 1.1 var(--font-display); letter-spacing: 0.02em; }
+}
+
+.legal-eyebrow { margin: 0 0 0.4rem; color: var(--hi); font: 600 0.85rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+
+// O texto vem projetado das páginas (ng-content), que têm o próprio escopo de estilo: daí o ::ng-deep, preso a .legal-texto.
+:host ::ng-deep .legal-texto {
+  line-height: 1.65;
+
+  h2 { margin: 2.2rem 0 0.6rem; font: 700 1.45rem var(--font-display); letter-spacing: 0.02em; }
+  h3 { margin: 1.4rem 0 0.4rem; font: 600 1.1rem var(--font-body); }
+  p, li { color: var(--fg); }
+  ul, ol { padding-left: 1.3rem; }
+  li + li { margin-top: 0.35rem; }
+  a { color: var(--hi); }
+  strong { font-weight: 600; }
+
+  .resumo {
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--hi);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.95rem; }
+  th, td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .tabela-rolavel { overflow-x: auto; }
+}
+
+.legal-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding: 1rem 5%;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.9rem;
+
+  nav { display: flex; flex-wrap: wrap; gap: 0 1.2rem; }
+  p { margin: 0; }
+}

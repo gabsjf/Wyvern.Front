@@ -42,6 +42,11 @@
       </label>
     </fieldset>
 
+    <p class="auth-aceite">
+      Ao criar a conta, você concorda com os <a routerLink="/termos" target="_blank">Termos de uso</a>
+      e declara ter lido a <a routerLink="/privacidade" target="_blank">Política de privacidade</a>.
+    </p>
+
     <button type="submit" class="btn-primary auth-submit" [disabled]="registerForm.invalid || loading">
       <span *ngIf="!loading">Criar conta</span>
       <span *ngIf="loading">Registrando...</span>

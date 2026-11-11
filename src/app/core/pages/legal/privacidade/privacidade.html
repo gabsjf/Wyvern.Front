@@ -1,0 +1,138 @@
+<app-legal-shell titulo="Política de privacidade">
+  <p class="resumo">
+    <strong>Em resumo:</strong> coletamos só o necessário para você jogar (nome, e-mail, senha protegida e o que você cria),
+    não vendemos dados, não usamos anúncios nem rastreadores de marketing, e você pode ver, corrigir ou apagar seus dados
+    quando quiser. Esta política segue a Lei Geral de Proteção de Dados (Lei 13.709/2018, "LGPD").
+  </p>
+
+  <h2>1. Quem cuida dos seus dados</h2>
+  <ul>
+    <li><strong>Controlador:</strong> {{ dados.responsavel }}@if (dados.cnpj) {, CNPJ {{ dados.cnpj }}}.</li>
+    <li><strong>Encarregado (DPO):</strong> {{ dados.encarregado }}.</li>
+    <li><strong>Contato para privacidade:</strong> <a [href]="'mailto:' + dados.emailPrivacidade">{{ dados.emailPrivacidade }}</a>.</li>
+  </ul>
+
+  <h2>2. Que dados tratamos e por quê</h2>
+  <div class="tabela-rolavel">
+    <table>
+      <thead>
+        <tr><th scope="col">Dado</th><th scope="col">Para quê</th><th scope="col">Base legal (LGPD, art. 7º)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nome, e-mail e senha (guardada só como código irreversível, nunca em texto)</td>
+          <td>Criar e proteger a sua conta, entrar, confirmar o e-mail, recuperar a senha e mandar avisos sobre a conta</td>
+          <td>Execução do contrato (inciso V)</td>
+        </tr>
+        <tr>
+          <td>Foto de perfil (opcional)</td>
+          <td>Mostrar quem você é para o seu grupo</td>
+          <td>Execução do contrato (inciso V)</td>
+        </tr>
+        <tr>
+          <td>Conteúdo de jogo: campanhas, sessões, personagens e fichas, anotações, crônica, mapas, imagens e combates</td>
+          <td>Fazer o Wyvern funcionar para você e para a sua mesa</td>
+          <td>Execução do contrato (inciso V)</td>
+        </tr>
+        <tr>
+          <td>Aparelhos conectados (tipo de aparelho e navegador, data de entrada e de último uso)</td>
+          <td>Manter você logado e permitir que você veja e desconecte aparelhos</td>
+          <td>Execução do contrato (inciso V) e legítimo interesse em segurança (inciso IX)</td>
+        </tr>
+        <tr>
+          <td>Endereço IP e tentativas de login</td>
+          <td>Barrar ataques e excesso de tentativas. Ficam só na memória do servidor por poucos minutos e não são gravados no banco</td>
+          <td>Legítimo interesse em segurança (inciso IX)</td>
+        </tr>
+        <tr>
+          <td>Relatórios de erro técnicos (o que falhou, em que tela, navegador e sistema), ligados no máximo a um número interno da conta, sem nome nem e-mail</td>
+          <td>Encontrar e corrigir falhas</td>
+          <td>Legítimo interesse em manter o serviço funcionando (inciso IX)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Não tratamos dados sensíveis (como saúde, religião ou origem racial) de propósito. Não escreva esse tipo de informação
+    em fichas e anotações: o que você escreve ali fica visível para quem tem acesso à campanha, conforme as opções de visibilidade.
+  </p>
+
+  <h2>3. Com quem compartilhamos</h2>
+  <p>Não vendemos nem alugamos dados pessoais. Só os repassamos a quem nos ajuda a operar o serviço, e só o necessário:</p>
+  <ul>
+    <li><strong>Hospedagem:</strong> Oracle Cloud, onde ficam o servidor e o banco de dados.</li>
+    <li><strong>Envio de e-mails:</strong> o provedor de e-mail que entrega as mensagens de confirmação, recuperação de senha e avisos da conta. Ele recebe o seu nome e e-mail.</li>
+    <li><strong>Monitoramento de erros:</strong> Sentry (Functional Software, Inc.), nos Estados Unidos. Recebe relatórios técnicos de falhas. Configuramos o envio para tirar e-mails, endereços IP, cookies, cabeçalhos e parâmetros de endereço antes de qualquer envio.</li>
+    <li><strong>Fontes e ícones:</strong> Google Fonts e jsDelivr entregam as fontes e os ícones das páginas. Como qualquer site, eles recebem o endereço IP e o navegador de quem abre a página.</li>
+    <li><strong>As pessoas da sua campanha:</strong> veem o seu nome, a sua foto e o que você coloca na campanha.</li>
+    <li><strong>Autoridades:</strong> quando a lei ou uma ordem judicial exigir.</li>
+  </ul>
+
+  <h2>4. Transferência para fora do Brasil</h2>
+  <p>
+    Alguns desses fornecedores guardam ou processam dados fora do Brasil, como o Sentry nos Estados Unidos. Nesses casos
+    exigimos garantias de proteção compatíveis com a LGPD (art. 33), como cláusulas contratuais e medidas de segurança, e enviamos o mínimo possível.
+  </p>
+
+  <h2>5. Cookies e armazenamento no navegador</h2>
+  <p>Usamos só o que é necessário para o serviço funcionar. Não há cookies de publicidade nem de rastreamento.</p>
+  <ul>
+    <li><strong>Cookie de sessão</strong> (protegido, inacessível a scripts): mantém você logado. Some ao sair da conta ou quando a sessão vence.</li>
+    <li><strong>Armazenamento local do navegador:</strong> guarda preferências como o tema claro ou escuro e o menu lateral recolhido, além de um controle técnico da renovação da sessão. Fica só no seu aparelho.</li>
+  </ul>
+
+  <h2>6. Por quanto tempo guardamos</h2>
+  <ul>
+    <li><strong>Conta e conteúdo:</strong> enquanto a conta existir.</li>
+    <li><strong>Links enviados por e-mail:</strong> confirmação de cadastro e troca de e-mail valem 24 horas; recuperação de senha, 1 hora.</li>
+    <li><strong>Aparelhos conectados:</strong> até você sair, desconectar o aparelho ou a sessão vencer.</li>
+    <li><strong>Relatórios de erro:</strong> pelo prazo de retenção do Sentry, de até 90 dias.</li>
+  </ul>
+
+  <h2>7. Quando você exclui a conta</h2>
+  <p>A exclusão é feita por você em <em>Minha conta</em> e vale na hora:</p>
+  <ul>
+    <li>Nome, e-mail, senha e foto são apagados, e todos os aparelhos são desconectados.</li>
+    <li>As anotações privadas são apagadas.</li>
+    <li>Personagens, anotações públicas e registros da crônica fazem parte da história do grupo e continuam na campanha, mas sem nenhum dado seu: aparecem como "Conta excluída".</li>
+    <li>Se você era dono de uma campanha, o co-Mestre mais antigo assume; sem co-Mestre, a campanha é encerrada.</li>
+  </ul>
+
+  <h2>8. Seus direitos</h2>
+  <p>Pela LGPD (art. 18), você pode pedir a qualquer momento:</p>
+  <ul>
+    <li>confirmação de que tratamos seus dados e acesso a eles;</li>
+    <li>correção de dados incompletos, errados ou desatualizados (nome, e-mail e foto você mesmo muda em <em>Minha conta</em>);</li>
+    <li>anonimização, bloqueio ou eliminação de dados desnecessários ou tratados em desacordo com a lei;</li>
+    <li>portabilidade dos seus dados;</li>
+    <li>eliminação dos dados (você mesmo exclui a conta em <em>Minha conta</em>);</li>
+    <li>informação sobre com quem compartilhamos seus dados;</li>
+    <li>revisão de decisões tomadas só por meios automáticos (hoje não tomamos nenhuma);</li>
+    <li>oposição a um tratamento baseado em legítimo interesse, quando ele não seguir a lei.</li>
+  </ul>
+  <p>
+    Para exercer qualquer um deles, escreva para <a [href]="'mailto:' + dados.emailPrivacidade">{{ dados.emailPrivacidade }}</a>
+    a partir do e-mail da sua conta. Respondemos em até {{ dados.prazoRespostaDias }} dias. Se não ficar satisfeito, você também pode
+    reclamar à Autoridade Nacional de Proteção de Dados (<a href="https://www.gov.br/anpd" target="_blank" rel="noopener">ANPD</a>).
+  </p>
+
+  <h2>9. Segurança</h2>
+  <p>
+    Usamos conexão criptografada (HTTPS) em todo o serviço, senhas guardadas com hash forte, cookie de sessão protegido, renovação
+    de sessão que detecta uso indevido, bloqueio de tentativas repetidas de login e controle de acesso por campanha. Nenhum sistema é
+    100% seguro: se acontecer um incidente que possa trazer risco a você, avisaremos você e a ANPD, como manda a lei.
+  </p>
+
+  <h2>10. Crianças e adolescentes</h2>
+  <p>
+    O Wyvern não é feito para menores de 13 anos e não aceita cadastro deles de propósito. Adolescentes de 13 a 17 anos só devem usar
+    o serviço com autorização dos pais ou responsáveis. Se você é responsável e acha que uma criança criou uma conta, escreva para nós
+    e a excluiremos.
+  </p>
+
+  <h2>11. Mudanças nesta política</h2>
+  <p>
+    Se a política mudar, a data no topo da página será atualizada. Mudanças importantes serão avisadas antes, por e-mail ou dentro do Wyvern.
+    Veja também os <a routerLink="/termos">Termos de uso</a>.
+  </p>
+</app-legal-shell>

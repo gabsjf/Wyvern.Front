@@ -22,6 +22,8 @@ export const routes: Routes = [
     {path: 'confirmar-email', component: ConfirmarEmail},
     {path: 'esqueci-senha', component: EsqueciSenha},
     {path: 'redefinir-senha', component: RedefinirSenha},
+    {path: 'termos', title: 'Termos de uso · Wyvern', loadComponent: () => import('./core/pages/legal/termos/termos').then(m => m.Termos)},
+    {path: 'privacidade', title: 'Política de privacidade · Wyvern', loadComponent: () => import('./core/pages/legal/privacidade/privacidade').then(m => m.Privacidade)},
     {path: 'reenviar-confirmacao', loadComponent: () => import('./core/pages/reenviar-confirmacao/reenviar-confirmacao').then(m => m.ReenviarConfirmacao)},
     // Pública: o link do e-mail pode abrir em outro aparelho, sem sessão.
     {path: 'confirmar-troca-email', loadComponent: () => import('./core/pages/confirmar-troca-email/confirmar-troca-email').then(m => m.ConfirmarTrocaEmail)},

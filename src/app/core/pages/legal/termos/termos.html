@@ -1,0 +1,96 @@
+<app-legal-shell titulo="Termos de uso">
+  <p class="resumo">
+    <strong>Em resumo:</strong> o Wyvern é uma mesa virtual para jogar RPG com o seu grupo. Você é dono do que cria,
+    responde pelo que envia e deve tratar bem quem joga com você. Os seus dados são tratados como descrito na
+    <a routerLink="/privacidade">Política de privacidade</a>. Este resumo não substitui o texto abaixo.
+  </p>
+
+  <h2>1. Quem somos e o que estes termos cobrem</h2>
+  <p>
+    O Wyvern ({{ dados.site }}, e o aplicativo para celular) é mantido por <strong>{{ dados.responsavel }}</strong>@if (dados.cnpj) {, CNPJ {{ dados.cnpj }}},
+    aqui chamado de "Wyvern" ou "nós". Estes termos valem para todo uso do site, do aplicativo e da API.
+  </p>
+  <p>
+    Ao criar uma conta ou usar o Wyvern, você declara que leu e aceita estes termos e a
+    <a routerLink="/privacidade">Política de privacidade</a>. Se não concordar, não use o serviço.
+  </p>
+
+  <h2>2. O serviço</h2>
+  <p>
+    O Wyvern ajuda grupos de RPG de mesa a organizar campanhas, sessões, fichas de personagem, anotações, crônica,
+    combate e mapas táticos em tempo real. Novas funções podem entrar e outras podem mudar ou sair com o tempo.
+  </p>
+
+  <h2>3. Sua conta</h2>
+  <ul>
+    <li>Para criar uma conta você precisa ter pelo menos <strong>13 anos</strong>. Quem tem menos de 18 anos só pode usar o Wyvern com a autorização e o acompanhamento de pais ou responsáveis.</li>
+    <li>Informe um e-mail que seja seu e mantenha seus dados corretos. A conta só funciona depois que o e-mail é confirmado.</li>
+    <li>A conta é pessoal. Guarde a sua senha e avise a gente se suspeitar que alguém entrou nela. Na tela <em>Minha conta</em> você vê os aparelhos conectados e pode desconectá-los.</li>
+    <li>Você pode excluir a conta quando quiser, também em <em>Minha conta</em>. O que acontece com os dados está na <a routerLink="/privacidade">Política de privacidade</a>.</li>
+  </ul>
+
+  <h2>4. Planos</h2>
+  <p>
+    Hoje o Wyvern não cobra pelo uso. Algumas funções, como criar campanhas, podem depender do tipo de conta (Jogador ou Mestre).
+    Se um dia houver cobrança, avisaremos antes, com preço e condições claros, e nada será cobrado sem a sua concordância.
+  </p>
+
+  <h2>5. O que você cria</h2>
+  <ul>
+    <li>Personagens, anotações, mapas, imagens e textos que você envia continuam <strong>seus</strong>.</li>
+    <li>Para o serviço funcionar, você nos autoriza a guardar, copiar, adaptar o formato e exibir esse conteúdo às pessoas da campanha em que ele foi colocado. A autorização é gratuita, vale no mundo todo e termina quando o conteúdo é apagado, exceto no que o grupo continua usando (veja a seção 7).</li>
+    <li>Só envie conteúdo que você tem direito de usar. Mapas, ilustrações e textos de terceiros podem ter direitos autorais.</li>
+    <li>O Mestre da campanha vê as fichas e o andamento dos personagens da mesa. Anotações marcadas como privadas ficam só com quem as escreveu.</li>
+  </ul>
+
+  <h2>6. O que não é permitido</h2>
+  <ul>
+    <li>Assediar, ameaçar, discriminar ou expor outras pessoas, ou divulgar dados pessoais de alguém sem autorização.</li>
+    <li>Enviar conteúdo ilegal, conteúdo sexual envolvendo menores, ou conteúdo que viole direitos de terceiros.</li>
+    <li>Tentar acessar contas, campanhas ou dados que não são seus, burlar limites de segurança ou sobrecarregar o serviço.</li>
+    <li>Usar robôs ou coleta automatizada sem a nossa autorização.</li>
+    <li>Usar o Wyvern para enviar spam ou golpes.</li>
+  </ul>
+  <p>
+    Podemos remover conteúdo que viole estas regras e suspender ou encerrar contas envolvidas, avisando o motivo
+    sempre que possível. Se achar que foi um engano, escreva para <a [href]="'mailto:' + dados.emailPrivacidade">{{ dados.emailPrivacidade }}</a>.
+  </p>
+
+  <h2>7. Campanhas em grupo</h2>
+  <p>
+    Uma campanha é de todo o grupo. O Mestre convida e remove membros e decide o que está em jogo. Se você sair da
+    campanha ou excluir a conta, os personagens e os registros da crônica que fazem parte da história continuam com o
+    grupo, sem o seu nome (aparecem como "Conta excluída"). Se você é o dono da campanha e exclui a conta, o co-Mestre
+    mais antigo assume; sem co-Mestre, a campanha é encerrada para todos.
+  </p>
+
+  <h2>8. Propriedade intelectual e regras de jogo</h2>
+  <p>
+    O nome Wyvern, a logo, o visual e o código do serviço são nossos. Estes termos não dão a você nenhum direito sobre eles além de usar o serviço.
+  </p>
+  <p>
+    O Wyvern não é afiliado nem endossado pela Wizards of the Coast. <em>Dungeons &amp; Dragons</em> e <em>D&amp;D</em> são marcas da Wizards of the Coast LLC.
+    Este trabalho inclui material do <em>System Reference Document 5.2</em> ("SRD 5.2"), da Wizards of the Coast LLC, disponível em
+    <a href="https://www.dndbeyond.com/srd" target="_blank" rel="noopener">dndbeyond.com/srd</a>. O SRD 5.2 é licenciado sob a
+    <a href="https://creativecommons.org/licenses/by/4.0/legalcode" target="_blank" rel="noopener">Creative Commons Attribution 4.0 International</a>.
+  </p>
+
+  <h2>9. Disponibilidade e limites</h2>
+  <ul>
+    <li>Trabalhamos para manter o Wyvern no ar e os dados seguros, mas o serviço pode ficar fora do ar para manutenção, por falhas ou por motivos fora do nosso controle.</li>
+    <li>Guarde cópia do que for importante para você. Fazemos o possível para não perder dados, mas não garantimos que isso nunca aconteça.</li>
+    <li>Na medida permitida pela lei, não respondemos por danos indiretos, como perda de oportunidade ou de lucro, nem por conteúdo enviado por outras pessoas. Nada nestes termos afasta os direitos que o Código de Defesa do Consumidor garante a você.</li>
+  </ul>
+
+  <h2>10. Mudanças nestes termos</h2>
+  <p>
+    Podemos atualizar estes termos. Mudanças importantes serão avisadas com antecedência razoável, por e-mail ou dentro do
+    Wyvern, e a data no topo da página sempre mostra a versão em vigor. Se não concordar com a nova versão, você pode excluir a conta.
+  </p>
+
+  <h2>11. Lei aplicável e contato</h2>
+  <p>
+    Estes termos seguem as leis do Brasil. Eventuais conflitos podem ser resolvidos no foro do seu domicílio.
+    Antes disso, fale com a gente: <a [href]="'mailto:' + dados.emailPrivacidade">{{ dados.emailPrivacidade }}</a>.
+  </p>
+</app-legal-shell>

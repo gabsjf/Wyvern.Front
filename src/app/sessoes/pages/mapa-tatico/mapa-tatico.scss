@@ -319,6 +319,14 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
 .barra-btn.ativo { background: var(--hi); color: var(--hi-fg); }
 .barra-btn:focus-visible { outline: 2px solid var(--hi); outline-offset: -3px; }
 .barra-btn + .barra-btn { border-left: 1px solid var(--line); }
+.barra-btn:disabled { opacity: 0.55; cursor: progress; }
+
+// passar o turno direto do mapa: rodada e quem está na vez
+.turno-combate {
+  .vez { gap: 0.4rem; border-right: 1px solid var(--line); }
+  .rodada { color: var(--hi); font-variant-numeric: tabular-nums; }
+  .nome-vez { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
 .nome-cena { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .offline { padding: 0 0.7rem; color: var(--danger); font-size: 1.2rem; }
 

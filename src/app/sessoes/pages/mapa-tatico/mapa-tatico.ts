@@ -277,6 +277,13 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     const c = this.combate();
     return c?.participantes?.[c.turnoAtualIndex]?.participanteId ?? null;
   });
+  /** Quem está na vez e em que rodada: aparece ao lado do botão de passar o turno. */
+  readonly vezAtual = computed(() => {
+    const c = this.combate();
+    const p = c?.participantes?.[c.turnoAtualIndex];
+    return p ? { nome: String(p.nomeNPC ?? ''), rodada: Number(c.rodadaAtual) } : null;
+  });
+  readonly passandoTurno = signal(false);
 
   // personagens da campanha que ainda não estão no mapa (para "Adicionar token")
   readonly personagensDaCampanha = signal<any[]>([]);
@@ -1925,6 +1932,24 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     const p = this.previa();
     if (p) URL.revokeObjectURL(p.url);
     this.previa.set(null);
+  }
+
+  /**
+   * O Mestre passa a vez sem sair do mapa (2D ou 3D). A API pula quem está fora de combate
+   * e avisa todo mundo pelo hub; o recarregamento aqui só deixa a resposta imediata.
+   */
+  async passarTurno(): Promise<void> {
+    const combate = this.combate();
+    if (!this.ehMestre() || !combate || this.passandoTurno()) return;
+    this.passandoTurno.set(true);
+    try {
+      await firstValueFrom(this.combateService.nextTurn(combate.combateId));
+      await this.carregarCombate();
+    } catch (erro) {
+      this.avisarErro(erro, 'Não foi possível passar o turno.');
+    } finally {
+      this.passandoTurno.set(false);
+    }
   }
 
   private async carregarCombate(): Promise<void> {

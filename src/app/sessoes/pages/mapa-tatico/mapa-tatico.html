@@ -324,6 +324,17 @@
             </button>
           }
         </div>
+        @if (vezAtual(); as vez) {
+          <div class="barra-grupo turno-combate" aria-live="polite">
+            <span class="barra-titulo vez" [title]="'Rodada ' + vez.rodada + ' · vez de ' + vez.nome">
+              <span class="rodada">R{{ vez.rodada }}</span><span class="nome-vez">{{ vez.nome }}</span>
+            </span>
+            <button type="button" class="barra-btn largo" (click)="passarTurno()" [disabled]="passandoTurno()"
+                    title="Passar para o próximo da ordem de combate">
+              <i class="bi bi-skip-forward-fill" aria-hidden="true"></i><span class="so-largo">Passar turno</span>
+            </button>
+          </div>
+        }
       }
       <div class="barra-grupo fim">
         @if (cena()) {

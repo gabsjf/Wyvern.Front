@@ -1,0 +1,202 @@
+<div class="container animate-fade-in">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Subir de nível</p>
+      <h1>{{ personagem()?.nome || 'Personagem' }}</h1>
+      @if (previa(); as p) {
+        <p class="sub">{{ p.classe || 'Sem classe' }}@if (personagem()?.personagemPlayer?.subclasse) { · {{ personagem()?.personagemPlayer?.subclasse }} } · nível {{ p.nivelAtual }}</p>
+      }
+    </div>
+    <a class="btn-secondary" [routerLink]="['/ficha', id]">Voltar para a ficha</a>
+  </header>
+
+  @if (erroCarga()) {
+    <p class="field-error" role="alert">{{ erroCarga() }}</p>
+  } @else if (previa(); as p) {
+    @if (!p.podeSubir) {
+      <div class="bloqueio">
+        <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+        <div>
+          <h2>Ainda não dá para subir</h2>
+          <p>{{ p.motivo }}</p>
+          @if (p.xpProximoNivel) {
+            <p class="dica">XP: <span class="num">{{ p.xp }}</span> de <span class="num">{{ p.xpProximoNivel }}</span> para o nível {{ p.proximoNivel }}.</p>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="criacao">
+        <form class="forja" (ngSubmit)="confirmar()" novalidate>
+          @if (!p.classeReconhecida) {
+            <div class="aviso" role="status">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+              <p>A classe <strong>{{ p.classe || '(vazia)' }}</strong> não é uma das 12 do Livro do Jogador 2024. Só PV, proficiência e dados de vida serão calculados; anote as características à mão na ficha.</p>
+            </div>
+          }
+
+          <!-- 1. O que o nível traz -->
+          @if (p.caracteristicas.length || p.recursos.length || espacos().length) {
+            <section class="etapa">
+              <h2 class="rotulo-secao"><span class="etapa-num">1</span> O que o nível {{ p.proximoNivel }} traz</h2>
+              @if (p.caracteristicas.length) {
+                <ul class="ganhos">
+                  @for (c of p.caracteristicas; track c) { <li [class.destaque]="c === 'Melhoria de Atributo' || c === 'Dádiva Épica' || c.startsWith('Subclasse')">{{ c }}</li> }
+                </ul>
+              }
+
+              <dl class="comparativo">
+                @if (p.proficiencia.antes !== p.proficiencia.depois) {
+                  <div class="muda"><dt>Proficiência</dt><dd class="num">{{ comSinal(p.proficiencia.antes) }} <i class="bi bi-arrow-right" aria-hidden="true"></i> {{ comSinal(p.proficiencia.depois) }}</dd></div>
+                }
+                @for (r of p.recursos; track r.nome) {
+                  <div [class.muda]="r.antes !== r.depois"><dt>{{ r.nome }}</dt><dd class="num">
+                    @if (r.antes !== r.depois) { {{ r.antes || '—' }} <i class="bi bi-arrow-right" aria-hidden="true"></i> }{{ r.depois }}
+                  </dd></div>
+                }
+                @if (p.truques; as t) {
+                  <div [class.muda]="t.antes !== t.depois"><dt>Truques</dt><dd class="num">@if (t.antes !== t.depois) { {{ t.antes }} <i class="bi bi-arrow-right" aria-hidden="true"></i> }{{ t.depois }}</dd></div>
+                }
+                @if (p.magiasPreparadas; as m) {
+                  <div [class.muda]="m.antes !== m.depois"><dt>Magias preparadas</dt><dd class="num">@if (m.antes !== m.depois) { {{ m.antes }} <i class="bi bi-arrow-right" aria-hidden="true"></i> }{{ m.depois }}</dd></div>
+                }
+              </dl>
+
+              @if (espacos().length) {
+                <div class="espacos" role="table" aria-label="Espaços de magia">
+                  <div role="row" class="espacos-linha cab"><span role="columnheader">Círculo</span>@for (e of espacos(); track e.circulo) { <span role="columnheader" class="num">{{ e.circulo }}º</span> }</div>
+                  <div role="row" class="espacos-linha"><span role="rowheader">Espaços</span>
+                    @for (e of espacos(); track e.circulo) {
+                      <span role="cell" class="num" [class.novo]="e.depois > e.antes">{{ e.depois }}@if (e.depois > e.antes) { <small>+{{ e.depois - e.antes }}</small> }</span>
+                    }
+                  </div>
+                </div>
+              }
+              @if (p.magiasPreparadas && p.magiasPreparadas.depois > p.magiasPreparadas.antes) {
+                <p class="dica">Escolha as magias novas na aba Magias da ficha depois de subir.</p>
+              }
+            </section>
+          }
+
+          <!-- 2. PV -->
+          <section class="etapa">
+            <h2 class="rotulo-secao" id="rot-pv"><span class="etapa-num">2</span> Pontos de vida</h2>
+            <div class="opcoes-pv" role="radiogroup" aria-labelledby="rot-pv">
+              <button type="button" role="radio" class="opcao pv-op" [class.ativo]="modoPv() === 'Fixo'" [attr.aria-checked]="modoPv() === 'Fixo'"
+                      [disabled]="rolado() != null" (click)="escolherModo('Fixo')">
+                <span class="pv-titulo">Valor fixo</span>
+                <span class="pv-conta num">{{ p.pvFixo }} <small>{{ comSinal(conAntes()) }} CON</small></span>
+                <span class="pv-nota">A média do d{{ p.dadoVida }}, sem surpresas.</span>
+              </button>
+              <button type="button" role="radio" class="opcao pv-op" [class.ativo]="modoPv() === 'Rolado'" [attr.aria-checked]="modoPv() === 'Rolado'"
+                      (click)="rolado() == null ? rolarDado() : null" [disabled]="rolando()">
+                <span class="pv-titulo">Rolar o d{{ p.dadoVida }}</span>
+                @if (rolado() != null) {
+                  <span class="pv-conta num">{{ rolado() }} <small>{{ comSinal(conAntes()) }} CON</small></span>
+                  <span class="pv-nota">Resultado final: a regra não deixa rolar de novo.</span>
+                } @else {
+                  <span class="pv-conta num"><i class="bi bi-dice-5" aria-hidden="true"></i> {{ rolando() ? '...' : 'Rolar' }}</span>
+                  <span class="pv-nota">De 1 a {{ p.dadoVida }}. Arriscado, mas pode render mais.</span>
+                }
+              </button>
+            </div>
+            <p class="dica">Nunca menos de 1 PV por nível. Se a Constituição subir neste nível, os PV de todos os níveis anteriores sobem junto.</p>
+          </section>
+
+          <!-- 3. Subclasse -->
+          @if (p.escolheSubclasse) {
+            <section class="etapa">
+              <h2 class="rotulo-secao"><span class="etapa-num">3</span> Subclasse @if (p.proximoNivel > 3) { <span class="rotulo-extra">ainda não escolhida</span> }</h2>
+              <label class="visually-hidden" for="subclasse">Subclasse</label>
+              <input id="subclasse" name="subclasse" class="nome-input" type="text" maxlength="50" autocomplete="off"
+                     placeholder="Ex: Campeão, Escola de Evocação" [ngModel]="subclasse()" (ngModelChange)="subclasse.set($event)" />
+              <p class="dica">O caminho que o {{ p.classe.toLowerCase() || 'personagem' }} segue daqui em diante. Combine com o Mestre.</p>
+            </section>
+          }
+
+          <!-- 4. Melhoria de atributo / talento / dádiva épica -->
+          @if (pedeMelhoria()) {
+            <section class="etapa">
+              <h2 class="rotulo-secao" id="rot-melhoria"><span class="etapa-num">{{ p.escolheSubclasse ? 4 : 3 }}</span> {{ p.dadivaEpica ? 'Dádiva Épica' : 'Melhoria de Atributo' }}</h2>
+              <div class="opcoes-melhoria" role="radiogroup" aria-labelledby="rot-melhoria">
+                <button type="button" role="radio" class="opcao melhoria-op" [class.ativo]="tipoMelhoria() === 'Atributos'"
+                        [attr.aria-checked]="tipoMelhoria() === 'Atributos'" (click)="escolherMelhoria('Atributos')">
+                  <strong>Aprimoramento de Atributo</strong>
+                  <small>+2 em um atributo ou +1 em dois (até 20).</small>
+                </button>
+                <button type="button" role="radio" class="opcao melhoria-op" [class.ativo]="tipoMelhoria() === 'Talento'"
+                        [attr.aria-checked]="tipoMelhoria() === 'Talento'" (click)="escolherMelhoria('Talento')">
+                  <strong>{{ p.dadivaEpica ? 'Uma Dádiva Épica' : 'Outro talento' }}</strong>
+                  <small>{{ p.dadivaEpica ? 'Ex: Dádiva da Fortitude. +1 em um atributo (até 30).' : 'Ex: Alerta, Sortudo. Muitos dão +1 em um atributo.' }}</small>
+                </button>
+              </div>
+
+              @if (tipoMelhoria() === 'Talento') {
+                <div class="form-group talento">
+                  <label class="form-label" for="talento">Nome do talento</label>
+                  <input id="talento" name="talento" class="form-control" maxlength="80" autocomplete="off"
+                         [ngModel]="talento()" (ngModelChange)="talento.set($event)" />
+                </div>
+              }
+
+              <p class="dica distribuir">
+                @if (tipoMelhoria() === 'Atributos') { Distribua <strong class="num">{{ 2 - somaAumentos() }}</strong> {{ 2 - somaAumentos() === 1 ? 'ponto' : 'pontos' }}. }
+                @else { Se o talento der +1 em um atributo, marque qual (opcional). }
+              </p>
+              <div class="atributos">
+                @for (a of atributos; track a.chave) {
+                  <div class="atributo" [class.subiu]="!!aumentos()[a.chave]">
+                    <span class="atr-sigla" [title]="a.nome">{{ a.sigla }}</span>
+                    <span class="atr-valor num">{{ valorDepois(a.chave) }}</span>
+                    <span class="atr-mod num">{{ comSinal(modificador(valorDepois(a.chave))) }}</span>
+                    <span class="atr-ctl">
+                      <button type="button" (click)="ajustar(a.chave, -1)" [disabled]="!(aumentos()[a.chave])" [attr.aria-label]="'Tirar 1 de ' + a.nome">−</button>
+                      <button type="button" (click)="ajustar(a.chave, 1)" [disabled]="!podeAumentar(a.chave)" [attr.aria-label]="'Somar 1 em ' + a.nome">+</button>
+                    </span>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+
+          @if (erro()) { <p class="field-error erro" role="alert">{{ erro() }}</p> }
+
+          <div class="acoes">
+            <button type="submit" class="btn-primary criar" [disabled]="!podeConfirmar()">
+              {{ salvando() ? 'Subindo...' : 'Subir para o nível ' + p.proximoNivel }}
+            </button>
+            @if (pendencias().length && !salvando()) { <span class="falta">Falta {{ pendencias().join(', ') }}.</span> }
+          </div>
+        </form>
+
+        <!-- Resumo fixo à direita -->
+        <aside class="lado" aria-label="Resumo da subida">
+          <div class="placar panel">
+            @if (personagem(); as pe) {
+              <div class="placar-topo">
+                <app-emblema [nome]="pe.nome" [tamanho]="44" />
+                <span><strong>{{ pe.nome }}</strong><small>{{ p.classe }}</small></span>
+              </div>
+            }
+            <div class="placar-nivel">
+              <span class="num antes">{{ p.nivelAtual }}</span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+              <span class="num depois">{{ p.proximoNivel }}</span>
+            </div>
+            <dl class="placar-numeros">
+              <div>
+                <dt>PV máximo</dt>
+                <dd class="num">{{ p.vidaMaxima }} @if (pvGanhos() != null) { <i class="bi bi-arrow-right" aria-hidden="true"></i> <b>{{ p.vidaMaxima + pvGanhos()! }}</b> }</dd>
+                @if (pvGanhos() != null) { <dd class="ganho num">+{{ pvGanhos() }}</dd> }
+              </div>
+              <div><dt>Proficiência</dt><dd class="num">{{ comSinal(p.proficiencia.depois) }}</dd></div>
+              <div><dt>Dados de vida</dt><dd class="num">{{ p.proximoNivel }}d{{ p.dadoVida }}</dd></div>
+            </dl>
+          </div>
+          <p class="dica nota-regras">Regras do Livro do Jogador 2024. O Mestre pode corrigir qualquer número na ficha depois.</p>
+        </aside>
+      </div>
+    }
+  } @else {
+    <p class="text-muted">Calculando o próximo nível...</p>
+  }
+</div>

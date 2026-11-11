@@ -169,3 +169,20 @@
 @media (max-width: 720px) {
   .tipos { grid-template-columns: 1fr; }
 }
+
+.aviso-nivel {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  max-width: 60rem;
+  margin: 0.5rem 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--hi);
+  background: var(--tint-1);
+  color: var(--fg);
+  font-size: 0.9rem;
+
+  i { color: var(--hi); }
+}
+
+.form-control:disabled { opacity: 0.6; cursor: not-allowed; }

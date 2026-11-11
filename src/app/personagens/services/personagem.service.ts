@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
-import { Personagem } from '../models/personagem';
+import { EscolhasDeNivel, Personagem, ProximoNivel, ResultadoSubida } from '../models/personagem';
 import { ResultadoDescanso } from '../utils/regras-descanso';
 
 /** Mudança parcial no estado de jogo da ficha: só o que vier preenchido é alterado. */
@@ -75,6 +75,21 @@ export class PersonagemService {
   /** Muda só o estado de jogo (PV, condições, espaços de magia...), sem reenviar a ficha inteira. */
   atualizarEstado(id: number, estado: EstadoParcial) {
     return this.http.put<Personagem>(`${this.apiUrl}/${id}/estado`, estado);
+  }
+
+  /** O que muda no próximo nível (regras do D&D 2024) e se já dá para subir. */
+  proximoNivel(id: number) {
+    return this.http.get<ProximoNivel>(`${this.apiUrl}/${id}/proximo-nivel`);
+  }
+
+  /** Sobe um nível com as escolhas do jogador. Só depois que o Mestre liberou (por XP ou marco). */
+  subirNivel(id: number, escolhas: EscolhasDeNivel) {
+    return this.http.post<ResultadoSubida>(`${this.apiUrl}/${id}/subir-nivel`, escolhas);
+  }
+
+  /** Só o Mestre: muda o XP e/ou libera um nível por marco. */
+  atualizarProgressao(id: number, progressao: { xp?: number; nivelLiberado?: number }) {
+    return this.http.put<Personagem>(`${this.apiUrl}/${id}/progressao`, progressao);
   }
 
   /** Registra o resultado de um descanso curto ou longo (já calculado; o servidor só confere os limites). */

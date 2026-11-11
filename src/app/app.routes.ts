@@ -39,6 +39,7 @@ export const routes: Routes = [
     {path: 'personagens/:id/edit', component: PersonagemCreate},
     {path: 'personagens/:id', component: PersonagemDetail},
     {path: 'ficha', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
+    {path: 'ficha/:id/subir-nivel', loadComponent: () => import('./personagens/pages/subir-nivel/subir-nivel').then(m => m.SubirNivel)},
     {path: 'ficha/:id', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
     {path: 'sessoes', component: SessaoList},
     {path: 'sessoes/create', loadComponent: () => import('./sessoes/pages/sessao-create/sessao-create').then(m => m.SessaoCreate)},

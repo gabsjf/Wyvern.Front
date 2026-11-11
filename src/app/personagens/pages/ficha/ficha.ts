@@ -16,11 +16,13 @@ import { CampaignService } from '../../../campaigns/services/campaign';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Campaign } from '../../../campaigns/models/campaign';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { BarraDeXp, barraDeXp } from '../../utils/progressao';
 
 @Component({
   selector: 'app-ficha',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichaHeader, FichaAtributos, DescansoDialog, MesaAoVivo],
+  imports: [CommonModule, FormsModule, RouterModule, FichaHeader, FichaAtributos, DescansoDialog, MesaAoVivo],
   templateUrl: './ficha.html',
   styleUrls: ['./ficha.scss']
 })
@@ -145,6 +147,71 @@ export class FichaComponent implements OnInit {
   /** Recarrega a ficha do servidor (quando uma alteração falha ou depois de um descanso). */
   recarregar() {
     if (this.personagem?.personagemId) this.loadPersonagem(String(this.personagem.personagemId));
+  }
+
+  // ----- progressão (XP e nível) -----
+  /** Mestre desta campanha: dá XP, libera nível por marco e corrige qualquer número da ficha. */
+  get ehMestre(): boolean {
+    return this.campanhas.find(c => c.campanhaId === this.personagem?.campanhaId)?.papel === 'Mestre';
+  }
+
+  get ehHeroi(): boolean {
+    return this.personagem?.tipoId === 1 && !!this.personagem?.personagemPlayer;
+  }
+
+  get xp(): BarraDeXp {
+    const p = this.personagem?.personagemPlayer;
+    return barraDeXp(p?.nivel ?? 1, p?.xp ?? 0);
+  }
+
+  /** Há nível liberado (por XP ou marco) esperando o jogador fazer as escolhas. */
+  get nivelPendente(): boolean {
+    const p = this.personagem?.personagemPlayer;
+    return this.ehHeroi && (p?.nivelDisponivel ?? 0) > (p?.nivel ?? 1);
+  }
+
+  /** O marco do Mestre está segurando um nível que o XP ainda não alcança. */
+  get marcoAtivo(): boolean {
+    const p = this.personagem?.personagemPlayer;
+    return (p?.nivelLiberado ?? 0) > (p?.nivel ?? 1);
+  }
+
+  xpGanho: number | null = null;
+  salvandoProgressao = false;
+
+  darXp() {
+    const ganho = Math.floor(Number(this.xpGanho));
+    if (!ganho || !this.personagem) return;
+    const xp = Math.max(0, (this.personagem.personagemPlayer?.xp ?? 0) + ganho);
+    this.salvarProgressao({ xp }, `${ganho > 0 ? '+' : ''}${ganho} XP para ${this.personagem.nome}.`);
+    this.xpGanho = null;
+  }
+
+  liberarMarco() {
+    const nivel = (this.personagem?.personagemPlayer?.nivel ?? 1) + 1;
+    this.salvarProgressao({ nivelLiberado: nivel }, `Nível ${nivel} liberado para ${this.personagem.nome}.`);
+  }
+
+  cancelarMarco() {
+    this.salvarProgressao({ nivelLiberado: 0 }, 'Liberação por marco cancelada.');
+  }
+
+  private salvarProgressao(dados: { xp?: number; nivelLiberado?: number }, mensagem: string) {
+    if (!this.personagem?.personagemId || this.salvandoProgressao) return;
+    this.salvandoProgressao = true;
+    this.personagemService.atualizarProgressao(this.personagem.personagemId, dados).subscribe({
+      next: p => {
+        this.salvandoProgressao = false;
+        this.personagem = p;
+        this.toast.ok(mensagem);
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.salvandoProgressao = false;
+        this.toast.erro(err?.error?.detail || 'Não foi possível salvar o XP.');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ----- condições -----

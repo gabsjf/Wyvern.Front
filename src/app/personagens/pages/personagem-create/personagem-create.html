@@ -1,7 +1,14 @@
 <div class="ficha-container animate-fade-in">
   <main class="ficha-content">
     <div class="page-header" style="margin-bottom: 2rem;">
-      <h2 class="text-accent title-glow">Criação Manual de Personagem</h2>
+      <h2 class="text-accent title-glow">{{ isEditMode ? 'Editar ' + (personagem.nome || 'personagem') : 'Criação Manual de Personagem' }}</h2>
+      @if (isEditMode && personagem.tipoId === 1) {
+        <p class="aviso-nivel" role="note">
+          <i class="bi" [class.bi-lock]="travarNivel" [class.bi-shield-check]="!travarNivel" aria-hidden="true"></i>
+          @if (travarNivel) { Nível, classe, PV máximo, proficiência, atributos e espaços de magia mudam só ao subir de nível (o Mestre libera). O resto da ficha é livre para editar. }
+          @else { Como Mestre, você pode corrigir também os campos de nível (nível, PV máximo, atributos, espaços de magia). }
+        </p>
+      }
       
       <nav class="top-nav-tabs">
         <button type="button" class="tab-btn" [class.active]="activeTab === 'basico'" (click)="setTab('basico')">Básico</button>
@@ -55,9 +62,9 @@
           <!-- JOGADOR -->
           <ng-container *ngIf="personagem.tipoId === 1">
             <div class="form-group row mt-2">
-              <div class="col"><label class="form-label">Classe</label><input type="text" name="classe" class="form-control" [(ngModel)]="personagem.personagemPlayer.classe" /></div>
-              <div class="col"><label class="form-label">Subclasse</label><input type="text" name="subclasse" class="form-control" [(ngModel)]="personagem.personagemPlayer.subclasse" /></div>
-              <div class="col"><label class="form-label">Nível</label><input type="number" name="nivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.nivel" /></div>
+              <div class="col"><label class="form-label">Classe</label><input type="text" name="classe" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.classe" /></div>
+              <div class="col"><label class="form-label">Subclasse</label><input type="text" name="subclasse" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.subclasse" /></div>
+              <div class="col"><label class="form-label">Nível</label><input type="number" name="nivel" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.nivel" /></div>
             </div>
             <div class="form-group row mt-2">
               <div class="col"><label class="form-label">Raça</label><input type="text" name="raca" class="form-control" [(ngModel)]="personagem.personagemPlayer.raca" /></div>
@@ -98,14 +105,14 @@
           <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Núcleo de Combate e Defesas</h3>
           
           <div class="form-group row">
-            <div class="col"><label class="form-label">Vida Máxima</label><input type="number" name="vidaMaxima" class="form-control" [(ngModel)]="personagem.personagemCombate.vidaMaxima" /></div>
+            <div class="col"><label class="form-label">Vida Máxima</label><input type="number" name="vidaMaxima" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.vidaMaxima" /></div>
             <div class="col"><label class="form-label">Fórmula Dado de Vida (Opcional)</label><input type="text" name="formulaDadoVida" class="form-control" [(ngModel)]="personagem.personagemNpc.formulaDadoVida" [disabled]="personagem.tipoId === 1" placeholder="Ex: 2d8+2" /></div>
-            <div class="col"><label class="form-label">Dado de Vida Máximo (Jogador)</label><input type="text" name="dadoVidaMax" class="form-control" [(ngModel)]="personagem.personagemCombate.dadoVidaMaximo" placeholder="Ex: 3d10" /></div>
+            <div class="col"><label class="form-label">Dado de Vida Máximo (Jogador)</label><input type="text" name="dadoVidaMax" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.dadoVidaMaximo" placeholder="Ex: 3d10" /></div>
             <div class="col"><label class="form-label">CA (Classe Armadura)</label><input type="number" name="ca" class="form-control" [(ngModel)]="personagem.personagemCombate.classeArmadura" /></div>
           </div>
           
           <div class="form-group row mt-2">
-            <div class="col"><label class="form-label">Proficiência (Bônus)</label><input type="number" name="profBonus" class="form-control" [(ngModel)]="personagem.personagemCombate.proficienciaBonus" /></div>
+            <div class="col"><label class="form-label">Proficiência (Bônus)</label><input type="number" name="profBonus" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.proficienciaBonus" /></div>
             <div class="col"><label class="form-label">Deslocamento (Ex: 9m)</label><input type="text" name="desloc" class="form-control" [(ngModel)]="personagem.personagemCombate.deslocamento" /></div>
           </div>
 
@@ -115,33 +122,33 @@
           <div class="form-group row" style="display: flex; gap: 10px;">
             <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <label class="form-label text-center">FOR</label>
-              <input type="number" name="forca" class="form-control text-center" [(ngModel)]="personagem.atributo.forca" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveFor" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaForca" /> Save</label>
+              <input type="number" name="forca" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.forca" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveFor" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaForca" /> Save</label>
             </div>
             <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <label class="form-label text-center">DES</label>
-              <input type="number" name="destreza" class="form-control text-center" [(ngModel)]="personagem.atributo.destreza" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveDes" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaDestreza" /> Save</label>
+              <input type="number" name="destreza" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.destreza" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveDes" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaDestreza" /> Save</label>
             </div>
             <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <label class="form-label text-center">CON</label>
-              <input type="number" name="constituicao" class="form-control text-center" [(ngModel)]="personagem.atributo.constituicao" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCon" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaConstituicao" /> Save</label>
+              <input type="number" name="constituicao" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.constituicao" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCon" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaConstituicao" /> Save</label>
             </div>
             <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <label class="form-label text-center">INT</label>
-              <input type="number" name="inteligencia" class="form-control text-center" [(ngModel)]="personagem.atributo.inteligencia" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveInt" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaInteligencia" /> Save</label>
+              <input type="number" name="inteligencia" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.inteligencia" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveInt" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaInteligencia" /> Save</label>
             </div>
             <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <label class="form-label text-center">SAB</label>
-              <input type="number" name="sabedoria" class="form-control text-center" [(ngModel)]="personagem.atributo.sabedoria" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveSab" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaSabedoria" /> Save</label>
+              <input type="number" name="sabedoria" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.sabedoria" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveSab" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaSabedoria" /> Save</label>
             </div>
             <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
               <label class="form-label text-center">CAR</label>
-              <input type="number" name="carisma" class="form-control text-center" [(ngModel)]="personagem.atributo.carisma" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCar" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaCarisma" /> Save</label>
+              <input type="number" name="carisma" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.carisma" />
+              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCar" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaCarisma" /> Save</label>
             </div>
           </div>
 
@@ -181,17 +188,17 @@
                 <option value="Carisma">Carisma</option>
               </select>
             </div>
-            <div class="col"><label class="form-label">Slots Nível 1</label><input type="number" name="slots1" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel1Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 2</label><input type="number" name="slots2" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel2Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 3</label><input type="number" name="slots3" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel3Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 1</label><input type="number" name="slots1" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel1Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 2</label><input type="number" name="slots2" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel2Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 3</label><input type="number" name="slots3" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel3Max" /></div>
           </div>
           <div class="form-group row mt-2">
-            <div class="col"><label class="form-label">Slots Nível 4</label><input type="number" name="slots4" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel4Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 5</label><input type="number" name="slots5" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel5Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 6</label><input type="number" name="slots6" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel6Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 7</label><input type="number" name="slots7" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel7Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 8</label><input type="number" name="slots8" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel8Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 9</label><input type="number" name="slots9" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel9Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 4</label><input type="number" name="slots4" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel4Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 5</label><input type="number" name="slots5" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel5Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 6</label><input type="number" name="slots6" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel6Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 7</label><input type="number" name="slots7" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel7Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 8</label><input type="number" name="slots8" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel8Max" /></div>
+            <div class="col"><label class="form-label">Slots Nível 9</label><input type="number" name="slots9" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel9Max" /></div>
           </div>
         </div>
       </ng-container>

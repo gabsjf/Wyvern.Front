@@ -28,6 +28,14 @@ export class PersonagemCreate implements OnInit {
     return this.campanhas.find(c => c.campanhaId === this.personagem.campanhaId)?.papel === 'Mestre';
   }
 
+  /**
+   * Editando um herói sem ser Mestre: o que muda ao subir de nível fica travado (nível, classe, PV máximo,
+   * proficiência, atributos, espaços de magia). O servidor também ignora esses campos.
+   */
+  get travarNivel(): boolean {
+    return this.isEditMode && this.personagem.tipoId === 1 && !this.ehMestreNaCampanha;
+  }
+
   campanhas: Campaign[] = [];
   periciasDisponiveis: any[] = [];
   selectedPericiasIds: number[] = [];

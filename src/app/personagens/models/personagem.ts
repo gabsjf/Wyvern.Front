@@ -53,3 +53,53 @@ export interface PersonagemAtaque {
     tipoDano?: string;
     propriedades?: string;
 }
+
+// ---- subida de nível (regras do D&D 2024, calculadas pelo servidor) ----
+
+export interface ValorComparado {
+    antes: number;
+    depois: number;
+}
+
+export interface ProximoNivel {
+    /** A classe da ficha é uma das 12 do livro; senão só PV, proficiência e dados de vida são calculados. */
+    classeReconhecida: boolean;
+    classe: string;
+    nivelAtual: number;
+    proximoNivel: number;
+    nivelDisponivel: number;
+    podeSubir: boolean;
+    motivo?: string | null;
+    xp: number;
+    xpProximoNivel?: number | null;
+    nivelLiberado: number;
+    dadoVida: number;
+    pvFixo: number;
+    modConstituicao: number;
+    vidaMaxima: number;
+    proficiencia: ValorComparado;
+    caracteristicas: string[];
+    recursos: { nome: string; antes?: string | null; depois?: string | null }[];
+    espacosAntes?: number[] | null;
+    espacosDepois?: number[] | null;
+    truques?: ValorComparado | null;
+    magiasPreparadas?: ValorComparado | null;
+    escolheSubclasse: boolean;
+    melhoriaDeAtributo: boolean;
+    dadivaEpica: boolean;
+    atributos: Record<string, number>;
+}
+
+export interface EscolhasDeNivel {
+    modoPv: 'Fixo' | 'Rolado';
+    pvRolado?: number;
+    subclasse?: string;
+    melhoria?: { tipo: 'Atributos' | 'Talento'; talento?: string; aumentos: Record<string, number> };
+}
+
+export interface ResultadoSubida {
+    personagem: Personagem;
+    nivelNovo: number;
+    pvGanhos: number;
+    resumo: string;
+}

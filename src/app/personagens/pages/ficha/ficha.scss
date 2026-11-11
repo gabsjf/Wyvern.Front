@@ -450,6 +450,71 @@
 
 .descansos-aviso { margin: 0; font-size: 0.85rem; color: var(--muted); }
 
+.editar-ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+// XP e nível
+.progressao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--line);
+
+  .w-100 { width: 100%; }
+}
+.xp-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  small { color: var(--muted); }
+}
+.xp-rotulo { font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.18em; color: var(--hi); }
+.xp-barra {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--tint-2);
+  overflow: hidden;
+  i { display: block; height: 100%; background: var(--hi); transition: width 0.4s; }
+}
+.subir {
+  margin-top: 0.35rem;
+  animation: pulsar 2.4s ease-in-out infinite;
+}
+@keyframes pulsar {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent); }
+}
+.progressao-dica { margin: 0; font-size: 0.8rem; color: var(--muted); }
+.mestre-xp {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  input { min-width: 0; flex: 1; }
+}
+.link-acao {
+  align-self: flex-start;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: var(--hi);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover:not(:disabled) { text-decoration: underline; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
 @media (max-width: 720px) {
   .descansos {
     flex-direction: row;

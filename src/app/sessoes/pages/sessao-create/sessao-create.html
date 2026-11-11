@@ -1,50 +1,148 @@
-<div class="container estreito animate-fade-in">
-  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
-    <h1 class="title-glow text-accent" style="margin-bottom: 0;">
-      {{ isEditMode ? 'Editar Sessão' : 'Nova Sessão' }}
-    </h1>
-    <button class="btn-secondary" routerLink="/sessoes">Cancelar</button>
-  </div>
+<div class="container animate-fade-in">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">{{ editando() ? 'Diário de mesa' : 'Nova sessão' }}</p>
+      <h1>{{ editando() ? 'Editar sessão' : 'Preparar uma sessão' }}</h1>
+      <p class="sub">
+        @if (editando()) { Ajuste o título, a data ou as anotações desta sessão. }
+        @else { Marque a próxima noite de jogo ou registre uma que já aconteceu. }
+      </p>
+    </div>
+    <a class="btn-secondary" [routerLink]="editando() ? ['/sessoes', route.snapshot.paramMap.get('id')] : ['/sessoes']">Cancelar</a>
+  </header>
 
-  <div class="glass-panel" style="padding: var(--spacing-xl); max-width: 800px; margin: 0 auto;">
-    <form (ngSubmit)="save()" #sessaoForm="ngForm">
-      
-      <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-
-
-        <div class="form-group" style="flex: 3; min-width: 250px;">
-          <label class="form-label" for="nome">Título da Sessão</label>
-          <input type="text" id="nome" name="nome" class="form-control" [(ngModel)]="sessao.nome" required placeholder="Ex: A Caverna dos Goblins..." />
-        </div>
-      </div>
-
-      <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-        <div class="form-group" style="flex: 1; min-width: 200px;">
-          <label class="form-label" for="dataSessao">Data da Sessão</label>
-          <input type="date" id="dataSessao" name="dataSessao" class="form-control" [(ngModel)]="sessao.dataSessao" required />
-        </div>
-
-        <div class="form-group" style="flex: 1; min-width: 200px;">
-          <label class="form-label" for="campanhaId">Campanha</label>
-          <select id="campanhaId" name="campanhaId" class="form-control" [(ngModel)]="sessao.campanhaId" (ngModelChange)="onCampanhaChange($event)" required>
-            <option [ngValue]="0" disabled>Selecione uma campanha...</option>
-            @for (campanha of campanhas; track campanha.campanhaId) {
-              <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
+  @if (!carregando() && campanhas().length === 0 && !editando()) {
+    <div class="vazio">
+      <h2>Você ainda não mestra nenhuma campanha</h2>
+      <p>Só o Mestre de uma campanha cria sessões. Abra a sua campanha primeiro e depois volte aqui.</p>
+      <a class="btn-primary" routerLink="/campaigns/create">Abrir uma campanha</a>
+    </div>
+  } @else {
+    <div class="criacao">
+      <form class="forja" (ngSubmit)="save()" novalidate>
+        <!-- 1. Campanha -->
+        <section class="etapa">
+          <h2 class="rotulo-secao" id="rot-campanha"><span class="etapa-num">1</span> A campanha</h2>
+          @if (editando()) {
+            @if (campanha(); as c) {
+              <div class="campanhas">
+                <div class="opcao campanha ativo fixa">
+                  <app-emblema [nome]="c.nome" [tamanho]="40" />
+                  <span><strong>{{ c.nome }}</strong><small>{{ c.sistema || 'Sistema livre' }}</small></span>
+                </div>
+              </div>
             }
-          </select>
+          } @else {
+            <div class="campanhas" role="radiogroup" aria-labelledby="rot-campanha">
+              @for (c of campanhas(); track c.campanhaId) {
+                <button type="button" role="radio" class="opcao campanha" [class.ativo]="campanhaId() === c.campanhaId"
+                        [attr.aria-checked]="campanhaId() === c.campanhaId" (click)="escolherCampanha(c.campanhaId!)">
+                  <app-emblema [nome]="c.nome" [tamanho]="40" />
+                  <span><strong>{{ c.nome }}</strong><small>{{ c.sistema || 'Sistema livre' }}</small></span>
+                  @if (campanhaId() === c.campanhaId) { <i class="bi bi-check-lg marca" aria-hidden="true"></i> }
+                </button>
+              }
+            </div>
+          }
+          @if (campanhaId()) {
+            <p class="dica">
+              @if (ultima(); as u) {
+                Última sessão: <strong>Nº <span class="num">{{ u.numeroSessao }}</span> · {{ u.nome }}</strong>
+              } @else {
+                Esta é a primeira sessão da campanha.
+              }
+            </p>
+          }
+        </section>
+
+        <!-- 2. Título -->
+        <section class="etapa">
+          <h2 class="rotulo-secao"><span class="etapa-num">2</span> O título</h2>
+          <div class="titulo-linha">
+            <label class="numero" for="numero" title="Número da sessão na campanha">
+              <span>Nº</span>
+              <input id="numero" name="numero" type="number" min="1" class="num"
+                     [ngModel]="numero()" (ngModelChange)="mudarNumero($event)" aria-label="Número da sessão" />
+            </label>
+            <label class="visually-hidden" for="nome">Título da sessão</label>
+            <input id="nome" name="nome" class="nome-input" type="text" autocomplete="off" maxlength="120" required
+                   placeholder="Ex: A Caverna dos Goblins" [ngModel]="nome()" (ngModelChange)="nome.set($event)" />
+          </div>
+          <p class="dica">O número segue a ordem da campanha. Mude só se quiser pular ou corrigir.</p>
+        </section>
+
+        <!-- 3. Data -->
+        <section class="etapa">
+          <h2 class="rotulo-secao" id="rot-data"><span class="etapa-num">3</span> Quando</h2>
+          <div class="quando">
+            <label class="visually-hidden" for="data">Data da sessão</label>
+            <input id="data" name="data" type="date" class="form-control data" required
+                   [ngModel]="data()" (ngModelChange)="data.set($event)" />
+            <div class="atalhos" role="group" aria-labelledby="rot-data">
+              @for (a of atalhos(); track a.rotulo) {
+                <button type="button" class="atalho" [class.ativo]="data() === a.dia" [attr.aria-pressed]="data() === a.dia" (click)="data.set(a.dia)">{{ a.rotulo }}</button>
+              }
+            </div>
+          </div>
+          @if (sobreData()) {
+            <p class="dica sobre-data" [class.futura]="agendada()">
+              <i class="bi" [class.bi-calendar-check]="agendada()" [class.bi-journal-text]="!agendada()" aria-hidden="true"></i>
+              {{ sobreData() }}
+            </p>
+          }
+        </section>
+
+        <!-- 4. Anotações -->
+        <section class="etapa">
+          <h2 class="rotulo-secao"><span class="etapa-num">4</span> {{ agendada() ? 'O plano' : 'O que aconteceu' }} <span class="rotulo-extra">opcional</span></h2>
+          <label class="visually-hidden" for="obs">Anotações da sessão</label>
+          <textarea id="obs" name="obs" class="form-control" rows="6"
+                    [placeholder]="agendada() ? 'Ganchos, cenas e encontros que você quer preparar...' : 'O que aconteceu de importante nesta sessão...'"
+                    [ngModel]="obs()" (ngModelChange)="obs.set($event)"></textarea>
+        </section>
+
+        @if (erro()) { <p class="field-error erro" role="alert">{{ erro() }}</p> }
+
+        <div class="acoes">
+          <button type="submit" class="btn-primary criar" [disabled]="!podeSalvar()">
+            @if (salvando()) { Salvando... }
+            @else if (editando()) { Salvar alterações }
+            @else if (agendada()) { Agendar sessão }
+            @else { Registrar sessão }
+          </button>
+          @if (!salvando() && falta()) { <span class="falta">{{ falta() }}</span> }
         </div>
-      </div>
+      </form>
 
-      <div class="form-group">
-        <label class="form-label" for="obs">Anotações / Resumo</label>
-        <textarea id="obs" name="obs" class="form-control" [(ngModel)]="sessao.obs" rows="6" placeholder="Escreva o que aconteceu de importante nesta sessão..."></textarea>
-      </div>
+      <!-- Prévia: o mesmo cartão do diário, atualizado enquanto se digita -->
+      <aside class="lado" aria-label="Prévia da sessão">
+        <p class="eyebrow lado-titulo">Assim ela aparece no diário</p>
+        <article class="folha" [class.agendada]="agendada()">
+          <span class="folha-numero num" aria-hidden="true">{{ numero() }}</span>
+          <div class="folha-corpo">
+            <p class="folha-sobre">
+              Sessão <span class="num">{{ numero() }}</span>
+              @if (agendada()) { <span class="chip chip-hi">Agendada</span> }
+            </p>
+            <h3 [class.vazio-txt]="!nome().trim()">{{ nomePrevia() }}</h3>
+            <p class="folha-data num">{{ dataCurta() }}</p>
+            @if (obs().trim()) { <p class="folha-obs">{{ obs() }}</p> }
+          </div>
+          @if (campanha(); as c) {
+            <p class="folha-campanha"><app-emblema [nome]="c.nome" [tamanho]="22" /> {{ c.nome }}</p>
+          }
+        </article>
 
-      <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-lg);">
-        <button type="submit" class="btn-primary" [disabled]="!sessaoForm.form.valid || sessao.campanhaId === 0 || isSaving">
-          {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar Alterações' : 'Registrar Sessão') }}
-        </button>
-      </div>
-    </form>
-  </div>
+        @if (!editando()) {
+          <div class="depois">
+            <p class="eyebrow lado-titulo">Na sessão você terá</p>
+            <ol>
+              <li><i class="bi bi-play-circle" aria-hidden="true"></i><div><strong>A mesa ao vivo</strong><span>Botão “Jogar” abre mapa, combate e anotações em tela cheia.</span></div></li>
+              <li><i class="bi bi-book" aria-hidden="true"></i><div><strong>Um capítulo na crônica</strong><span>A sessão entra sozinha na linha do tempo da campanha.</span></div></li>
+            </ol>
+          </div>
+        }
+      </aside>
+    </div>
+  }
 </div>

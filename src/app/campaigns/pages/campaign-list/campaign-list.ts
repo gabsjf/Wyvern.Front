@@ -5,7 +5,7 @@ import { Campaign } from '../../models/campaign';
 import { RouterModule } from '@angular/router';
 import { SessaoService } from '../../../sessoes/services/sessao.service';
 import { PersonagemService } from '../../../personagens/services/personagem.service';
-import { Emblema, matizDoNome } from '../../../shared/ui/emblema/emblema';
+import { Emblema, capaDoNome } from '../../../shared/ui/emblema/emblema';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -64,9 +64,7 @@ export class CampaignList implements OnInit {
     return this.heroisPor.get(c.campanhaId!) ?? 0;
   }
 
-  /** Fundo da capa: o mesmo matiz do brasão, em tons escuros. */
   capa(c: Campaign): string {
-    const h = matizDoNome(c.nome);
-    return `radial-gradient(ellipse 80% 120% at 85% 0%, hsl(${h} 45% 30% / 0.9), transparent 70%), linear-gradient(160deg, hsl(${h} 38% 16%), hsl(${h} 30% 8%))`;
+    return capaDoNome(c.nome);
   }
 }

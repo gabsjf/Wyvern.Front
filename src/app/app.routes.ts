@@ -1,12 +1,10 @@
 import { Routes } from '@angular/router';
 import { CampaignList } from './campaigns/pages/campaign-list/campaign-list';
-import { CampaignCreate } from './campaigns/pages/campaign-create/campaign-create';
 import { CampaignDetail } from './campaigns/pages/campaign-detail/campaign-detail';
 import { PersonagemList } from './personagens/pages/personagem-list/personagem-list';
 import { PersonagemCreate } from './personagens/pages/personagem-create/personagem-create';
 import { PersonagemDetail } from './personagens/pages/personagem-detail/personagem-detail';
 import { SessaoList } from './sessoes/pages/sessao-list/sessao-list';
-import { SessaoCreate } from './sessoes/pages/sessao-create/sessao-create';
 import { SessaoDetail } from './sessoes/pages/sessao-detail/sessao-detail';
 import { PlaySession } from './sessoes/pages/play-session/play-session';
 
@@ -33,7 +31,7 @@ export const routes: Routes = [
         {path: 'dashboard', loadComponent: () => import('./core/pages/dashboard/dashboard').then(m => m.DashboardComponent)},
         {path: 'perfil', loadComponent: () => import('./core/pages/perfil/perfil').then(m => m.PerfilComponent)},
         {path: 'campaigns', component: CampaignList},
-    {path: 'campaigns/create', component: CampaignCreate},
+    {path: 'campaigns/create', loadComponent: () => import('./campaigns/pages/campaign-create/campaign-create').then(m => m.CampaignCreate)},
     {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},
     {path: 'campaigns/:id', component: CampaignDetail},
     {path: 'personagens', component: PersonagemList},
@@ -43,8 +41,8 @@ export const routes: Routes = [
     {path: 'ficha', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
     {path: 'ficha/:id', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
     {path: 'sessoes', component: SessaoList},
-    {path: 'sessoes/create', component: SessaoCreate},
-    {path: 'sessoes/:id/edit', component: SessaoCreate},
+    {path: 'sessoes/create', loadComponent: () => import('./sessoes/pages/sessao-create/sessao-create').then(m => m.SessaoCreate)},
+    {path: 'sessoes/:id/edit', loadComponent: () => import('./sessoes/pages/sessao-create/sessao-create').then(m => m.SessaoCreate)},
     {path: 'sessoes/:id', component: SessaoDetail},
     {path: 'combate', loadComponent: () => import('./sessoes/pages/combate-tracker/combate-tracker').then(m => m.CombateTracker)},
         {path: 'play/:id', component: PlaySession},

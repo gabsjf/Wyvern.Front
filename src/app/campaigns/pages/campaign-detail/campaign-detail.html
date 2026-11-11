@@ -65,7 +65,7 @@
       <div class="hub-principal">
         <section aria-labelledby="tit-sessoes">
           <h2 class="rotulo-secao" id="tit-sessoes">Sessões
-            @if (ehMestre) { <a class="rotulo-extra" routerLink="/sessoes/create">+ Nova sessão</a> }
+            @if (ehMestre) { <a class="rotulo-extra" routerLink="/sessoes/create" [queryParams]="{ campanha: campaign?.campanhaId }">+ Nova sessão</a> }
           </h2>
           @if (sessoes.length > 0) {
             <ol class="sessoes">

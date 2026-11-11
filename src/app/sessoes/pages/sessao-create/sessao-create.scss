@@ -1,0 +1,116 @@
+@use '../../ui/folha';
+@use '../../../shared/ui/criacao';
+
+.vazio {
+  max-width: 34rem;
+  padding: var(--spacing-xl) 0;
+
+  h2 { margin: 0 0 0.5rem; }
+  p { color: var(--muted); margin: 0 0 var(--spacing-lg); }
+}
+
+// campanha: cartões com o brasão
+.campanhas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 0.75rem;
+}
+
+.campanha {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 2rem 0.75rem 0.85rem;
+
+  span { display: flex; flex-direction: column; min-width: 0; }
+  strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
+  small { color: var(--muted); font-size: 0.85rem; }
+
+  &.fixa { cursor: default; max-width: 22rem; }
+}
+
+// número + título na mesma linha
+.titulo-linha { display: flex; align-items: flex-end; gap: var(--spacing-md); }
+
+.numero {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  flex: none;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--muted);
+  color: var(--hi);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+
+  input {
+    width: 3.2ch;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: var(--hi);
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    line-height: 1.1;
+    text-align: center;
+    -moz-appearance: textfield;
+
+    &:focus { outline: 0; }
+  }
+
+  &:focus-within { border-bottom: 2px solid var(--hi); margin-bottom: -1px; }
+}
+
+// data + atalhos
+.quando { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-md); }
+.data { width: auto; min-width: 11rem; }
+
+.atalhos { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.atalho {
+  min-height: 40px;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  &:hover { border-color: var(--muted); }
+  &.ativo { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 14%, transparent); color: var(--hi); font-weight: 600; }
+}
+
+.sobre-data {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  &::first-letter { text-transform: uppercase; }
+  &.futura { color: var(--hi); }
+}
+
+textarea { resize: vertical; min-height: 9rem; }
+
+// prévia
+.lado .folha { min-height: 14rem; box-shadow: var(--shadow); }
+.folha h3.vazio-txt { color: var(--muted); }
+
+.folha-campanha {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: var(--spacing-md) 0 0;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 560px) {
+  .quando { align-items: stretch; flex-direction: column; }
+  .data { width: 100%; }
+}

@@ -10,6 +10,12 @@ export function matizDoNome(nome: string): number {
   return MATIZES[hashDoNome(nome) % MATIZES.length];
 }
 
+/** Fundo da capa de uma campanha: o mesmo matiz do brasão, em tons escuros (a capa é escura nos dois temas). */
+export function capaDoNome(nome: string): string {
+  const h = matizDoNome(nome);
+  return `radial-gradient(ellipse 80% 120% at 85% 0%, hsl(${h} 45% 30% / 0.9), transparent 70%), linear-gradient(160deg, hsl(${h} 38% 16%), hsl(${h} 30% 8%))`;
+}
+
 function hashDoNome(nome: string): number {
   let h = 5381;
   for (const c of nome.toLowerCase()) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0;

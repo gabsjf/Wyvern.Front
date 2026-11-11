@@ -1,52 +1,124 @@
-<div class="container estreito animate-fade-in">
-  <div class="flex-between" style="margin-bottom: var(--spacing-xl);">
+<div class="container animate-fade-in">
+  <header class="page-head">
     <div>
-      <h1 class="title-glow text-accent" style="margin-bottom: 0;">Nova Campanha</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.5rem;">Crie um novo mundo para explorar.</p>
+      <p class="eyebrow">Nova aventura</p>
+      <h1>Abrir uma campanha</h1>
+      <p class="sub">Dê um nome ao mundo e escolha as regras. O resto você prepara depois, com a mesa já montada.</p>
     </div>
-    <button class="btn-secondary" routerLink="/campaigns">Voltar</button>
-  </div>
+    <a class="btn-secondary" routerLink="/campaigns">Voltar para a estante</a>
+  </header>
 
-  <div class="glass-panel" style="padding: var(--spacing-xl); max-width: 600px; margin: 0 auto;">
-    <form (ngSubmit)="save()" #campaignForm="ngForm">
-      <div class="form-group">
-        <label class="form-label" for="nome">Nome da Campanha</label>
-        <input 
-          type="text" 
-          id="nome" 
-          name="nome" 
-          class="form-control" 
-          [(ngModel)]="campaign.nome" 
-          required 
-          placeholder="Ex: O Dragão do Gelo"
-        />
-      </div>
+  @if (usuario() && !usuario()!.podeCriarCampanha) {
+    <div class="aviso-plano" role="status">
+      <i class="bi bi-lock" aria-hidden="true"></i>
+      <p>
+        @if (usuario()!.papel === 'Mestre') {
+          O seu plano já chegou ao limite de campanhas.
+        } @else {
+          Contas de Jogador entram em campanhas pelo convite do Mestre. Para criar a sua própria mesa, vire Mestre.
+        }
+        <a routerLink="/perfil">Ver meu plano</a>
+      </p>
+    </div>
+  }
 
-      <div class="form-group">
-        <label class="form-label" for="sistema">Sistema de RPG</label>
-        <input 
-          type="text" 
-          id="sistema" 
-          name="sistema" 
-          class="form-control" 
-          [(ngModel)]="campaign.sistema" 
-          required 
-          placeholder="Ex: D&D 5e, Tormenta20"
-        />
-      </div>
+  <div class="criacao">
+    <form class="forja" (ngSubmit)="save()" novalidate>
+      <!-- 1. Nome -->
+      <section class="etapa">
+        <h2 class="rotulo-secao"><span class="etapa-num">1</span> O nome</h2>
+        <label class="visually-hidden" for="nome">Nome da campanha</label>
+        <div class="nome-linha">
+          <input id="nome" name="nome" class="nome-input" type="text" autocomplete="off" required
+                 [maxlength]="nomeMax" placeholder="Ex: O Dragão do Gelo"
+                 [ngModel]="nome()" (ngModelChange)="nome.set($event)" aria-describedby="nome-dica" />
+          <button type="button" class="btn-secondary sortear" (click)="sortearNome()" title="Sugerir um nome">
+            <i class="bi bi-dice-5" aria-hidden="true"></i> Sortear
+          </button>
+        </div>
+        <p class="dica" id="nome-dica">O nome gera o brasão e as cores da capa. Dá para trocar depois.</p>
+      </section>
+
+      <!-- 2. Sistema -->
+      <section class="etapa">
+        <h2 class="rotulo-secao" id="rot-sistema"><span class="etapa-num">2</span> O sistema</h2>
+        <div class="sistemas" role="radiogroup" aria-labelledby="rot-sistema">
+          @for (s of sistemas; track s.nome) {
+            <button type="button" role="radio" class="opcao sistema" [class.ativo]="!outroSistema() && sistemaEscolhido() === s.nome"
+                    [attr.aria-checked]="!outroSistema() && sistemaEscolhido() === s.nome" (click)="escolherSistema(s.nome)">
+              @if (!outroSistema() && sistemaEscolhido() === s.nome) { <i class="bi bi-check-lg marca" aria-hidden="true"></i> }
+              <strong>{{ s.nome }}</strong>
+              <small>{{ s.tom }}</small>
+            </button>
+          }
+          <button type="button" role="radio" class="opcao sistema sistema-outro" [class.ativo]="outroSistema()"
+                  [attr.aria-checked]="outroSistema()" (click)="escolherOutro()">
+            @if (outroSistema()) { <i class="bi bi-check-lg marca" aria-hidden="true"></i> }
+            <strong>Outro sistema</strong>
+            <small>Caseiro, indie ou qualquer outro</small>
+          </button>
+        </div>
+
+        @if (outroSistema()) {
+          <div class="form-group outro-campo animate-fade-in">
+            <label class="form-label" for="sistemaLivre">Nome do sistema</label>
+            <input id="sistemaLivre" name="sistemaLivre" class="form-control" type="text" maxlength="60" autofocus
+                   placeholder="Ex: Old Dragon 2, Mörk Borg, sistema próprio"
+                   [ngModel]="sistemaLivre()" (ngModelChange)="sistemaLivre.set($event)" />
+          </div>
+        }
+      </section>
 
       @if (erro()) {
-        <p class="field-error" role="alert">
+        <p class="field-error erro" role="alert">
           {{ erro() }}
           @if (bloqueadoPeloPlano()) { <a routerLink="/perfil">Ver meu plano</a> }
         </p>
       }
 
-      <div style="margin-top: var(--spacing-lg); text-align: right;">
-        <button type="submit" class="btn-primary" [disabled]="!campaignForm.valid || isSaving">
-          {{ isSaving ? 'Salvando...' : 'Criar Campanha' }}
+      <div class="acoes">
+        <button type="submit" class="btn-primary criar" [disabled]="!podeSalvar()">
+          {{ salvando() ? 'Criando...' : 'Criar campanha' }}
         </button>
+        @if (!podeSalvar() && !salvando()) {
+          <span class="falta">
+            @if (!nomeLimpo() && !sistema()) { Falta o nome e o sistema. }
+            @else if (!nomeLimpo()) { Falta o nome. }
+            @else { Falta escolher o sistema. }
+          </span>
+        }
       </div>
     </form>
+
+    <!-- Prévia: o mesmo cartão da estante, atualizado enquanto se digita -->
+    <aside class="lado" aria-label="Prévia da campanha">
+      <p class="eyebrow lado-titulo">Assim ela aparece na sua estante</p>
+
+      <div class="tomo">
+        <div class="capa" [style.background]="capa()">
+          <div class="capa-marca" aria-hidden="true"><app-emblema [nome]="nomePrevia()" [tamanho]="150" /></div>
+          <div class="capa-topo">
+            <span class="chip chip-hi">Mestre</span>
+          </div>
+          <p class="capa-sistema">{{ sistema() || 'Sistema livre' }}</p>
+        </div>
+        <div class="tomo-corpo">
+          <h3 [class.vazio]="!nomeLimpo()">{{ nomePrevia() }}</h3>
+          <dl class="tomo-numeros">
+            <div><dt>Sessões</dt><dd class="num">0</dd></div>
+            <div><dt>Heróis</dt><dd class="num">0</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="depois">
+        <p class="eyebrow lado-titulo">Depois de criar</p>
+        <ol>
+          <li><i class="bi bi-link-45deg" aria-hidden="true"></i><div><strong>Convide os jogadores</strong><span>Um link de convite leva cada um direto para a mesa.</span></div></li>
+          <li><i class="bi bi-calendar-event" aria-hidden="true"></i><div><strong>Marque a primeira sessão</strong><span>Com cenas, combate e anotações prontas para o dia.</span></div></li>
+          <li><i class="bi bi-map" aria-hidden="true"></i><div><strong>Prepare mapas e NPCs</strong><span>Suba os mapas e monte o elenco antes de os heróis chegarem.</span></div></li>
+        </ol>
+      </div>
+    </aside>
   </div>
 </div>

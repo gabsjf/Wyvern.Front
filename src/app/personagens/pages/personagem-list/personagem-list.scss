@@ -117,7 +117,21 @@
 }
 
 .carta-tipo { margin: 0; }
-.carta-campanha { margin: 0; color: var(--hi); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+// de onde é e de quem é: duas linhas com ícone, logo abaixo do nome
+.carta-origem {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: center;
+  margin: 0.35rem 0 0;
+  max-width: 100%;
+
+  > div { display: flex; align-items: center; gap: 0.4rem; min-width: 0; max-width: 100%; }
+  dt { margin: 0; color: var(--muted); font-weight: normal; line-height: 1; }
+  dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+.carta-campanha { color: var(--hi); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.carta-dono { color: var(--fg); font-size: 0.95rem; }
+.carta-dono.meu { color: var(--muted); }
 
 .carta-desc {
   display: -webkit-box;

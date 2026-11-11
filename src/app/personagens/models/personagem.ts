@@ -3,8 +3,12 @@ export interface Personagem {
     nome: string;
     descricao?: string;
     campanhaId: number;
+    /** Vem na listagem de personagens. */
+    campanhaNome?: string | null;
     tipoId: number; // 1 = Jogador, 2 = NPC, 3 = Monstro
     criadoPorId?: number;
+    /** Quem criou (o jogador dono, ou o Mestre nos NPCs e monstros). Vem na listagem de personagens. */
+    criadoPorNome?: string | null;
     criadoEm?: string;
     ativo?: boolean;
     atributo?: any;

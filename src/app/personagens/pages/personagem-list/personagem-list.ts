@@ -9,6 +9,7 @@ import { CampaignService } from '../../../campaigns/services/campaign';
 import { Emblema } from '../../../shared/ui/emblema/emblema';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Campaign } from '../../../campaigns/models/campaign';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-personagem-list',
@@ -22,6 +23,7 @@ export class PersonagemList implements OnInit {
   private papelService = inject(PapelService);
   private campaignService = inject(CampaignService);
   private toast = inject(ToastService);
+  private readonly meuId = inject(AuthService).usuarioLogado()?.usuarioId ?? 0;
   private nomesCampanha = new Map<number, string>();
   personagens: Personagem[] = [];
   activeTab: string = 'herois';
@@ -73,18 +75,39 @@ export class PersonagemList implements OnInit {
   busca = '';
   campanhaFiltro: number | null = null;
 
+  /** A busca olha o nome, a descrição, a campanha e quem é o dono. A lista sai agrupada por campanha e, nela, por nome. */
   get filteredPersonagens() {
     const termo = this.busca.trim().toLowerCase();
-    return this.personagens.filter(p =>
-      (this.activeTab === 'herois' ? p.tipoId === 1 : p.tipoId !== 1) &&
-      (this.campanhaFiltro === null || p.campanhaId === this.campanhaFiltro) &&
-      (!termo || p.nome.toLowerCase().includes(termo) || (p.descricao ?? '').toLowerCase().includes(termo)));
+    return this.personagens
+      .filter(p =>
+        (this.activeTab === 'herois' ? p.tipoId === 1 : p.tipoId !== 1) &&
+        (this.campanhaFiltro === null || p.campanhaId === this.campanhaFiltro) &&
+        (!termo || [p.nome, p.descricao, this.nomeDaCampanha(p), p.criadoPorNome].some(t => (t ?? '').toLowerCase().includes(termo))))
+      .sort((a, b) => this.nomeDaCampanha(a).localeCompare(this.nomeDaCampanha(b), 'pt-BR') || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
-  /** Campanhas que têm personagens (para os filtros). */
-  get campanhasDosPersonagens(): { id: number; nome: string }[] {
-    const ids = [...new Set(this.personagens.map(p => p.campanhaId))];
-    return ids.map(id => ({ id, nome: this.nomeDaCampanha(id) }));
+  /** Campanhas que têm personagens na aba atual (para os filtros), com quantos cada uma tem. */
+  get campanhasDosPersonagens(): { id: number; nome: string; total: number }[] {
+    const daAba = this.personagens.filter(p => (this.activeTab === 'herois' ? p.tipoId === 1 : p.tipoId !== 1));
+    const porCampanha = new Map<number, { id: number; nome: string; total: number }>();
+    for (const p of daAba) {
+      const c = porCampanha.get(p.campanhaId) ?? { id: p.campanhaId, nome: this.nomeDaCampanha(p), total: 0 };
+      c.total++;
+      porCampanha.set(p.campanhaId, c);
+    }
+    return [...porCampanha.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  }
+
+  ehMeu(p: Personagem): boolean {
+    return p.criadoPorId === this.meuId;
+  }
+
+  /** De quem é: "Você" no que é seu; senão o nome de quem criou (o jogador, ou o Mestre nos NPCs e monstros). */
+  donoDe(p: Personagem): string {
+    if (this.ehMeu(p)) return p.tipoId === 1 ? 'Seu personagem' : 'Criado por você';
+    const nome = p.criadoPorNome?.trim();
+    if (!nome) return p.tipoId === 1 ? 'Jogador desconhecido' : 'Criado pelo Mestre';
+    return p.tipoId === 1 ? nome : `Criado por ${nome}`;
   }
 
   contar(aba: 'herois' | 'monstros'): number {
@@ -103,7 +126,10 @@ export class PersonagemList implements OnInit {
     this.activeTab = tab;
   }
 
-  nomeDaCampanha(id: number): string {
+  /** Nome da campanha: o que veio com o personagem ou, se faltar, o da lista de campanhas. */
+  nomeDaCampanha(alvo: number | Personagem): string {
+    if (typeof alvo !== 'number' && alvo.campanhaNome) return alvo.campanhaNome;
+    const id = typeof alvo === 'number' ? alvo : alvo.campanhaId;
     return this.nomesCampanha.get(id) ?? 'Campanha';
   }
 

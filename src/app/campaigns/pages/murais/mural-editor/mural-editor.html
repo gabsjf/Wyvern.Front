@@ -1,0 +1,252 @@
+<div class="mural" [class.com-mao]="ferramenta() === 'mao' || espaco()" [class.arrastando]="arrastando()">
+  <!-- ===== topo: voltar, nome, desfazer e o estado da gravação ===== -->
+  <header class="topo">
+    <a class="voltar" [routerLink]="['/campaigns', campanhaId, 'murais']" aria-label="Voltar aos murais" title="Voltar aos murais">
+      <i class="bi bi-arrow-left" aria-hidden="true"></i>
+    </a>
+    <label class="visually-hidden" for="nome-do-mural">Nome do mural</label>
+    <input id="nome-do-mural" class="nome" [value]="nome()" (input)="nome.set($any($event.target).value)" maxlength="100" placeholder="Mural sem nome" autocomplete="off" />
+
+    <div class="topo-acoes">
+      <button type="button" class="icone" (click)="desfazer()" [disabled]="!podeDesfazer" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">
+        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="icone" (click)="refazer()" [disabled]="!podeRefazer" title="Refazer (Ctrl+Shift+Z)" aria-label="Refazer">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+      </button>
+      <span class="estado" [class]="'estado ' + status()" role="status" aria-live="polite">
+        @switch (status()) {
+          @case ('salvo') { <i class="bi bi-cloud-check" aria-hidden="true"></i> }
+          @case ('salvando') { <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> }
+          @case ('erro') { <i class="bi bi-cloud-slash" aria-hidden="true"></i> }
+          @case ('conflito') { <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> }
+          @default { <i class="bi bi-cloud" aria-hidden="true"></i> }
+        }
+        <span class="so-largo">{{ textoDoStatus() }}</span>
+      </span>
+      @if (status() === 'erro') {
+        <button type="button" class="btn-secondary btn-sm" (click)="salvar()">Tentar de novo</button>
+      } @else if (status() === 'conflito') {
+        <button type="button" class="btn-secondary btn-sm" (click)="recarregar()">Recarregar</button>
+      }
+    </div>
+  </header>
+
+  <!-- ===== ferramentas (à esquerda, como no Miro) ===== -->
+  <nav class="ferramentas" role="toolbar" aria-label="Ferramentas do mural" aria-orientation="vertical">
+    <button type="button" class="ferramenta" [class.ativa]="ferramenta() === 'selecionar'" (click)="escolher('selecionar')" title="Selecionar (V)" aria-label="Selecionar">
+      <i class="bi bi-cursor" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="ferramenta" [class.ativa]="ferramenta() === 'mao'" (click)="escolher('mao')" title="Mover o quadro (H, ou segure Espaço)" aria-label="Mover o quadro">
+      <i class="bi bi-hand-index-thumb" aria-hidden="true"></i>
+    </button>
+    <span class="divisor" aria-hidden="true"></span>
+    <button type="button" class="ferramenta" [class.ativa]="ferramenta() === 'nota'" (click)="escolher('nota')" title="Nota adesiva (N)" aria-label="Nota adesiva">
+      <i class="bi bi-sticky" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="ferramenta" [class.ativa]="ferramenta() === 'texto'" (click)="escolher('texto')" title="Texto (T)" aria-label="Texto">
+      <i class="bi bi-fonts" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="ferramenta" [class.ativa]="ferramenta() === 'forma'" (click)="escolher('forma')" title="Forma (R)" aria-label="Forma">
+      <i class="bi" [class]="'bi ' + (formaEscolhida() === 'elipse' ? 'bi-circle' : formaEscolhida() === 'losango' ? 'bi-diamond' : 'bi-square')" aria-hidden="true"></i>
+    </button>
+    @if (ferramenta() === 'forma') {
+      <div class="subferramentas" role="group" aria-label="Tipo de forma">
+        @for (f of formas; track f.id) {
+          <button type="button" class="ferramenta mini" [class.ativa]="formaEscolhida() === f.id" (click)="escolherForma(f.id)" [title]="f.nome" [attr.aria-label]="f.nome">
+            <i class="bi" [class]="'bi ' + f.icone" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    }
+    <button type="button" class="ferramenta" [class.ativa]="ferramenta() === 'conector'" (click)="escolher('conector')" title="Seta (L): arraste de um elemento a outro" aria-label="Seta">
+      <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+    </button>
+    <span class="divisor" aria-hidden="true"></span>
+    <button type="button" class="ferramenta" (click)="escolherImagem()" title="Imagem" aria-label="Adicionar imagem">
+      <i class="bi bi-image" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="ferramenta" (click)="abrirCartoes()" title="Cartão de personagem ou sessão" aria-label="Adicionar cartão de personagem ou sessão">
+      <i class="bi bi-person-vcard" aria-hidden="true"></i>
+    </button>
+    <input #entradaDeImagem type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" tabindex="-1" (change)="aoEscolherImagem($event)" />
+  </nav>
+
+  <!-- ===== barra de contexto da seleção ===== -->
+  @if (temSelecao() && !editando()) {
+    <div class="contexto" role="toolbar" aria-label="Opções da seleção">
+      <div class="cores" role="group" aria-label="Cor">
+        @for (c of cores; track c.id) {
+          <button type="button" class="cor" [style.background]="c.fundo" [style.border-color]="c.traco" (click)="mudarCor(c.id)" [title]="c.nome" [attr.aria-label]="'Cor ' + c.nome"></button>
+        }
+      </div>
+      @if (soFormas()) {
+        <span class="divisor" aria-hidden="true"></span>
+        @for (f of formas; track f.id) {
+          <button type="button" class="icone" (click)="mudarForma(f.id)" [title]="f.nome" [attr.aria-label]="f.nome"><i class="bi" [class]="'bi ' + f.icone" aria-hidden="true"></i></button>
+        }
+      }
+      @if (comTexto()) {
+        <span class="divisor" aria-hidden="true"></span>
+        @for (t of tamanhos; track t.id) {
+          <button type="button" class="icone texto-tamanho" (click)="mudarTamanho(t.id)" [title]="'Texto ' + t.nome" [attr.aria-label]="'Texto ' + t.nome">{{ t.nome }}</button>
+        }
+      }
+      @if (conectoresSelecionados().length) {
+        <span class="divisor" aria-hidden="true"></span>
+        <button type="button" class="icone" (click)="alternarPontaDaSeta()" title="Com ou sem ponta de seta" aria-label="Alternar a ponta da seta"><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+      }
+      <span class="divisor" aria-hidden="true"></span>
+      <button type="button" class="icone" (click)="trazerParaFrente()" title="Trazer para a frente" aria-label="Trazer para a frente"><i class="bi bi-front" aria-hidden="true"></i></button>
+      <button type="button" class="icone" (click)="enviarParaTras()" title="Enviar para trás" aria-label="Enviar para trás"><i class="bi bi-back" aria-hidden="true"></i></button>
+      <button type="button" class="icone" (click)="duplicarSelecao()" title="Duplicar (Ctrl+D)" aria-label="Duplicar"><i class="bi bi-copy" aria-hidden="true"></i></button>
+      <button type="button" class="icone perigo" (click)="excluirSelecao()" title="Excluir (Delete)" aria-label="Excluir"><i class="bi bi-trash" aria-hidden="true"></i></button>
+    </div>
+  }
+
+  <!-- ===== o quadro ===== -->
+  <div #palco class="palco" [class]="'palco ferramenta-' + ferramenta()"
+       [style.background-size]="fundoDoPalco().tamanho" [style.background-position]="fundoDoPalco().posicao"
+       (pointerdown)="aoApertar($event)" (wheel)="aoRolar($event)" (dblclick)="aoDuploClique($event)"
+       aria-label="Quadro do mural" role="application">
+    <div class="mundo" [style.transform]="transformacao()" [style.--zoom]="vista().zoom">
+      <!-- setas por baixo dos elementos -->
+      <svg class="camada-setas" aria-hidden="true">
+        <defs>
+          @for (c of cores; track c.id) {
+            <marker [attr.id]="'ponta-' + c.id" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" [attr.fill]="c.traco" />
+            </marker>
+          }
+        </defs>
+        @for (s of setas(); track s.conector.id) {
+          <g [attr.data-conector]="s.conector.id" [class.selecionada]="selecao().has(s.conector.id)">
+            <line class="alvo" [attr.x1]="s.trecho.x1" [attr.y1]="s.trecho.y1" [attr.x2]="s.trecho.x2" [attr.y2]="s.trecho.y2" />
+            <line class="traco" [attr.x1]="s.trecho.x1" [attr.y1]="s.trecho.y1" [attr.x2]="s.trecho.x2" [attr.y2]="s.trecho.y2"
+                  [attr.stroke]="s.traco" [attr.marker-end]="s.conector.seta ? 'url(#ponta-' + s.conector.cor + ')' : null" />
+          </g>
+        }
+        @if (setaEmCurso(); as s) {
+          <line class="traco em-curso" [attr.x1]="s.x1" [attr.y1]="s.y1" [attr.x2]="s.x2" [attr.y2]="s.y2" marker-end="url(#ponta-cinza)" />
+        }
+      </svg>
+
+      @for (e of quadro().elementos; track e.id) {
+        <div class="el" [class]="'el ' + e.tipo" [attr.data-id]="e.id" [class.selecionado]="selecao().has(e.id)"
+             [style.left.px]="e.x" [style.top.px]="e.y" [style.width.px]="e.w" [style.height.px]="e.h">
+          @switch (e.tipo) {
+            @case ('nota') {
+              <div class="nota-papel" [style.background]="fundo(e.cor)" [style.font-size.px]="tamanhoDaFonte(e)">
+                @if (editando() === e.id) {
+                  <textarea [value]="e.texto" (input)="aoDigitar(e.id, $any($event.target).value)" (keydown)="aoTeclarNoTexto($event)" (blur)="terminarEdicao()" aria-label="Texto da nota"></textarea>
+                } @else {
+                  <p class="conteudo">{{ e.texto }}</p>
+                }
+              </div>
+            }
+            @case ('texto') {
+              <div class="texto-livre" [style.font-size.px]="tamanhoDaFonte(e)" [style.color]="e.cor === 'branco' ? null : traco(e.cor)">
+                @if (editando() === e.id) {
+                  <textarea [value]="e.texto" (input)="aoDigitar(e.id, $any($event.target).value)" (keydown)="aoTeclarNoTexto($event)" (blur)="terminarEdicao()" aria-label="Texto"></textarea>
+                } @else {
+                  <p class="conteudo">{{ e.texto || 'Texto' }}</p>
+                }
+              </div>
+            }
+            @case ('forma') {
+              <svg class="forma-fundo" [attr.viewBox]="'0 0 ' + e.w + ' ' + e.h" preserveAspectRatio="none" aria-hidden="true">
+                @switch (e.forma) {
+                  @case ('elipse') { <ellipse [attr.cx]="e.w / 2" [attr.cy]="e.h / 2" [attr.rx]="e.w / 2 - 1.5" [attr.ry]="e.h / 2 - 1.5" [attr.fill]="fundo(e.cor)" [attr.stroke]="traco(e.cor)" stroke-width="2" /> }
+                  @case ('losango') { <polygon [attr.points]="(e.w / 2) + ',1.5 ' + (e.w - 1.5) + ',' + (e.h / 2) + ' ' + (e.w / 2) + ',' + (e.h - 1.5) + ' 1.5,' + (e.h / 2)" [attr.fill]="fundo(e.cor)" [attr.stroke]="traco(e.cor)" stroke-width="2" /> }
+                  @default { <rect x="1" y="1" [attr.width]="e.w - 2" [attr.height]="e.h - 2" rx="8" [attr.fill]="fundo(e.cor)" [attr.stroke]="traco(e.cor)" stroke-width="2" /> }
+                }
+              </svg>
+              <div class="forma-texto" [style.font-size.px]="tamanhoDaFonte(e)">
+                @if (editando() === e.id) {
+                  <textarea [value]="e.texto" (input)="aoDigitar(e.id, $any($event.target).value)" (keydown)="aoTeclarNoTexto($event)" (blur)="terminarEdicao()" aria-label="Texto da forma"></textarea>
+                } @else {
+                  <p class="conteudo">{{ e.texto }}</p>
+                }
+              </div>
+            }
+            @case ('imagem') {
+              @if (imagens().get(e.imagemId!); as url) {
+                <img [src]="url" alt="" draggable="false" />
+              } @else {
+                <div class="imagem-carregando"><i class="bi bi-image" aria-hidden="true"></i></div>
+              }
+            }
+            @case ('cartao') {
+              <div class="cartao-ref">
+                <i class="bi" [class]="'bi ' + (e.ref?.tipo === 'sessao' ? 'bi-calendar-event' : 'bi-person')" aria-hidden="true"></i>
+                <span class="cartao-info">
+                  <strong>{{ e.ref?.titulo }}</strong>
+                  @if (e.ref?.detalhe) { <small>{{ e.ref?.detalhe }}</small> }
+                </span>
+                <a class="cartao-abrir" [routerLink]="linkDoCartao(e)" target="_blank" title="Abrir em outra aba" aria-label="Abrir em outra aba">
+                  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                </a>
+              </div>
+            }
+          }
+
+          @if (unicoSelecionado()?.id === e.id && editando() !== e.id) {
+            <span class="alca nw" data-alca="nw" aria-hidden="true"></span>
+            <span class="alca ne" data-alca="ne" aria-hidden="true"></span>
+            <span class="alca sw" data-alca="sw" aria-hidden="true"></span>
+            <span class="alca se" data-alca="se" aria-hidden="true"></span>
+          }
+        </div>
+      }
+
+      @if (retanguloDeSelecao(); as r) {
+        <div class="laco" [style.left.px]="r.x" [style.top.px]="r.y" [style.width.px]="r.w" [style.height.px]="r.h" aria-hidden="true"></div>
+      }
+    </div>
+
+    @if (mostrarDica) {
+      <div class="dica" aria-hidden="true">
+        <i class="bi bi-easel2"></i>
+        <p><strong>Um quadro em branco.</strong> Escolha uma ferramenta à esquerda e clique no quadro, ou dê um duplo clique para criar uma nota.</p>
+        <p class="atalhos">Roda do mouse: zoom · Espaço + arrastar: mover · Shift: várias seleções · Delete: apagar</p>
+      </div>
+    }
+  </div>
+
+  <!-- ===== zoom ===== -->
+  <div class="zoom" role="group" aria-label="Zoom">
+    <button type="button" class="icone" (click)="zoomar(1 / 1.2)" title="Afastar (-)" aria-label="Afastar"><i class="bi bi-dash-lg" aria-hidden="true"></i></button>
+    <button type="button" class="zoom-valor num" (click)="zoomCem()" title="Voltar a 100% (0)">{{ zoomEmPorcento() }}%</button>
+    <button type="button" class="icone" (click)="zoomar(1.2)" title="Aproximar (+)" aria-label="Aproximar"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    <button type="button" class="icone" (click)="ajustarATela()" title="Ver tudo (1)" aria-label="Ver tudo"><i class="bi bi-fullscreen" aria-hidden="true"></i></button>
+  </div>
+
+  <!-- ===== seletor de cartões ===== -->
+  @if (cartoesAbertos()) {
+    <div class="modal-overlay" (click)="cartoesAbertos.set(false)">
+      <div class="modal-content seletor-de-cartoes" role="dialog" aria-modal="true" aria-labelledby="tit-cartoes" (click)="$event.stopPropagation()">
+        <h2 id="tit-cartoes">Adicionar cartão</h2>
+        <p class="ajuda">Personagens e sessões desta campanha. O cartão leva direto à ficha ou à sessão.</p>
+        <label class="visually-hidden" for="busca-cartao">Buscar</label>
+        <input id="busca-cartao" class="form-control" type="search" placeholder="Buscar por nome" [value]="buscaDeCartao()" (input)="buscaDeCartao.set($any($event.target).value)" />
+        @if (opcoesDeCartao() === null) {
+          <p class="ajuda" role="status">Carregando...</p>
+        } @else if (cartoesFiltrados().length === 0) {
+          <p class="ajuda">Nada encontrado.</p>
+        } @else {
+          <ul class="opcoes">
+            @for (o of cartoesFiltrados(); track o.ref.tipo + o.ref.id) {
+              <li>
+                <button type="button" class="opcao" (click)="adicionarCartao(o)">
+                  <i class="bi" [class]="'bi ' + o.icone" aria-hidden="true"></i>
+                  <span><strong>{{ o.ref.titulo }}</strong>@if (o.ref.detalhe) { <small>{{ o.ref.detalhe }}</small> }</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        <div class="modal-acoes"><button type="button" class="btn-secondary" (click)="cartoesAbertos.set(false)">Fechar</button></div>
+      </div>
+    </div>
+  }
+</div>

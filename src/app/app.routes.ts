@@ -28,6 +28,8 @@ export const routes: Routes = [
         {path: 'campaigns', loadComponent: () => import('./campaigns/pages/campaign-list/campaign-list').then(m => m.CampaignList)},
     {path: 'campaigns/create', loadComponent: () => import('./campaigns/pages/campaign-create/campaign-create').then(m => m.CampaignCreate)},
     {path: 'anotacoes', title: 'Anotações · Wyvern', loadComponent: () => import('./campaigns/pages/anotacoes/anotacoes-pagina').then(m => m.AnotacoesPagina)},
+    {path: 'campaigns/:id/murais', title: 'Murais · Wyvern', loadComponent: () => import('./campaigns/pages/murais/murais').then(m => m.Murais)},
+    {path: 'campaigns/:id/murais/:muralId', title: 'Mural · Wyvern', loadComponent: () => import('./campaigns/pages/murais/mural-editor/mural-editor').then(m => m.MuralEditor)},
     {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},
     {path: 'campaigns/:id', loadComponent: () => import('./campaigns/pages/campaign-detail/campaign-detail').then(m => m.CampaignDetail)},
     {path: 'personagens', loadComponent: () => import('./personagens/pages/personagem-list/personagem-list').then(m => m.PersonagemList)},

@@ -1,17 +1,15 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
-import { DashboardSummary } from '../../models/dashboard-summary';
-import { CampaignService } from '../../../campaigns/services/campaign';
-import { Campaign } from '../../../campaigns/models/campaign';
-import { PersonagemService } from '../../../personagens/services/personagem.service';
-import { Personagem } from '../../../personagens/models/personagem';
-import { SessaoService } from '../../../sessoes/services/sessao.service';
-import { Sessao } from '../../../sessoes/models/sessao';
+import { DashboardSummary, SessaoNoPainel } from '../../models/dashboard-summary';
 import { Emblema } from '../../../shared/ui/emblema/emblema';
 import { AuthService } from '../../services/auth.service';
 
+/**
+ * O painel inicial. Tudo vem de uma chamada só (/Dashboard/resumo), já contado e cortado no servidor:
+ * nada de baixar as listas inteiras de campanhas, sessões e personagens para montar o resumo.
+ */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -21,62 +19,52 @@ import { AuthService } from '../../services/auth.service';
 })
 export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
-  private campaignService = inject(CampaignService);
-  private personagemService = inject(PersonagemService);
-  private sessaoService = inject(SessaoService);
-  private cdr = inject(ChangeDetectorRef);
   /** Só mostra "Nova campanha" para quem pode criar (conta Mestre com vaga, ou qualquer conta no beta). */
   readonly usuario = inject(AuthService).usuarioLogado;
 
-  summary: DashboardSummary | null = null;
-  loading: boolean = true;
+  readonly summary = signal<DashboardSummary | null>(null);
+  readonly loading = signal(true);
+  readonly erro = signal(false);
+  readonly hoje = new Date();
 
-  campanhas: Campaign[] = [];
-  herois: Personagem[] = [];
-  sessoes: Sessao[] = [];
-  hoje = new Date();
+  /** A campanha mais recente, para "Continue de onde parou". */
+  readonly destaque = computed(() => this.summary()?.destaque ?? null);
+  readonly ultimaSessao = computed(() => this.summary()?.ultimaSessaoDoDestaque ?? null);
+  readonly campanhas = computed(() => this.summary()?.ultimasCampanhas ?? []);
+  readonly herois = computed(() => this.summary()?.herois ?? []);
 
-  /** A campanha em destaque é a mais recente (a API devolve a lista na ordem de criação). */
-  get destaque(): Campaign | null {
-    return this.campanhas.length ? this.campanhas[this.campanhas.length - 1] : null;
-  }
+  /** Sessões agendadas; se não houver, as mais recentes, para o bloco nunca ficar vazio à toa. */
+  readonly listaSessoes = computed<{ titulo: string; itens: SessaoNoPainel[] }>(() => {
+    const s = this.summary();
+    const futuras = s?.proximasSessoes ?? [];
+    return futuras.length
+      ? { titulo: 'Próximas sessões', itens: futuras }
+      : { titulo: 'Sessões recentes', itens: s?.sessoesRecentes ?? [] };
+  });
 
-  /** Última sessão registrada da campanha em destaque. */
-  get ultimaSessao(): Sessao | null {
-    const id = this.destaque?.campanhaId;
-    const dela = this.sessoes.filter(s => s.campanhaId === id).sort((a, b) => b.numeroSessao - a.numeroSessao);
-    return dela[0] ?? null;
-  }
-
-  /** Sessões agendadas; se não houver, mostra as mais recentes para o bloco nunca ficar vazio à toa. */
-  get listaSessoes(): { titulo: string; itens: Sessao[] } {
-    const futuras = this.summary?.proximasSessoes ?? [];
-    if (futuras.length) return { titulo: 'Próximas sessões', itens: futuras };
-    const recentes = [...this.sessoes].sort((a, b) => +new Date(b.dataSessao) - +new Date(a.dataSessao)).slice(0, 5);
-    return { titulo: 'Sessões recentes', itens: recentes };
-  }
-
-  nomeDaCampanha(id: number): string {
-    return this.campanhas.find(c => c.campanhaId === id)?.nome ?? 'Campanha';
-  }
+  /** Há mais campanhas do que as que cabem no painel? Então o "Ver todas" mostra quantas são. */
+  readonly campanhasAlemDoPainel = computed(() => {
+    const s = this.summary();
+    return s ? Math.max(0, s.totalCampanhas - s.ultimasCampanhas.length) : 0;
+  });
 
   ngOnInit() {
-    this.dashboardService.getResumo().subscribe({
-      next: (res) => {
-        this.summary = res;
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Erro ao carregar o dashboard', err);
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.carregar();
+  }
 
-    // O resto enriquece o painel; se falhar, ele continua útil só com o resumo
-    this.campaignService.getAll().subscribe({ next: c => { this.campanhas = c; this.cdr.detectChanges(); } });
-    this.personagemService.getAll().subscribe({ next: p => { this.herois = p.filter(x => x.tipoId === 1); this.cdr.detectChanges(); } });
-    this.sessaoService.getAll().subscribe({ next: s => { this.sessoes = s; this.cdr.detectChanges(); } });
+  carregar() {
+    this.loading.set(true);
+    this.erro.set(false);
+    this.dashboardService.getResumo().subscribe({
+      next: res => {
+        this.summary.set(res);
+        this.loading.set(false);
+      },
+      error: err => {
+        console.error('Erro ao carregar o dashboard', err);
+        this.erro.set(true);
+        this.loading.set(false);
+      },
+    });
   }
 }

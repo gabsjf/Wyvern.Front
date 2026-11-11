@@ -1,4 +1,4 @@
-@if (!loading && summary) {
+@if (summary(); as r) {
   <div class="container painel animate-fade-in">
     <header class="page-head">
       <div>
@@ -16,7 +16,7 @@
     <div class="grade">
       <!-- Campanha em destaque -->
       <section class="destaque" aria-labelledby="tit-destaque">
-        @if (destaque; as d) {
+        @if (destaque(); as d) {
           <div class="destaque-marca" aria-hidden="true"><app-emblema [nome]="d.nome" [tamanho]="340" /></div>
           <div class="destaque-corpo">
             <p class="rotulo-secao" id="tit-destaque">Continue de onde parou</p>
@@ -24,10 +24,11 @@
             <p class="destaque-meta">
               <span>{{ d.sistema || 'Sistema não definido' }}</span>
               @if (d.papel) { <span class="chip" [class.chip-hi]="d.papel === 'Mestre'">{{ d.papel }}</span> }
-              @if (ultimaSessao; as s) { <span>Última sessão: <strong class="num">#{{ s.numeroSessao }}</strong> {{ s.nome }}</span> }
+              @if (ultimaSessao(); as s) { <span>Última sessão: <strong class="num">#{{ s.numeroSessao }}</strong> {{ s.nome }}</span> }
+              @else { <span>Nenhuma sessão ainda</span> }
             </p>
             <div class="destaque-acoes">
-              @if (ultimaSessao; as s) { <a class="btn-primary" [routerLink]="['/play', s.sessaoId]">Jogar sessão {{ s.numeroSessao }}</a> }
+              @if (ultimaSessao(); as s) { <a class="btn-primary" [routerLink]="['/play', s.sessaoId]">Jogar sessão {{ s.numeroSessao }}</a> }
               <a class="btn-secondary" [routerLink]="['/campaigns', d.campanhaId]">Abrir campanha</a>
               <a class="btn-secondary" [routerLink]="['/campaigns', d.campanhaId, 'timeline']">Crônica</a>
             </div>
@@ -54,26 +55,29 @@
       <section class="livro" aria-labelledby="tit-livro">
         <h2 class="rotulo-secao" id="tit-livro">O grimório</h2>
         <ul>
-          <li><a routerLink="/campaigns"><span class="liv-nome">Campanhas</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalCampanhas }}</span></a></li>
-          <li><a routerLink="/sessoes"><span class="liv-nome">Sessões</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ sessoes.length }}</span></a></li>
-          <li><a routerLink="/personagens"><span class="liv-nome">Heróis</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalHerois }}</span></a></li>
-          <li><a routerLink="/personagens"><span class="liv-nome">NPCs</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalNpcs }}</span></a></li>
-          <li><a routerLink="/personagens"><span class="liv-nome">Monstros</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ summary.totalViloes }}</span></a></li>
+          <li><a routerLink="/campaigns"><span class="liv-nome">Campanhas</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ r.totalCampanhas }}</span></a></li>
+          <li><a routerLink="/sessoes"><span class="liv-nome">Sessões</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ r.totalSessoes }}</span></a></li>
+          <li><a routerLink="/personagens"><span class="liv-nome">Heróis</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ r.totalHerois }}</span></a></li>
+          <li><a routerLink="/personagens" [queryParams]="{ aba: 'monstros' }"><span class="liv-nome">NPCs</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ r.totalNpcs }}</span></a></li>
+          <li><a routerLink="/personagens" [queryParams]="{ aba: 'monstros' }"><span class="liv-nome">Monstros</span><i class="liv-pontos" aria-hidden="true"></i><span class="liv-num num">{{ r.totalViloes }}</span></a></li>
         </ul>
       </section>
 
       <!-- Campanhas -->
       <section class="campanhas" aria-labelledby="tit-campanhas">
-        <h2 class="rotulo-secao" id="tit-campanhas">Suas campanhas <a routerLink="/campaigns" class="rotulo-extra">Ver todas</a></h2>
-        @if (campanhas.length > 0) {
+        <h2 class="rotulo-secao" id="tit-campanhas">
+          Suas campanhas
+          <a routerLink="/campaigns" class="rotulo-extra">Ver todas@if (campanhasAlemDoPainel() > 0) { ({{ r.totalCampanhas }}) }</a>
+        </h2>
+        @if (campanhas().length > 0) {
           <ul class="lista-campanhas">
-            @for (camp of campanhas; track camp.campanhaId) {
+            @for (camp of campanhas(); track camp.campanhaId) {
               <li>
                 <a class="camp" [routerLink]="['/campaigns', camp.campanhaId]">
                   <app-emblema [nome]="camp.nome" [tamanho]="52" />
                   <span class="camp-info">
                     <strong>{{ camp.nome }}</strong>
-                    <small>{{ camp.sistema || 'Sistema não definido' }}</small>
+                    <small>{{ camp.sistema || 'Sistema não definido' }} · <span class="num">{{ camp.totalSessoes }}</span> {{ camp.totalSessoes === 1 ? 'sessão' : 'sessões' }}</small>
                   </span>
                   @if (camp.papel) { <span class="chip" [class.chip-hi]="camp.papel === 'Mestre'">{{ camp.papel }}</span> }
                   <span class="camp-seta" aria-hidden="true">→</span>
@@ -88,10 +92,10 @@
 
       <!-- Sessões -->
       <section class="sessoes" aria-labelledby="tit-sessoes">
-        <h2 class="rotulo-secao" id="tit-sessoes">{{ listaSessoes.titulo }} <a routerLink="/sessoes" class="rotulo-extra">Ver todas</a></h2>
-        @if (listaSessoes.itens.length > 0) {
+        <h2 class="rotulo-secao" id="tit-sessoes">{{ listaSessoes().titulo }} <a routerLink="/sessoes" class="rotulo-extra">Ver todas</a></h2>
+        @if (listaSessoes().itens.length > 0) {
           <ul class="lista-sessoes">
-            @for (s of listaSessoes.itens; track s.sessaoId) {
+            @for (s of listaSessoes().itens; track s.sessaoId) {
               <li>
                 <a class="ses" [routerLink]="['/sessoes', s.sessaoId]">
                   <span class="ses-data" aria-hidden="true">
@@ -100,7 +104,7 @@
                   </span>
                   <span class="ses-info">
                     <strong>{{ s.nome }}</strong>
-                    <small>Sessão <span class="num">{{ s.numeroSessao }}</span> · {{ s.campanha?.nome || nomeDaCampanha(s.campanhaId) }}</small>
+                    <small>Sessão <span class="num">{{ s.numeroSessao }}</span> · {{ s.campanhaNome }}</small>
                   </span>
                 </a>
               </li>
@@ -112,16 +116,19 @@
       </section>
 
       <!-- Heróis -->
-      @if (herois.length > 0) {
+      @if (herois().length > 0) {
         <section class="herois" aria-labelledby="tit-herois">
-          <h2 class="rotulo-secao" id="tit-herois">Seus heróis <a routerLink="/personagens" class="rotulo-extra">Ver todos</a></h2>
+          <h2 class="rotulo-secao" id="tit-herois">
+            Seus heróis
+            <a routerLink="/personagens" class="rotulo-extra">Ver todos@if (r.totalHerois > herois().length) { ({{ r.totalHerois }}) }</a>
+          </h2>
           <ul class="lista-herois">
-            @for (h of herois; track h.personagemId) {
+            @for (h of herois(); track h.personagemId) {
               <li>
                 <a class="heroi" [routerLink]="['/ficha', h.personagemId]">
                   <app-emblema [nome]="h.nome" [tamanho]="64" />
                   <strong>{{ h.nome }}</strong>
-                  <small>{{ nomeDaCampanha(h.campanhaId) }}</small>
+                  <small>{{ h.campanhaNome }}</small>
                 </a>
               </li>
             }
@@ -130,8 +137,15 @@
       }
     </div>
   </div>
-} @else if (loading) {
+} @else if (loading()) {
   <div class="container" role="status">
     <p class="text-muted">Carregando o painel...</p>
+  </div>
+} @else if (erro()) {
+  <div class="container">
+    <div class="alert-error" role="alert">
+      Não foi possível carregar o painel.
+      <button type="button" class="btn-secondary btn-sm" (click)="carregar()">Tentar de novo</button>
+    </div>
   </div>
 }

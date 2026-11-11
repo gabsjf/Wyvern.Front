@@ -11,6 +11,18 @@ export interface Campaign {
     papel?: 'Mestre' | 'Jogador';
 }
 
+/** Campanha na estante paginada e no painel: papel e números já vêm contados pela API. */
+export interface CampanhaNaLista {
+    campanhaId: number;
+    nome: string;
+    sistema: string;
+    ativo: boolean;
+    mestreNome: string;
+    papel: 'Mestre' | 'Jogador';
+    totalSessoes: number;
+    totalHerois: number;
+}
+
 export interface Membro {
     usuarioId: number;
     nome: string;

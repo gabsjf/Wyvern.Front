@@ -1,12 +1,4 @@
 import { Routes } from '@angular/router';
-import { CampaignList } from './campaigns/pages/campaign-list/campaign-list';
-import { CampaignDetail } from './campaigns/pages/campaign-detail/campaign-detail';
-import { PersonagemList } from './personagens/pages/personagem-list/personagem-list';
-import { PersonagemCreate } from './personagens/pages/personagem-create/personagem-create';
-import { PersonagemDetail } from './personagens/pages/personagem-detail/personagem-detail';
-import { SessaoList } from './sessoes/pages/sessao-list/sessao-list';
-import { SessaoDetail } from './sessoes/pages/sessao-detail/sessao-detail';
-import { PlaySession } from './sessoes/pages/play-session/play-session';
 
 import { authGuard } from './core/guards/auth.guard';
 import { Login } from './core/pages/login/login';
@@ -33,23 +25,23 @@ export const routes: Routes = [
       children: [
         {path: 'dashboard', loadComponent: () => import('./core/pages/dashboard/dashboard').then(m => m.DashboardComponent)},
         {path: 'perfil', loadComponent: () => import('./core/pages/perfil/perfil').then(m => m.PerfilComponent)},
-        {path: 'campaigns', component: CampaignList},
+        {path: 'campaigns', loadComponent: () => import('./campaigns/pages/campaign-list/campaign-list').then(m => m.CampaignList)},
     {path: 'campaigns/create', loadComponent: () => import('./campaigns/pages/campaign-create/campaign-create').then(m => m.CampaignCreate)},
     {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},
-    {path: 'campaigns/:id', component: CampaignDetail},
-    {path: 'personagens', component: PersonagemList},
-    {path: 'personagens/create', component: PersonagemCreate},
-    {path: 'personagens/:id/edit', component: PersonagemCreate},
-    {path: 'personagens/:id', component: PersonagemDetail},
+    {path: 'campaigns/:id', loadComponent: () => import('./campaigns/pages/campaign-detail/campaign-detail').then(m => m.CampaignDetail)},
+    {path: 'personagens', loadComponent: () => import('./personagens/pages/personagem-list/personagem-list').then(m => m.PersonagemList)},
+    {path: 'personagens/create', loadComponent: () => import('./personagens/pages/personagem-create/personagem-create').then(m => m.PersonagemCreate)},
+    {path: 'personagens/:id/edit', loadComponent: () => import('./personagens/pages/personagem-create/personagem-create').then(m => m.PersonagemCreate)},
+    {path: 'personagens/:id', loadComponent: () => import('./personagens/pages/personagem-detail/personagem-detail').then(m => m.PersonagemDetail)},
     {path: 'ficha', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
     {path: 'ficha/:id/subir-nivel', loadComponent: () => import('./personagens/pages/subir-nivel/subir-nivel').then(m => m.SubirNivel)},
     {path: 'ficha/:id', loadComponent: () => import('./personagens/pages/ficha/ficha').then(m => m.FichaComponent)},
-    {path: 'sessoes', component: SessaoList},
+    {path: 'sessoes', loadComponent: () => import('./sessoes/pages/sessao-list/sessao-list').then(m => m.SessaoList)},
     {path: 'sessoes/create', loadComponent: () => import('./sessoes/pages/sessao-create/sessao-create').then(m => m.SessaoCreate)},
     {path: 'sessoes/:id/edit', loadComponent: () => import('./sessoes/pages/sessao-create/sessao-create').then(m => m.SessaoCreate)},
-    {path: 'sessoes/:id', component: SessaoDetail},
+    {path: 'sessoes/:id', loadComponent: () => import('./sessoes/pages/sessao-detail/sessao-detail').then(m => m.SessaoDetail)},
     {path: 'combate', loadComponent: () => import('./sessoes/pages/combate-tracker/combate-tracker').then(m => m.CombateTracker)},
-        {path: 'play/:id', component: PlaySession},
+        {path: 'play/:id', loadComponent: () => import('./sessoes/pages/play-session/play-session').then(m => m.PlaySession)},
         {path: 'invite/:token', loadComponent: () => import('./campaigns/pages/invite/invite').then(m => m.InviteComponent)}
       ]
     }

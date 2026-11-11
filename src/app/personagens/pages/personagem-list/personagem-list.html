@@ -24,7 +24,7 @@
     <label class="busca">
       <span class="visually-hidden">Buscar personagem</span>
       <i class="bi bi-search" aria-hidden="true"></i>
-      <input type="search" class="form-control" placeholder="Buscar por nome, jogador ou campanha" [value]="busca" (input)="busca = $any($event.target).value" />
+      <input type="search" class="form-control" placeholder="Buscar por nome, jogador ou campanha" [value]="busca" (input)="buscar($any($event.target).value)" />
     </label>
 
     @if (campanhasDosPersonagens.length > 1) {
@@ -36,7 +36,14 @@
     }
   </div>
 
-  <ul class="galeria">
+  @if (erro) {
+    <div class="alert-error" role="alert">
+      Não foi possível carregar os personagens.
+      <button type="button" class="btn-secondary btn-sm" (click)="loadPersonagens()">Tentar de novo</button>
+    </div>
+  }
+
+  <ul class="galeria" [class.carregando]="carregando" [attr.aria-busy]="carregando">
     @for (personagem of filteredPersonagens; track personagem.personagemId) {
       <li>
         <article class="carta" [class.carta-inimigo]="personagem.tipoId !== 1">
@@ -71,12 +78,19 @@
         </article>
       </li>
     } @empty {
-      <li class="galeria-vazia">
-        <h2>{{ busca || campanhaFiltro !== null ? 'Ninguém encontrado' : 'O elenco está vazio' }}</h2>
-        <p>{{ busca || campanhaFiltro !== null ? 'Tente outro nome ou limpe os filtros.' : 'Use “Novo personagem” para criar o primeiro.' }}</p>
-      </li>
+      @if (pagina) {
+        <li class="galeria-vazia">
+          <h2>{{ busca || campanhaFiltro !== null ? 'Ninguém encontrado' : 'O elenco está vazio' }}</h2>
+          <p>{{ busca || campanhaFiltro !== null ? 'Tente outro nome ou limpe os filtros.' : 'Use “Novo personagem” para criar o primeiro.' }}</p>
+        </li>
+      }
     }
   </ul>
+
+  @if (pagina; as p) {
+    <app-paginacao [pagina]="p.pagina" [totalPaginas]="p.totalPaginas" [total]="p.total" [tamanhoPagina]="p.tamanhoPagina"
+                   rotulo="personagens" (mudar)="irPara($event)" />
+  }
 </div>
 
 @if (duplicando) {

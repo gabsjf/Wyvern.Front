@@ -47,3 +47,25 @@ li.destaque h3 { font-size: 2.3rem; }
   li.destaque h3 { font-size: 1.9rem; }
   .folha-acoes > a { flex: 1; min-height: 44px; }
 }
+
+/* ---- filtro por campanha (o mesmo visual da lista de personagens) ---- */
+.filtros { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); margin-bottom: var(--spacing-lg); }
+
+.filtro {
+  min-height: 44px;
+  padding: 0 1rem;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover { border-color: var(--hi); }
+  &.ativo { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 18%, transparent); color: var(--hi); }
+}
+
+.continua { color: var(--muted); font-weight: 400; font-size: 0.9em; }
+
+// enquanto a próxima página chega, a atual fica esmaecida em vez de sumir
+.carregando { opacity: 0.55; transition: opacity 0.15s; }

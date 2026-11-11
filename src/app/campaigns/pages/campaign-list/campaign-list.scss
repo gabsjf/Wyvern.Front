@@ -57,3 +57,26 @@
   line-height: 1;
   color: var(--hi);
 }
+
+// busca: só aparece quando a estante passa de seis campanhas (ou já há uma busca)
+.busca-estante {
+  position: relative;
+  display: block;
+  max-width: 28rem;
+  margin-bottom: var(--spacing-lg);
+
+  i { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .form-control { padding-left: 2.5rem; border-radius: 999px; }
+}
+
+// enquanto a próxima página chega, a atual fica esmaecida em vez de sumir
+.estante.carregando { opacity: 0.55; transition: opacity 0.15s; }
+
+.estante-vazia {
+  grid-column: 1 / -1;
+  padding: 2rem 0;
+  color: var(--muted);
+
+  h2 { margin: 0 0 0.3rem; color: var(--fg); font-size: 1.3rem; }
+  p { margin: 0; }
+}

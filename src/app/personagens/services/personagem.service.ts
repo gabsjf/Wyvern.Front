@@ -3,6 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
 import { EscolhasDeNivel, Personagem, ProximoNivel, ResultadoSubida } from '../models/personagem';
 import { ResultadoDescanso } from '../utils/regras-descanso';
+import { ContagemPorCampanha, Pagina, TAMANHO_PAGINA, paramsDe } from '../../shared/models/pagina';
+
+/** Página do elenco: `totalHerois` e `totalMonstros` contam as abas; `porCampanha`, os filtros da aba pedida. */
+export interface PaginaDePersonagens extends Pagina<Personagem> {
+  totalHerois: number;
+  totalMonstros: number;
+  porCampanha: ContagemPorCampanha[];
+}
 
 /** Mudança parcial no estado de jogo da ficha: só o que vier preenchido é alterado. */
 export interface EstadoParcial {
@@ -26,6 +34,13 @@ export class PersonagemService {
 
   getAll() {
     return this.http.get<Personagem[]>(this.apiUrl);
+  }
+
+  /** O elenco paginado de uma aba, com as contagens das abas e de cada campanha. */
+  getPagina(filtro: { pagina: number; tipo: 'herois' | 'monstros'; busca?: string; campanhaId?: number | null }, tamanho = TAMANHO_PAGINA) {
+    return this.http.get<PaginaDePersonagens>(`${this.apiUrl}/pagina`, {
+      params: paramsDe({ pagina: filtro.pagina, tamanho, tipo: filtro.tipo, busca: filtro.busca?.trim(), campanhaId: filtro.campanhaId }),
+    });
   }
   getPericias() {
     return this.http.get<any[]>(`${environment.apiUrl}/Pericia`);

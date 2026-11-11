@@ -3,7 +3,15 @@
     <div>
       <p class="eyebrow">Sua estante</p>
       <h1>Campanhas</h1>
-      <p class="sub">{{ campaigns.length }} {{ campaigns.length === 1 ? 'aventura' : 'aventuras' }} em andamento ou guardadas.</p>
+      @if (pagina()) {
+        <p class="sub">
+          @if (busca().trim()) {
+            {{ total }} {{ total === 1 ? 'campanha encontrada' : 'campanhas encontradas' }}.
+          } @else {
+            {{ total }} {{ total === 1 ? 'aventura' : 'aventuras' }} em andamento ou guardadas.
+          }
+        </p>
+      }
     </div>
     @if (usuario()?.podeCriarCampanha) {
       <a class="btn-primary" routerLink="/campaigns/create">+ Nova campanha</a>
@@ -12,7 +20,22 @@
     }
   </header>
 
-  <ul class="estante">
+  @if (busca() || total > 6) {
+    <label class="busca-estante">
+      <span class="visually-hidden">Buscar campanha</span>
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" class="form-control" placeholder="Buscar por nome ou sistema" [value]="busca()" (input)="buscar($any($event.target).value)" />
+    </label>
+  }
+
+  @if (erro()) {
+    <div class="alert-error" role="alert">
+      Não foi possível carregar as campanhas.
+      <button type="button" class="btn-secondary btn-sm" (click)="carregar(pagina()?.pagina ?? 1)">Tentar de novo</button>
+    </div>
+  }
+
+  <ul class="estante" [class.carregando]="carregando()" [attr.aria-busy]="carregando()">
     @for (campaign of campaigns; track campaign.campanhaId) {
       <li>
         <a class="tomo" [routerLink]="['/campaigns', campaign.campanhaId]">
@@ -20,7 +43,7 @@
             <div class="capa-marca" aria-hidden="true"><app-emblema [nome]="campaign.nome" [tamanho]="150" /></div>
             <div class="capa-topo">
               @if (campaign.papel) { <span class="chip" [class.chip-hi]="campaign.papel === 'Mestre'">{{ campaign.papel }}</span> }
-              @if (campaign.ativo !== undefined) { <span class="chip" [class.chip-ok]="campaign.ativo">{{ campaign.ativo ? 'Em andamento' : 'Encerrada' }}</span> }
+              <span class="chip" [class.chip-ok]="campaign.ativo">{{ campaign.ativo ? 'Em andamento' : 'Encerrada' }}</span>
             </div>
             <p class="capa-sistema">{{ campaign.sistema || 'Sistema livre' }}</p>
           </div>
@@ -30,8 +53,8 @@
             @if (campaign.mestreNome) { <p class="tomo-mestre">Mestre: {{ campaign.mestreNome }}</p> }
 
             <dl class="tomo-numeros">
-              <div><dt>Sessões</dt><dd class="num">{{ sessoes(campaign) }}</dd></div>
-              <div><dt>Heróis</dt><dd class="num">{{ herois(campaign) }}</dd></div>
+              <div><dt>Sessões</dt><dd class="num">{{ campaign.totalSessoes }}</dd></div>
+              <div><dt>Heróis</dt><dd class="num">{{ campaign.totalHerois }}</dd></div>
             </dl>
 
             <span class="tomo-abrir">Abrir campanha <span aria-hidden="true">→</span></span>
@@ -40,26 +63,40 @@
       </li>
     }
 
-    <li>
-      @if (usuario()?.podeCriarCampanha) {
-        <a class="tomo tomo-novo" routerLink="/campaigns/create">
-          <span class="novo-mais" aria-hidden="true">+</span>
-          <strong>{{ campaigns.length === 0 && !carregando ? 'Comece sua primeira campanha' : 'Nova campanha' }}</strong>
-          <small>Crie o mundo, convide os jogadores e registre a história.</small>
-        </a>
-      } @else if (usuario()?.papel === 'Mestre') {
-        <a class="tomo tomo-novo" routerLink="/perfil">
-          <span class="novo-mais" aria-hidden="true"><i class="bi bi-lock"></i></span>
-          <strong>Limite do plano atingido</strong>
-          <small>O seu plano não permite mais campanhas. Veja os detalhes em Meu perfil.</small>
-        </a>
-      } @else {
-        <a class="tomo tomo-novo" routerLink="/perfil">
-          <span class="novo-mais" aria-hidden="true"><i class="bi bi-envelope-open"></i></span>
-          <strong>{{ campaigns.length === 0 && !carregando ? 'Entre na sua primeira campanha' : 'Quer mestrar?' }}</strong>
-          <small>Peça o link de convite ao seu Mestre. Para criar a sua própria mesa, vire Mestre em Meu perfil.</small>
-        </a>
-      }
-    </li>
+    @if (busca().trim() && pagina() && total === 0) {
+      <li class="estante-vazia">
+        <h2>Nenhuma campanha encontrada</h2>
+        <p>Tente outro nome ou limpe a busca.</p>
+      </li>
+    }
+
+    @if (mostraCartaoNovo) {
+      <li>
+        @if (usuario()?.podeCriarCampanha) {
+          <a class="tomo tomo-novo" routerLink="/campaigns/create">
+            <span class="novo-mais" aria-hidden="true">+</span>
+            <strong>{{ total === 0 ? 'Comece sua primeira campanha' : 'Nova campanha' }}</strong>
+            <small>Crie o mundo, convide os jogadores e registre a história.</small>
+          </a>
+        } @else if (usuario()?.papel === 'Mestre') {
+          <a class="tomo tomo-novo" routerLink="/perfil">
+            <span class="novo-mais" aria-hidden="true"><i class="bi bi-lock"></i></span>
+            <strong>Limite do plano atingido</strong>
+            <small>O seu plano não permite mais campanhas. Veja os detalhes em Meu perfil.</small>
+          </a>
+        } @else {
+          <a class="tomo tomo-novo" routerLink="/perfil">
+            <span class="novo-mais" aria-hidden="true"><i class="bi bi-envelope-open"></i></span>
+            <strong>{{ total === 0 ? 'Entre na sua primeira campanha' : 'Quer mestrar?' }}</strong>
+            <small>Peça o link de convite ao seu Mestre. Para criar a sua própria mesa, vire Mestre em Meu perfil.</small>
+          </a>
+        }
+      </li>
+    }
   </ul>
+
+  @if (pagina(); as p) {
+    <app-paginacao [pagina]="p.pagina" [totalPaginas]="p.totalPaginas" [total]="p.total" [tamanhoPagina]="p.tamanhoPagina"
+                   rotulo="campanhas" (mudar)="irPara($event)" />
+  }
 </div>

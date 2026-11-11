@@ -106,6 +106,11 @@ export class AuthService {
     return this.http.post<void>(`${this.apiUrl}/confirmar-email`, { token }, { headers: this.cabecalhosDeEntrada() });
   }
 
+  /** Outro link de confirmação: responde igual exista a conta ou não; só sai e-mail para cadastro pendente. */
+  reenviarConfirmacao(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reenviar-confirmacao`, { email }, { headers: this.cabecalhosDeEntrada() });
+  }
+
   logout(): void {
     const tinhaSessao = this.usuario() !== null || this.tokenNativo !== null || this.refreshNativo !== null;
     this.usuario.set(null);

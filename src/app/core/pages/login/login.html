@@ -2,7 +2,10 @@
   <h1 class="auth-titulo">Bem-vindo de volta</h1>
   <p class="auth-sub">Entre para continuar sua aventura.</p>
 
-  <div *ngIf="errorMessage" class="alert-error" role="alert">{{ errorMessage }}</div>
+  <div *ngIf="errorMessage" class="alert-error" role="alert">
+    {{ errorMessage }}
+    <a *ngIf="emailNaoConfirmado" [routerLink]="['/reenviar-confirmacao']" [queryParams]="{ email: loginForm.value.email }">Enviar outro link</a>
+  </div>
 
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
     <div class="form-group">

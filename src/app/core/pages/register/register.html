@@ -7,6 +7,7 @@
   <div *ngIf="mensagemEnviado" class="alert-ok" role="status">
     <p>{{ mensagemEnviado }}</p>
     <p>Depois de confirmar, <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }">entre na sua conta</a>.</p>
+    <p>Não chegou? <a [routerLink]="['/reenviar-confirmacao']" [queryParams]="{ email: registerForm.value.email }">Peça outro link</a>.</p>
   </div>
 
   <form *ngIf="!mensagemEnviado" [formGroup]="registerForm" (ngSubmit)="onSubmit()">

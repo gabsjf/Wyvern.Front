@@ -303,3 +303,27 @@
   .abertura-marca { right: -3rem; opacity: 0.1; }
   .membro-acoes > button { flex: 1; }
 }
+
+/* ---- heróis: trazer de outra campanha ---- */
+.rotulo-acoes {
+  order: 3;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+
+  .rotulo-extra { letter-spacing: 0.04em; text-transform: none; font-weight: 500; }
+}
+
+.botao-texto {
+  min-height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--hi);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+}
+
+.trazer-painel { margin-bottom: var(--spacing-md); }

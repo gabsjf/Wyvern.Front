@@ -1,25 +1,50 @@
-<div class="container estreito animate-fade-in" style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-  <div class="glass-panel text-center" style="max-width: 500px; padding: 3rem;">
-    <h2 class="title-glow text-accent mb-4">Portal de Invocação</h2>
-    
-    @if (status === 'loading') {
-      <div class="spinner mb-3" style="margin: 0 auto; width: 40px; height: 40px; border: 4px solid var(--tint-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-    }
-    @if (status === 'success') {
-      <div style="font-size: 3rem; color: var(--ok); margin-bottom: 1rem;">✓</div>
-    }
-    @if (status === 'error') {
-      <div style="font-size: 3rem; color: var(--danger); margin-bottom: 1rem;">✕</div>
-    }
-    
-    <p style="font-size: 1.2rem; color: var(--text-secondary);">{{ message }}</p>
-    
-    @if (status !== 'loading') {
-      <button class="btn-primary mt-4" routerLink="/campaigns">Ver Minhas Campanhas</button>
-    }
-  </div>
-</div>
+<div class="container convite animate-fade-in">
+  @if (status() === 'loading') {
+    <div class="cartao centro" role="status">
+      <div class="girando" aria-hidden="true"></div>
+      <p>{{ message() }}</p>
+    </div>
+  } @else if (status() === 'error') {
+    <div class="cartao centro" role="alert">
+      <div class="selo erro" aria-hidden="true">!</div>
+      <h1>Não deu para entrar</h1>
+      <p>{{ message() }}</p>
+      <a class="btn-primary" routerLink="/campaigns">Ver minhas campanhas</a>
+    </div>
+  } @else {
+    <div class="cartao">
+      <header class="cabeca">
+        <div class="selo ok" aria-hidden="true"><i class="bi bi-check2"></i></div>
+        <div>
+          <p class="eyebrow">Convite aceito</p>
+          <h1>Você entrou em {{ campanhaNome() || 'uma nova campanha' }}</h1>
+        </div>
+      </header>
 
-<style>
-  @keyframes spin { 100% { transform: rotate(360deg); } }
-</style>
+      @if (trazido(); as p) {
+        <section class="passo" aria-labelledby="tit-pronto">
+          <h2 id="tit-pronto">{{ p.nome }} já está na mesa</h2>
+          <p class="sub">Confira a ficha antes da primeira sessão. O Mestre pode ajustar o que não combinar com a campanha.</p>
+          <div class="acoes">
+            <a class="btn-primary" [routerLink]="['/ficha', p.personagemId]">Abrir a ficha</a>
+            <button type="button" class="btn-secondary" (click)="irParaCampanha()">Ir para a campanha</button>
+          </div>
+        </section>
+      } @else {
+        <section class="passo" aria-labelledby="tit-heroi">
+          <h2 id="tit-heroi">Com quem você vai jogar?</h2>
+          <p class="sub">Traga um herói que você já tem em outra campanha, ou crie um novo para esta mesa.</p>
+
+          <app-trazer-heroi [campanhaId]="campanhaId()!" (trazido)="aoTrazer($event)" />
+
+          <div class="acoes">
+            <a class="btn-secondary" routerLink="/personagens/create" [queryParams]="{ campanha: campanhaId() }">
+              <i class="bi bi-plus-lg" aria-hidden="true"></i> Criar um herói novo
+            </a>
+            <button type="button" class="link" (click)="irParaCampanha()">Escolher depois</button>
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>

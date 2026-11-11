@@ -1,48 +1,63 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CampaignService } from '../../services/campaign';
+import { TrazerHeroi } from '../../../personagens/components/trazer-heroi/trazer-heroi';
+import { Personagem } from '../../../personagens/models/personagem';
 
+/**
+ * Destino do link de convite: entra na campanha e, em seguida, oferece trazer um herói que a pessoa já tem
+ * (uma cópia, de outra campanha) ou criar um novo.
+ */
 @Component({
   selector: 'app-invite',
-  imports: [CommonModule, RouterLink],
-  templateUrl: './invite.html'
+  imports: [RouterLink, TrazerHeroi],
+  templateUrl: './invite.html',
+  styleUrl: './invite.scss',
 })
 export class InviteComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private campaignService = inject(CampaignService);
-  private cdr = inject(ChangeDetectorRef);
 
-  status: 'loading' | 'success' | 'error' = 'loading';
-  message: string = 'Iniciando o ritual de invocação...';
+  readonly status = signal<'loading' | 'success' | 'error'>('loading');
+  readonly message = signal('Entrando na campanha...');
+  readonly campanhaId = signal<number | null>(null);
+  readonly campanhaNome = signal('');
+  /** Herói trazido nesta visita: troca o convite pelo atalho para a ficha. */
+  readonly trazido = signal<Personagem | null>(null);
 
   ngOnInit() {
     const token = this.route.snapshot.paramMap.get('token');
     if (!token) {
-      this.fail('Selo de invocação (Token) inválido ou ausente.');
+      this.fail('Este link de convite está incompleto. Peça ao Mestre um novo link.');
       return;
     }
 
     this.campaignService.join(token).subscribe({
-      next: () => {
-        this.status = 'success';
-        this.message = 'Ritual concluído! Você agora faz parte desta campanha.';
-        this.cdr.detectChanges();
-        setTimeout(() => this.router.navigate(['/campaigns']), 2000);
+      next: ({ campanhaId }) => {
+        this.campanhaId.set(campanhaId);
+        this.status.set('success');
+        this.campaignService.getById(campanhaId).subscribe({ next: c => this.campanhaNome.set(c.nome) });
       },
       error: (err: HttpErrorResponse) => {
         console.error(err);
         this.fail(this.messageFor(err));
-      }
+      },
     });
   }
 
+  aoTrazer(p: Personagem) {
+    this.trazido.set(p);
+  }
+
+  irParaCampanha() {
+    void this.router.navigate(['/campaigns', this.campanhaId()]);
+  }
+
   private fail(message: string) {
-    this.status = 'error';
-    this.message = message;
-    this.cdr.detectChanges();
+    this.status.set('error');
+    this.message.set(message);
   }
 
   // Cada causa tem uma mensagem própria, em vez de um texto genérico para qualquer erro.

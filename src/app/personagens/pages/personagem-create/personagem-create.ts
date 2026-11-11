@@ -111,6 +111,11 @@ export class PersonagemCreate implements OnInit {
         this.campanhas = data;
         // Personagem novo já abre com uma campanha escolhida (de preferência uma em que o usuário é Mestre),
         // para o Tipo e os demais campos não ficarem escondidos até alguém escolher.
+        // ?campanha=ID (vindo do convite ou da página da campanha) escolhe a campanha, se a pessoa participa dela.
+        const pedida = Number(this.route.snapshot.queryParamMap.get('campanha'));
+        if (!this.isEditMode && !this.personagem.campanhaId && data.some(c => c.campanhaId === pedida)) {
+          this.personagem.campanhaId = pedida;
+        }
         if (!this.isEditMode && !this.personagem.campanhaId && data.length) {
           this.personagem.campanhaId = (data.find(c => c.papel === 'Mestre') ?? data[0]).campanhaId;
         }

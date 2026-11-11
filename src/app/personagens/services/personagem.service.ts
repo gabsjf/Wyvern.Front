@@ -87,6 +87,11 @@ export class PersonagemService {
     return this.http.post<Personagem>(`${this.apiUrl}/${id}/duplicar`, opcoes);
   }
 
+  /** O jogador leva uma cópia do próprio herói para outra campanha (chega descansado, com o mesmo nível). */
+  trazer(id: number, campanhaId: number) {
+    return this.http.post<Personagem>(`${this.apiUrl}/${id}/trazer`, { campanhaId });
+  }
+
   /** Muda só o estado de jogo (PV, condições, espaços de magia...), sem reenviar a ficha inteira. */
   atualizarEstado(id: number, estado: EstadoParcial) {
     return this.http.put<Personagem>(`${this.apiUrl}/${id}/estado`, estado);

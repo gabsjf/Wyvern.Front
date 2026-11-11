@@ -91,7 +91,18 @@
         </section>
 
         <section aria-labelledby="tit-herois">
-          <h2 class="rotulo-secao" id="tit-herois">Heróis <a class="rotulo-extra" routerLink="/personagens/create">+ Novo personagem</a></h2>
+          <h2 class="rotulo-secao" id="tit-herois">
+            Heróis
+            <span class="rotulo-acoes">
+              <button type="button" class="rotulo-extra botao-texto" (click)="trazendoHeroi = !trazendoHeroi" [attr.aria-expanded]="trazendoHeroi">Trazer de outra campanha</button>
+              <a class="rotulo-extra" routerLink="/personagens/create" [queryParams]="{ campanha: campaign.campanhaId }">+ Novo personagem</a>
+            </span>
+          </h2>
+          @if (trazendoHeroi) {
+            <div class="trazer-painel">
+              <app-trazer-heroi [campanhaId]="campaign.campanhaId!" (trazido)="aoTrazerHeroi()" />
+            </div>
+          }
           @if (herois.length > 0) {
             <ul class="herois">
               @for (h of herois; track h.personagemId) {

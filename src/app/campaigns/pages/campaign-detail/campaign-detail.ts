@@ -11,10 +11,11 @@ import { Sessao } from '../../../sessoes/models/sessao';
 import { PersonagemService } from '../../../personagens/services/personagem.service';
 import { Personagem } from '../../../personagens/models/personagem';
 import { Emblema, matizDoNome } from '../../../shared/ui/emblema/emblema';
+import { TrazerHeroi } from '../../../personagens/components/trazer-heroi/trazer-heroi';
 
 @Component({
   selector: 'app-campaign-detail',
-  imports: [CommonModule, RouterModule, Emblema],
+  imports: [CommonModule, RouterModule, Emblema, TrazerHeroi],
   templateUrl: './campaign-detail.html',
   styleUrl: './campaign-detail.scss',
 })
@@ -62,6 +63,13 @@ export class CampaignDetail implements OnInit {
   // ----- Conteúdo da campanha (sessões e heróis) -----
   sessoes: Sessao[] = [];
   herois: Personagem[] = [];
+  /** Painel "Trazer de outra campanha" aberto na seção Heróis. */
+  trazendoHeroi = false;
+
+  /** Um herói chegou de outra campanha: atualiza a lista de heróis da mesa. */
+  aoTrazerHeroi() {
+    if (this.campaign?.campanhaId) this.loadConteudo(this.campaign.campanhaId);
+  }
 
   private loadConteudo(id: number) {
     this.sessaoService.getAll().subscribe({

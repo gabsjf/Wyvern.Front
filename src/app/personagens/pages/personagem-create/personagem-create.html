@@ -1,7 +1,8 @@
 <div class="ficha-container animate-fade-in">
   <main class="ficha-content">
-    <div class="page-header" style="margin-bottom: 2rem;">
-      <h2 class="text-accent title-glow">{{ isEditMode ? 'Editar ' + (personagem.nome || 'personagem') : 'Criação Manual de Personagem' }}</h2>
+    <header class="page-header">
+      <p class="sobretitulo">{{ isEditMode ? 'Ficha' : 'Novo personagem' }}</p>
+      <h2 class="text-accent title-glow">{{ isEditMode ? 'Editar ' + (personagem.nome || 'personagem') : (personagem.nome || 'Criar personagem') }}</h2>
       @if (isEditMode && personagem.tipoId === 1) {
         <p class="aviso-nivel" role="note">
           <i class="bi" [class.bi-lock]="travarNivel" [class.bi-shield-check]="!travarNivel" aria-hidden="true"></i>
@@ -9,30 +10,52 @@
           @else { Como Mestre, você pode corrigir também os campos de nível (nível, PV máximo, atributos, espaços de magia). }
         </p>
       }
-      
-      <nav class="top-nav-tabs">
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'basico'" (click)="setTab('basico')">Básico</button>
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'atributos'" (click)="setTab('atributos')" *ngIf="personagem.tipoId === 1 || (personagem.tipoId !== 1 && personagem.personagemNpc.categoriaUso !== 'Narrativo')">Atributos & Defesas</button>
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'detalhes'" (click)="setTab('detalhes')">Detalhes & História</button>
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'acoes'" (click)="setTab('acoes')" *ngIf="personagem.tipoId !== 1 && personagem.personagemNpc.categoriaUso !== 'Narrativo'">Ações Especiais</button>
-      </nav>
-    </div>
 
-    <form (ngSubmit)="save()" #personagemForm="ngForm" class="ficha-main-area">
-      
+      <nav class="top-nav-tabs" aria-label="Partes da ficha">
+        @for (aba of abasVisiveis; track aba.id) {
+          <button type="button" class="tab-btn" [class.active]="activeTab === aba.id" (click)="setTab(aba.id)">
+            {{ aba.nome }}
+            @if (!isEditMode && pendentesNaAba(aba.id) > 0) { <span class="tab-pendente" [attr.aria-label]="pendentesNaAba(aba.id) + ' pendência(s)'">{{ pendentesNaAba(aba.id) }}</span> }
+          </button>
+        }
+      </nav>
+    </header>
+
+    <form (ngSubmit)="save()" #personagemForm="ngForm" class="ficha-main-area" novalidate>
+
+      <!-- O que falta para criar, pelas regras do tipo escolhido -->
+      @if (!isEditMode) {
+        <aside class="pendencias" [class.ok]="faltas.length === 0" aria-live="polite">
+          @if (faltas.length === 0) {
+            <i class="bi bi-check2-circle" aria-hidden="true"></i>
+            <span>Ficha pronta para criar.</span>
+          } @else {
+            <i class="bi bi-list-check" aria-hidden="true"></i>
+            <div>
+              <strong>{{ resumoDoTipo }}</strong>
+              <ul>
+                @for (f of faltas; track f.campo) {
+                  <li><button type="button" (click)="irPara(f)">{{ f.mensagem }}</button></li>
+                }
+              </ul>
+            </div>
+          }
+        </aside>
+      }
+
       <!-- ABA BÁSICO -->
       <ng-container *ngIf="activeTab === 'basico'">
-        <div class="glass-panel" style="padding: var(--spacing-xl);">
-          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Informações Essenciais</h3>
-          
-          <div class="form-group row">
-            <div class="col">
-              <label class="form-label">Nome*</label>
-              <input type="text" name="nome" class="form-control" [(ngModel)]="personagem.nome" required />
+        <section class="bloco">
+          <h3 class="bloco-titulo"><i class="bi bi-person-badge" aria-hidden="true"></i> Quem é</h3>
+
+          <div class="grade grade-2">
+            <div class="campo">
+              <label class="form-label" for="f-nome" [class.obrig]="obrig('nome')">Nome</label>
+              <input id="f-nome" type="text" name="nome" class="form-control" [class.invalido]="falta('nome')" [(ngModel)]="personagem.nome" required autocomplete="off" />
             </div>
-            <div class="col">
-              <label class="form-label">Campanha*</label>
-              <select name="campanhaId" class="form-control" [(ngModel)]="personagem.campanhaId" (ngModelChange)="aoMudarCampanha()" required>
+            <div class="campo">
+              <label class="form-label" for="f-campanha" [class.obrig]="obrig('campanhaId')">Campanha</label>
+              <select id="f-campanha" name="campanhaId" class="form-control" [class.invalido]="falta('campanhaId')" [(ngModel)]="personagem.campanhaId" (ngModelChange)="aoMudarCampanha()" required>
                 @for (campanha of campanhas; track campanha.campanhaId) {
                   <option [ngValue]="campanha.campanhaId">{{ campanha.nome }}</option>
                 }
@@ -41,172 +64,283 @@
           </div>
 
           <!-- Tipo: sempre visível; NPC e Monstro só ficam liberados para o Mestre da campanha -->
-          <div class="form-group tipo-grupo" role="radiogroup" aria-labelledby="rot-tipo">
-            <span class="form-label" id="rot-tipo">Tipo de personagem*</span>
+          <div class="tipo-grupo" role="radiogroup" aria-labelledby="rot-tipo">
+            <span class="form-label obrig" id="rot-tipo">Tipo de personagem</span>
             <div class="tipos">
               @for (tipo of tiposPersonagem; track tipo.id) {
                 <button type="button" role="radio" class="tipo-op" [class.ativo]="personagem.tipoId === tipo.id"
                         [attr.aria-checked]="personagem.tipoId === tipo.id" [disabled]="!podeEscolherTipo(tipo.id)" (click)="escolherTipo(tipo.id)">
+                  <i class="bi" [ngClass]="tipo.icone" aria-hidden="true"></i>
                   <strong>{{ tipo.nome }}</strong>
                   <small>{{ tipo.descricao }}</small>
                 </button>
               }
             </div>
             @if (!personagem.campanhaId) {
-              <p class="tipo-dica">Escolha a campanha para liberar os outros tipos. Só o Mestre dela cria NPCs e monstros.</p>
-            } @else if (!ehMestreNaCampanha) {
-              <p class="tipo-dica">Só o Mestre da campanha cria NPCs e monstros. Nesta campanha você cria heróis.</p>
+              <p class="dica">Escolha a campanha para liberar os outros tipos. Só o Mestre dela cria NPCs e monstros.</p>
+            } @else if (!ehMestreNaCampanha && !isEditMode) {
+              <p class="dica">Só o Mestre da campanha cria NPCs e monstros. Nesta campanha você cria heróis.</p>
             }
           </div>
 
-          <!-- JOGADOR -->
-          <ng-container *ngIf="personagem.tipoId === 1">
-            <div class="form-group row mt-2">
-              <div class="col"><label class="form-label">Classe</label><input type="text" name="classe" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.classe" /></div>
-              <div class="col"><label class="form-label">Subclasse</label><input type="text" name="subclasse" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.subclasse" /></div>
-              <div class="col"><label class="form-label">Nível</label><input type="number" name="nivel" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemPlayer.nivel" /></div>
+          <!-- Categoria do NPC -->
+          @if (personagem.tipoId === 2) {
+            <div class="tipo-grupo" role="radiogroup" aria-labelledby="rot-categoria">
+              <span class="form-label" id="rot-categoria">Papel do NPC</span>
+              <div class="tipos tipos-compactos">
+                @for (cat of categoriasNpc; track cat.valor) {
+                  <button type="button" role="radio" class="tipo-op" [class.ativo]="personagem.personagemNpc.categoriaUso === cat.valor"
+                          [attr.aria-checked]="personagem.personagemNpc.categoriaUso === cat.valor" (click)="escolherCategoria(cat.valor)">
+                    <strong>{{ cat.nome }}</strong>
+                    <small>{{ cat.descricao }}</small>
+                  </button>
+                }
+              </div>
             </div>
-            <div class="form-group row mt-2">
-              <div class="col"><label class="form-label">Raça</label><input type="text" name="raca" class="form-control" [(ngModel)]="personagem.personagemPlayer.raca" /></div>
-              <div class="col"><label class="form-label">Antecedente</label><input type="text" name="antecedente" class="form-control" [(ngModel)]="personagem.personagemPlayer.antecedente" /></div>
-              <div class="col"><label class="form-label">Alinhamento</label><input type="text" name="alinhamento" class="form-control" [(ngModel)]="personagem.personagemPlayer.alinhamento" /></div>
-            </div>
-          </ng-container>
+          }
 
-          <!-- NPC/MONSTRO -->
-          <ng-container *ngIf="personagem.tipoId !== 1">
-            <div class="form-group row mt-2">
-              <div class="col" *ngIf="personagem.tipoId !== 3"><label class="form-label">Categoria de Uso</label>
-                <select name="categoriaUso" class="form-control" [(ngModel)]="personagem.personagemNpc.categoriaUso">
-                  <option value="Narrativo">NPC Narrativo (Comum)</option>
-                  <option value="Inimigo">Inimigo de Combate</option>
+          <div class="campo">
+            <label class="form-label" for="f-descricao">Descrição rápida</label>
+            <textarea id="f-descricao" name="descricao" class="form-control" [(ngModel)]="personagem.descricao" rows="2" placeholder="Uma linha para lembrar quem é na mesa"></textarea>
+          </div>
+        </section>
+
+        <!-- HERÓI: origem e classe -->
+        @if (personagem.tipoId === 1) {
+          <section class="bloco">
+            <h3 class="bloco-titulo"><i class="bi bi-compass" aria-hidden="true"></i> Origem e classe</h3>
+            <div class="grade grade-3">
+              <div class="campo">
+                <label class="form-label" for="f-classe" [class.obrig]="obrig('classe')">Classe</label>
+                <input id="f-classe" type="text" name="classe" list="lista-classes" [disabled]="travarNivel" class="form-control" [class.invalido]="falta('classe')"
+                       [(ngModel)]="personagem.personagemPlayer.classe" (ngModelChange)="aoMudarClasse()" autocomplete="off" />
+                @if (classeEscolhida; as cl) { <small class="dica">Dado de vida d{{ cl.dadoVida }} · salvaguardas {{ siglasDe(cl.salvaguardas) }}</small> }
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-nivel" [class.obrig]="obrig('nivel')">Nível</label>
+                <input id="f-nivel" type="number" min="1" max="20" name="nivel" [disabled]="travarNivel" class="form-control" [class.invalido]="falta('nivel')"
+                       [(ngModel)]="personagem.personagemPlayer.nivel" (ngModelChange)="aoMudarNivel()" />
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-subclasse" [class.obrig]="obrig('subclasse')">Subclasse</label>
+                <input id="f-subclasse" type="text" name="subclasse" [disabled]="travarNivel" class="form-control" [class.invalido]="falta('subclasse')"
+                       [(ngModel)]="personagem.personagemPlayer.subclasse" autocomplete="off" />
+                @if (!obrig('subclasse')) { <small class="dica">Escolhida a partir do nível 3.</small> }
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-raca" [class.obrig]="obrig('raca')">Espécie</label>
+                <input id="f-raca" type="text" name="raca" list="lista-especies" class="form-control" [class.invalido]="falta('raca')" [(ngModel)]="personagem.personagemPlayer.raca" autocomplete="off" />
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-antecedente" [class.obrig]="obrig('antecedente')">Antecedente</label>
+                <input id="f-antecedente" type="text" name="antecedente" list="lista-antecedentes" class="form-control" [class.invalido]="falta('antecedente')" [(ngModel)]="personagem.personagemPlayer.antecedente" autocomplete="off" />
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-alinhamento">Alinhamento</label>
+                <input id="f-alinhamento" type="text" name="alinhamento" list="lista-alinhamentos" class="form-control" [(ngModel)]="personagem.personagemPlayer.alinhamento" autocomplete="off" />
+              </div>
+            </div>
+          </section>
+        }
+
+        <!-- NPC / MONSTRO: identificação do bloco de estatísticas -->
+        @if (personagem.tipoId !== 1) {
+          <section class="bloco">
+            <h3 class="bloco-titulo"><i class="bi bi-journal-richtext" aria-hidden="true"></i> {{ comBloco ? 'Bloco de estatísticas' : 'Sobre o NPC' }}</h3>
+            <div class="grade grade-3">
+              <div class="campo">
+                <label class="form-label" for="f-tamanho" [class.obrig]="obrig('tamanho')">Tamanho</label>
+                <input id="f-tamanho" type="text" name="tamanho" list="lista-tamanhos" class="form-control" [class.invalido]="falta('tamanho')" [(ngModel)]="personagem.personagemNpc.tamanho" autocomplete="off" />
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-tipoCriatura" [class.obrig]="obrig('tipoCriatura')">Tipo de criatura</label>
+                <input id="f-tipoCriatura" type="text" name="tipoCriatura" list="lista-tipos-criatura" class="form-control" [class.invalido]="falta('tipoCriatura')" [(ngModel)]="personagem.personagemNpc.tipoCriatura" autocomplete="off" />
+              </div>
+              <div class="campo">
+                <label class="form-label" for="f-tendencia">Tendência</label>
+                <input id="f-tendencia" type="text" name="tendencia" list="lista-alinhamentos" class="form-control" [(ngModel)]="personagem.personagemNpc.tendencia" autocomplete="off" />
+              </div>
+              @if (comBloco) {
+                <div class="campo">
+                  <label class="form-label" for="f-nd" [class.obrig]="obrig('nivelDesafio')">Nível de desafio (ND)</label>
+                  <select id="f-nd" name="cr" class="form-control" [class.invalido]="falta('nivelDesafio')" [(ngModel)]="personagem.personagemNpc.nivelDesafio" (ngModelChange)="aoMudarNd()">
+                    @if (!ndValido) { <option [ngValue]="personagem.personagemNpc.nivelDesafio">{{ personagem.personagemNpc.nivelDesafio || '—' }}</option> }
+                    @for (nd of nds; track nd) { <option [ngValue]="nd">ND {{ nd }}</option> }
+                  </select>
+                </div>
+                <div class="campo">
+                  <label class="form-label" for="f-xp">XP concedido</label>
+                  <input id="f-xp" type="number" min="0" name="xpConcedido" class="form-control" [(ngModel)]="personagem.personagemNpc.xpConcedido" />
+                  <small class="dica">Vem da tabela do ND; pode ajustar.</small>
+                </div>
+              }
+            </div>
+          </section>
+        }
+        <!-- Miniatura 3D: a figura dos tokens deste personagem na visão 3D do mapa (WYV-26) -->
+        @if (personagem.campanhaId) {
+          <section class="bloco">
+            <div class="bloco-cabeca">
+              <h3 class="bloco-titulo"><i class="bi bi-person-standing" aria-hidden="true"></i> Miniatura 3D</h3>
+              <a class="link-sugestao" [routerLink]="['/campaigns', personagem.campanhaId, 'modelos']">Biblioteca 3D da campanha</a>
+            </div>
+            <p class="dica">Opcional. Na visão 3D do mapa, os tokens deste personagem aparecem com esta miniatura em vez do cartão.</p>
+            <div class="grade grade-2 miniatura-linha">
+              <div class="campo">
+                <label class="form-label" for="f-miniatura">Miniatura</label>
+                <select id="f-miniatura" name="miniatura" class="form-control" [ngModel]="miniaturaId" (ngModelChange)="escolherMiniatura($event)">
+                  <option [ngValue]="null">Nenhuma (cartão com retrato)</option>
+                  @for (m of miniaturas; track m.modeloId) { <option [ngValue]="m.modeloId">{{ m.nome }}</option> }
                 </select>
               </div>
-              <div class="col"><label class="form-label">Tamanho</label><input type="text" name="tamanho" class="form-control" [(ngModel)]="personagem.personagemNpc.tamanho" /></div>
-              <div class="col"><label class="form-label">Tipo (ex: Fera, Humanoide)</label><input type="text" name="tipoCriatura" class="form-control" [(ngModel)]="personagem.personagemNpc.tipoCriatura" /></div>
-              <div class="col"><label class="form-label">Tendência</label><input type="text" name="tendencia" class="form-control" [(ngModel)]="personagem.personagemNpc.tendencia" /></div>
+              <div class="campo">
+                <span class="form-label">Ou suba uma nova</span>
+                <label class="btn-secondary btn-sm subir-mini" [class.desabilitado]="enviandoMiniatura">
+                  <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> {{ enviandoMiniatura ? 'Enviando...' : 'Subir .glb, .gltf, .stl ou .3mf' }}
+                  <input type="file" multiple accept=".glb,.gltf,.stl,.3mf,.bin,.png,.jpg,.jpeg,.webp,.ktx2,model/gltf-binary,model/gltf+json,model/stl" class="visually-hidden"
+                         title="Para .gltf, selecione junto o .bin e as texturas" [disabled]="enviandoMiniatura" (change)="subirMiniatura($event)" />
+                </label>
+              </div>
             </div>
-            <div class="form-group row mt-2">
-              <div class="col"><label class="form-label">CR (Nível Desafio)</label><input type="text" name="cr" class="form-control" [(ngModel)]="personagem.personagemNpc.nivelDesafio" /></div>
-              <div class="col"><label class="form-label">XP Concedido</label><input type="number" name="xpConcedido" class="form-control" [(ngModel)]="personagem.personagemNpc.xpConcedido" /></div>
-            </div>
-          </ng-container>
-
-          <div class="form-group mt-2">
-            <label class="form-label">Descrição Rápida</label>
-            <textarea name="descricao" class="form-control" [(ngModel)]="personagem.descricao" rows="2"></textarea>
-          </div>
-        </div>
+            @if (miniaturaEscolhida; as mini) {
+              @if (verMiniatura) {
+                @for (atual of [mini]; track atual.modeloId) {
+                  <app-visualizador-glb class="previa-mini" [buscar]="buscarMiniatura" [nome]="atual.nome" />
+                }
+                <button type="button" class="link-sugestao" (click)="verMiniatura = false">Esconder a prévia</button>
+              } @else {
+                <button type="button" class="link-sugestao" (click)="verMiniatura = true">Ver “{{ mini.nome }}” em 3D</button>
+              }
+            }
+          </section>
+        }
       </ng-container>
 
       <!-- ABA ATRIBUTOS & DEFESAS -->
       <ng-container *ngIf="activeTab === 'atributos'">
-        <div class="glass-panel" style="padding: var(--spacing-xl);">
-          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Núcleo de Combate e Defesas</h3>
-          
-          <div class="form-group row">
-            <div class="col"><label class="form-label">Vida Máxima</label><input type="number" name="vidaMaxima" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.vidaMaxima" /></div>
-            <div class="col"><label class="form-label">Fórmula Dado de Vida (Opcional)</label><input type="text" name="formulaDadoVida" class="form-control" [(ngModel)]="personagem.personagemNpc.formulaDadoVida" [disabled]="personagem.tipoId === 1" placeholder="Ex: 2d8+2" /></div>
-            <div class="col"><label class="form-label">Dado de Vida Máximo (Jogador)</label><input type="text" name="dadoVidaMax" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.dadoVidaMaximo" placeholder="Ex: 3d10" /></div>
-            <div class="col"><label class="form-label">CA (Classe Armadura)</label><input type="number" name="ca" class="form-control" [(ngModel)]="personagem.personagemCombate.classeArmadura" /></div>
+        <section class="bloco">
+          <div class="bloco-cabeca">
+            <h3 class="bloco-titulo" [class.obrig]="obrig('atributos')"><i class="bi bi-diagram-3" aria-hidden="true"></i> Atributos</h3>
+            @if (!travarNivel) {
+              <div class="acoes-rapidas">
+                <button type="button" class="btn-secondary btn-sm" (click)="usarArranjoPadrao()" title="15, 14, 13, 12, 10 e 8, na ordem que favorece a classe">
+                  <i class="bi bi-magic" aria-hidden="true"></i> Arranjo padrão
+                </button>
+              </div>
+            }
           </div>
-          
-          <div class="form-group row mt-2">
-            <div class="col"><label class="form-label">Proficiência (Bônus)</label><input type="number" name="profBonus" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.proficienciaBonus" /></div>
-            <div class="col"><label class="form-label">Deslocamento (Ex: 9m)</label><input type="text" name="desloc" class="form-control" [(ngModel)]="personagem.personagemCombate.deslocamento" /></div>
+          <div class="atributos" [class.invalido]="falta('atributos')">
+            @for (at of atributos; track at.chave) {
+              <div class="atributo">
+                <label class="atributo-sigla" [for]="'f-' + at.chave" [title]="at.nome">{{ at.sigla }}</label>
+                <input [id]="'f-' + at.chave" type="number" min="1" max="30" [name]="at.chave" [disabled]="travarNivel" class="form-control atributo-valor"
+                       [(ngModel)]="personagem.atributo[at.chave]" [attr.aria-label]="at.nome" />
+                <span class="atributo-mod" [attr.aria-label]="'Modificador de ' + at.nome">{{ mod(at.chave) }}</span>
+                <label class="checkbox-label atributo-save">
+                  <input type="checkbox" [name]="'save-' + at.chave" [disabled]="travarNivel" [(ngModel)]="personagem.atributo[at.save]" /> Salvaguarda
+                </label>
+              </div>
+            }
           </div>
+        </section>
 
-          <hr style="border-color: var(--tint-2); margin: 2rem 0;" />
-
-          <!-- Atributos base e Salvaguardas -->
-          <div class="form-group row" style="display: flex; gap: 10px;">
-            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <label class="form-label text-center">FOR</label>
-              <input type="number" name="forca" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.forca" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveFor" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaForca" /> Save</label>
+        <section class="bloco">
+          <h3 class="bloco-titulo"><i class="bi bi-shield-shaded" aria-hidden="true"></i> Combate</h3>
+          <div class="grade grade-4">
+            <div class="campo">
+              <label class="form-label" for="f-pv" [class.obrig]="obrig('vidaMaxima')">PV máximos</label>
+              <input id="f-pv" type="number" min="1" name="vidaMaxima" [disabled]="travarNivel" class="form-control" [class.invalido]="falta('vidaMaxima')" [(ngModel)]="personagem.personagemCombate.vidaMaxima" />
+              @if (pvDaRegra !== null && !travarNivel && personagem.personagemCombate.vidaMaxima !== pvDaRegra) {
+                <button type="button" class="link-sugestao" (click)="personagem.personagemCombate.vidaMaxima = pvDaRegra">Pela regra: {{ pvDaRegra }} PV — usar</button>
+              }
             </div>
-            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <label class="form-label text-center">DES</label>
-              <input type="number" name="destreza" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.destreza" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveDes" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaDestreza" /> Save</label>
+            <div class="campo">
+              <label class="form-label" for="f-ca" [class.obrig]="obrig('classeArmadura')">Classe de armadura (CA)</label>
+              <input id="f-ca" type="number" min="1" name="ca" class="form-control" [class.invalido]="falta('classeArmadura')" [(ngModel)]="personagem.personagemCombate.classeArmadura" />
+              @if (caSemArmadura !== null && personagem.personagemCombate.classeArmadura !== caSemArmadura) {
+                <button type="button" class="link-sugestao" (click)="personagem.personagemCombate.classeArmadura = caSemArmadura">Sem armadura: {{ caSemArmadura }} — usar</button>
+              }
             </div>
-            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <label class="form-label text-center">CON</label>
-              <input type="number" name="constituicao" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.constituicao" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCon" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaConstituicao" /> Save</label>
+            <div class="campo">
+              <label class="form-label" for="f-desloc" [class.obrig]="obrig('deslocamento')">Deslocamento</label>
+              <input id="f-desloc" type="text" name="desloc" class="form-control" [class.invalido]="falta('deslocamento')" [(ngModel)]="personagem.personagemCombate.deslocamento" placeholder="9m" />
             </div>
-            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <label class="form-label text-center">INT</label>
-              <input type="number" name="inteligencia" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.inteligencia" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveInt" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaInteligencia" /> Save</label>
+            <div class="campo">
+              <label class="form-label" for="f-prof">Bônus de proficiência</label>
+              <input id="f-prof" type="number" name="profBonus" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.proficienciaBonus" />
             </div>
-            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <label class="form-label text-center">SAB</label>
-              <input type="number" name="sabedoria" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.sabedoria" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveSab" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaSabedoria" /> Save</label>
-            </div>
-            <div class="col" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <label class="form-label text-center">CAR</label>
-              <input type="number" name="carisma" [disabled]="travarNivel" class="form-control text-center" [(ngModel)]="personagem.atributo.carisma" />
-              <label class="checkbox-label" style="font-size: 0.8rem;"><input type="checkbox" name="saveCar" [disabled]="travarNivel" [(ngModel)]="personagem.atributo.proficienciaSalvaguardaCarisma" /> Save</label>
-            </div>
+            @if (personagem.tipoId === 1) {
+              <div class="campo">
+                <label class="form-label" for="f-dv">Dados de vida</label>
+                <input id="f-dv" type="text" name="dadoVidaMax" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemCombate.dadoVidaMaximo" placeholder="Ex: 3d10" />
+              </div>
+            } @else {
+              <div class="campo">
+                <label class="form-label" for="f-formula">Fórmula dos PV</label>
+                <input id="f-formula" type="text" name="formulaDadoVida" class="form-control" [(ngModel)]="personagem.personagemNpc.formulaDadoVida" placeholder="Ex: 2d8+2" />
+              </div>
+            }
           </div>
+        </section>
 
-          <ng-container *ngIf="personagem.tipoId !== 1">
-            <hr style="border-color: var(--tint-2); margin: 2rem 0;" />
-            <div class="form-group row">
-              <div class="col"><label class="form-label">Vulnerabilidades a Dano</label><input type="text" name="vulnerabilidades" class="form-control" [(ngModel)]="personagem.personagemNpc.vulnerabilidades" /></div>
-              <div class="col"><label class="form-label">Resistências a Dano</label><input type="text" name="resistencias" class="form-control" [(ngModel)]="personagem.personagemNpc.resistencias" /></div>
+        <ng-container *ngIf="personagem.tipoId !== 1">
+          <section class="bloco">
+            <h3 class="bloco-titulo"><i class="bi bi-eye" aria-hidden="true"></i> Defesas e sentidos</h3>
+            <div class="grade grade-2">
+              <div class="campo"><label class="form-label" for="f-vuln">Vulnerabilidades a dano</label><input id="f-vuln" type="text" name="vulnerabilidades" class="form-control" [(ngModel)]="personagem.personagemNpc.vulnerabilidades" /></div>
+              <div class="campo"><label class="form-label" for="f-resist">Resistências a dano</label><input id="f-resist" type="text" name="resistencias" class="form-control" [(ngModel)]="personagem.personagemNpc.resistencias" /></div>
+              <div class="campo"><label class="form-label" for="f-imun">Imunidades a dano</label><input id="f-imun" type="text" name="imunidades" class="form-control" [(ngModel)]="personagem.personagemNpc.imunidadesDano" /></div>
+              <div class="campo"><label class="form-label" for="f-imunc">Imunidades a condição</label><input id="f-imunc" type="text" name="imunidadesCond" class="form-control" [(ngModel)]="personagem.personagemNpc.imunidadesCondicao" /></div>
             </div>
-            <div class="form-group row mt-2">
-              <div class="col"><label class="form-label">Imunidades a Dano</label><input type="text" name="imunidades" class="form-control" [(ngModel)]="personagem.personagemNpc.imunidadesDano" /></div>
-              <div class="col"><label class="form-label">Imunidades a Condição</label><input type="text" name="imunidadesCond" class="form-control" [(ngModel)]="personagem.personagemNpc.imunidadesCondicao" /></div>
+            <div class="campo">
+              <label class="form-label" for="f-sentidos">Sentidos</label>
+              <input id="f-sentidos" type="text" name="sentidos" class="form-control" [(ngModel)]="personagem.personagemNpc.sentidos" placeholder="Ex: Visão no escuro 18m, Percepção passiva 15" />
             </div>
-            <div class="form-group mt-2">
-              <label class="form-label">Sentidos</label><input type="text" name="sentidos" class="form-control" [(ngModel)]="personagem.personagemNpc.sentidos" placeholder="Ex: Visão no escuro 18m, Percepção passiva 15" />
-            </div>
-          </ng-container>
+          </section>
+        </ng-container>
 
-          <h3 class="text-accent title-glow mt-4" style="margin-bottom: 1rem;">Perícias (Proficiências)</h3>
+        <section class="bloco">
+          <h3 class="bloco-titulo"><i class="bi bi-check2-square" aria-hidden="true"></i> Perícias</h3>
           <div class="pericias-grid">
             @for (pericia of periciasDisponiveis; track pericia.periciaId) {
               <label class="checkbox-label pericia-item">
-                <input type="checkbox" [checked]="selectedPericiasIds.includes(pericia.periciaId)" (change)="togglePericia(pericia.periciaId)" /> 
+                <input type="checkbox" [checked]="selectedPericiasIds.includes(pericia.periciaId)" (change)="togglePericia(pericia.periciaId)" />
                 <span>{{ pericia.nome }}</span>
               </label>
             }
           </div>
+        </section>
 
-          <h3 class="text-accent title-glow mt-4" style="margin-bottom: 1rem;">Magias e Conjuração</h3>
-          <div class="form-group row">
-            <div class="col">
-              <label class="form-label">Atributo de Conjuração</label>
-              <select name="atributoConjuracao" class="form-control" [(ngModel)]="personagem.personagemConjuracao.atributoConjuracao">
+        <section class="bloco">
+          <h3 class="bloco-titulo"><i class="bi bi-stars" aria-hidden="true"></i> Magias e conjuração</h3>
+          <div class="grade grade-4">
+            <div class="campo">
+              <label class="form-label" for="f-conj">Atributo de conjuração</label>
+              <select id="f-conj" name="atributoConjuracao" class="form-control" [(ngModel)]="personagem.personagemConjuracao.atributoConjuracao">
                 <option value="Nenhum">Nenhum</option>
                 <option value="Inteligencia">Inteligência</option>
                 <option value="Sabedoria">Sabedoria</option>
                 <option value="Carisma">Carisma</option>
               </select>
             </div>
-            <div class="col"><label class="form-label">Slots Nível 1</label><input type="number" name="slots1" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel1Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 2</label><input type="number" name="slots2" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel2Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 3</label><input type="number" name="slots3" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel3Max" /></div>
           </div>
-          <div class="form-group row mt-2">
-            <div class="col"><label class="form-label">Slots Nível 4</label><input type="number" name="slots4" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel4Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 5</label><input type="number" name="slots5" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel5Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 6</label><input type="number" name="slots6" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel6Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 7</label><input type="number" name="slots7" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel7Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 8</label><input type="number" name="slots8" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel8Max" /></div>
-            <div class="col"><label class="form-label">Slots Nível 9</label><input type="number" name="slots9" [disabled]="travarNivel" class="form-control" [(ngModel)]="personagem.personagemConjuracao.slotsNivel9Max" /></div>
+          <p class="form-label slots-rotulo">Espaços de magia por círculo</p>
+          <div class="slots">
+            @for (n of circulos; track n) {
+              <div class="slot">
+                <label [for]="'f-slots' + n">{{ n }}º</label>
+                <input [id]="'f-slots' + n" type="number" min="0" [name]="'slots' + n" [disabled]="travarNivel" class="form-control text-center"
+                       [(ngModel)]="personagem.personagemConjuracao['slotsNivel' + n + 'Max']" />
+              </div>
+            }
           </div>
-        </div>
+        </section>
       </ng-container>
 
       <!-- ABA DETALHES & HISTÓRIA -->
       <ng-container *ngIf="activeTab === 'detalhes'">
-        <div class="glass-panel" style="padding: var(--spacing-xl);">
-          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Lore</h3>
+        <section class="bloco">
+          <h3 class="bloco-titulo"><i class="bi bi-book" aria-hidden="true"></i> História e detalhes</h3>
           
           <div class="form-group mt-2">
             <label class="form-label">Idiomas</label>
@@ -228,123 +362,202 @@
             <div class="col"><label class="form-label">Aparência</label><textarea name="aparencia" class="form-control" [(ngModel)]="personagem.personagemDetalhes.aparencia" rows="3"></textarea></div>
             <div class="col"><label class="form-label">História e Personalidade</label><textarea name="historia" class="form-control" [(ngModel)]="personagem.personagemDetalhes.historiaPersonalidade" rows="3"></textarea></div>
           </div>
-        </div>
+        </section>
       </ng-container>
 
-      <!-- ABA AÇÕES (Somente NPC/Monstro) -->
-      <ng-container *ngIf="activeTab === 'acoes' && personagem.tipoId !== 1">
-        <div class="glass-panel" style="padding: var(--spacing-xl);">
-          <h3 class="text-accent title-glow" style="margin-bottom: 1rem;">Montador de Stat Block</h3>
+      <!-- ABA AÇÕES (NPC de combate, vilão e monstro) -->
+      <ng-container *ngIf="activeTab === 'acoes' && personagem.tipoId !== 1 && comBloco">
+        <p class="acoes-intro">
+          Monte o que a criatura faz no turno, na ordem do bloco de estatísticas. Itens sem nome são descartados ao salvar.
+          Ataques e magias também entram nas abas de combate da ficha.
+        </p>
 
-
-          <!-- Ações Padrão -->
-          <div class="stat-block-section mt-4">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h4>Ações Padrão</h4>
-              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoPadrao()">+ Ação</button>
+        <!-- Traços: habilidades passivas -->
+        <section class="bloco grupo-acoes">
+          <header class="grupo-cabeca">
+            <div>
+              <h3 class="bloco-titulo"><i class="bi bi-gem" aria-hidden="true"></i> Traços <span class="contador">{{ personagem.personagemTracosEspeciais.length }}</span></h3>
+              <p class="dica">Sempre ativos: Resistência Mágica, Faro Aguçado, Táticas de Matilha…</p>
             </div>
-            @for (acao of personagem.personagemAcoesPadrao; track $index) {
-              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
-                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoPadrao($index)" title="Remover Ação">&times;</button>
-                <div class="form-group row">
-                  <div class="col-2"><input type="text" name="acaoNome{{$index}}" class="form-control" [(ngModel)]="acao.nome" placeholder="Nome (Ex: Garra)" /></div>
-                  <div class="col-2"><input type="text" name="acaoAlc{{$index}}" class="form-control" [(ngModel)]="acao.alcance" placeholder="Alcance (1,5m)" /></div>
-                  <div class="col-2"><input type="number" name="acaoBonus{{$index}}" class="form-control" [(ngModel)]="acao.bonusAcerto" placeholder="Bônus (0)" /></div>
-                  <div class="col-2"><input type="text" name="acaoDano{{$index}}" class="form-control" [(ngModel)]="acao.dano" placeholder="Dano (1d8+3)" /></div>
-                  <div class="col-2"><input type="text" name="acaoTipo{{$index}}" class="form-control" [(ngModel)]="acao.tipoDano" placeholder="Tipo (Cortante)" /></div>
-                  <div class="col-2">
-                    <select name="acaoAtributo{{$index}}" class="form-control" [(ngModel)]="acao.atributoBase">
-                      <option value="Forca">Força</option>
-                      <option value="Destreza">Destreza</option>
-                      <option value="Constituicao">Constituição</option>
-                      <option value="Inteligencia">Inteligência</option>
-                      <option value="Sabedoria">Sabedoria</option>
-                      <option value="Carisma">Carisma</option>
+            <button type="button" class="btn-secondary btn-sm" (click)="addTracoEspecial()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Traço</button>
+          </header>
+          @for (traco of personagem.personagemTracosEspeciais; track $index) {
+            <article class="acao-card">
+              <div class="acao-topo">
+                <input type="text" name="tracoNome{{$index}}" class="form-control acao-nome" [(ngModel)]="traco.nome" placeholder="Nome do traço" aria-label="Nome do traço" />
+                <button type="button" class="btn-remover" (click)="removeTracoEspecial($index)" title="Remover traço" aria-label="Remover traço"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+              </div>
+              <textarea name="tracoDesc{{$index}}" class="form-control" rows="2" [(ngModel)]="traco.descricao" placeholder="O que o traço faz" aria-label="Descrição do traço"></textarea>
+            </article>
+          } @empty {
+            <p class="vazio">Nenhum traço.</p>
+          }
+        </section>
+
+        <!-- Ações -->
+        <section class="bloco grupo-acoes">
+          <header class="grupo-cabeca">
+            <div>
+              <h3 class="bloco-titulo"><i class="bi bi-lightning" aria-hidden="true"></i> Ações <span class="contador">{{ personagem.personagemAcoesPadrao.length }}</span></h3>
+              <p class="dica">Ataques, magias e habilidades que gastam a ação do turno.</p>
+            </div>
+            <button type="button" class="btn-secondary btn-sm" (click)="addAcaoPadrao()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ação</button>
+          </header>
+          @for (acao of personagem.personagemAcoesPadrao; track $index) {
+            <article class="acao-card" [class.ataque]="acao.tipoAcao === 'Ataque'">
+              <div class="acao-topo">
+                <input type="text" name="acaoNome{{$index}}" class="form-control acao-nome" [(ngModel)]="acao.nome" placeholder="Nome (ex: Garra)" aria-label="Nome da ação" />
+                <div class="segmentado" role="radiogroup" aria-label="Tipo da ação">
+                  @for (t of tiposDeAcao; track t.valor) {
+                    <button type="button" role="radio" [class.ativo]="acao.tipoAcao === t.valor" [attr.aria-checked]="acao.tipoAcao === t.valor" (click)="acao.tipoAcao = t.valor">
+                      <i class="bi" [ngClass]="t.icone" aria-hidden="true"></i> {{ t.nome }}
+                    </button>
+                  }
+                </div>
+                <button type="button" class="btn-remover" (click)="removeAcaoPadrao($index)" title="Remover ação" aria-label="Remover ação"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+              </div>
+
+              @if (acao.tipoAcao === 'Ataque') {
+                <div class="grade grade-acao">
+                  <div class="campo">
+                    <label class="form-label" for="acaoAtributo{{$index}}">Atributo</label>
+                    <select id="acaoAtributo{{$index}}" name="acaoAtributo{{$index}}" class="form-control" [(ngModel)]="acao.atributoBase">
+                      @for (at of atributosDeAtaque; track at.valor) { <option [value]="at.valor">{{ at.nome }}</option> }
                     </select>
                   </div>
-                </div>
-                <div class="form-group row mt-2">
-                  <div class="col-2">
-                    <select name="acaoTipoClass{{$index}}" class="form-control" [(ngModel)]="acao.tipoAcao">
-                      <option value="Ataque">Ataque</option>
-                      <option value="Magia">Magia</option>
-                      <option value="Habilidade">Habilidade</option>
-                    </select>
+                  <div class="campo">
+                    <label class="form-label" for="acaoBonus{{$index}}">Bônus de acerto</label>
+                    <input id="acaoBonus{{$index}}" type="number" name="acaoBonus{{$index}}" class="form-control" [(ngModel)]="acao.bonusAcerto" placeholder="+0" />
+                    @if (bonusDaFicha(acao); as b) {
+                      @if (b.valor !== toNumero(acao.bonusAcerto)) {
+                        <button type="button" class="link-sugestao" (click)="acao.bonusAcerto = b.valor">Pela ficha: {{ b.texto }} — usar</button>
+                      }
+                    }
                   </div>
-                  <div class="col-1"><label class="checkbox-label" style="font-size: 0.8rem; padding-top: 10px;"><input type="checkbox" name="acaoProf{{$index}}" [(ngModel)]="acao.proficiente" /> Prof.</label></div>
-                  <div class="col-9">
-                    <input type="text" name="acaoDesc{{$index}}" class="form-control" [(ngModel)]="acao.descricao" placeholder="Descrição adicional (Efeitos, Salvaguardas, Propriedades)" />
+                  <div class="campo">
+                    <label class="form-label" for="acaoAlc{{$index}}">Alcance</label>
+                    <input id="acaoAlc{{$index}}" type="text" name="acaoAlc{{$index}}" class="form-control" [(ngModel)]="acao.alcance" placeholder="1,5 m ou 24/96 m" />
                   </div>
+                  <div class="campo">
+                    <label class="form-label" for="acaoDano{{$index}}">Dano</label>
+                    <input id="acaoDano{{$index}}" type="text" name="acaoDano{{$index}}" class="form-control" [(ngModel)]="acao.dano" placeholder="1d8+3" />
+                  </div>
+                  <div class="campo">
+                    <label class="form-label" for="acaoTipo{{$index}}">Tipo de dano</label>
+                    <input id="acaoTipo{{$index}}" type="text" name="acaoTipo{{$index}}" list="lista-tipos-dano" class="form-control" [(ngModel)]="acao.tipoDano" placeholder="Cortante" autocomplete="off" />
+                  </div>
+                  <label class="checkbox-label acao-prof">
+                    <input type="checkbox" name="acaoProf{{$index}}" [(ngModel)]="acao.proficiente" /> Proficiente
+                  </label>
                 </div>
-              </div>
-            }
-          </div>
+              }
 
-          <!-- Ações Bônus -->
-          <div class="stat-block-section mt-4">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h4>Ações Bônus</h4>
-              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoBonus()">+ Ação Bônus</button>
+              <textarea name="acaoDesc{{$index}}" class="form-control" rows="2" [(ngModel)]="acao.descricao"
+                        [placeholder]="acao.tipoAcao === 'Ataque' ? 'Efeito extra no acerto (opcional): derruba, agarra, salvaguarda…' : 'O que acontece: alvo, área, salvaguarda e efeito'" aria-label="Descrição da ação"></textarea>
+
+              @if (acao.nome) { <p class="acao-previa"><strong>{{ acao.nome }}.</strong> {{ previaDaAcao(acao) }}</p> }
+            </article>
+          } @empty {
+            <p class="vazio">Nenhuma ação. Toda criatura de combate costuma ter pelo menos um ataque.</p>
+          }
+        </section>
+
+        <!-- Ações bônus -->
+        <section class="bloco grupo-acoes">
+          <header class="grupo-cabeca">
+            <div>
+              <h3 class="bloco-titulo"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Ações bônus <span class="contador">{{ personagem.personagemAcoesBonus.length }}</span></h3>
+              <p class="dica">Algo rápido além da ação: Fuga Ágil, Investida…</p>
             </div>
-            @for (bonus of personagem.personagemAcoesBonus; track $index) {
-              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
-                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoBonus($index)" title="Remover Ação Bônus">&times;</button>
-                <div class="form-group row">
-                  <div class="col-3"><input type="text" name="bonusNome{{$index}}" class="form-control" [(ngModel)]="bonus.nome" placeholder="Nome" /></div>
-                  <div class="col-9"><input type="text" name="bonusDesc{{$index}}" class="form-control" [(ngModel)]="bonus.descricao" placeholder="Descrição" /></div>
-                </div>
+            <button type="button" class="btn-secondary btn-sm" (click)="addAcaoBonus()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ação bônus</button>
+          </header>
+          @for (bonus of personagem.personagemAcoesBonus; track $index) {
+            <article class="acao-card">
+              <div class="acao-topo">
+                <input type="text" name="bonusNome{{$index}}" class="form-control acao-nome" [(ngModel)]="bonus.nome" placeholder="Nome" aria-label="Nome da ação bônus" />
+                <button type="button" class="btn-remover" (click)="removeAcaoBonus($index)" title="Remover ação bônus" aria-label="Remover ação bônus"><i class="bi bi-trash3" aria-hidden="true"></i></button>
               </div>
-            }
-          </div>
+              <textarea name="bonusDesc{{$index}}" class="form-control" rows="2" [(ngModel)]="bonus.descricao" placeholder="O que faz" aria-label="Descrição da ação bônus"></textarea>
+            </article>
+          } @empty {
+            <p class="vazio">Nenhuma ação bônus.</p>
+          }
+        </section>
 
-          <!-- Reações -->
-          <div class="stat-block-section mt-4">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h4>Reações</h4>
-              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addReacao()">+ Reação</button>
+        <!-- Reações -->
+        <section class="bloco grupo-acoes">
+          <header class="grupo-cabeca">
+            <div>
+              <h3 class="bloco-titulo"><i class="bi bi-arrow-return-left" aria-hidden="true"></i> Reações <span class="contador">{{ personagem.personagemReacoes.length }}</span></h3>
+              <p class="dica">Uma por rodada, quando o gatilho acontece: Aparar, Contramágica…</p>
             </div>
-            @for (reacao of personagem.personagemReacoes; track $index) {
-              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
-                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeReacao($index)" title="Remover Reação">&times;</button>
-                <div class="form-group row">
-                  <div class="col-3"><input type="text" name="reacaoNome{{$index}}" class="form-control" [(ngModel)]="reacao.nome" placeholder="Nome" /></div>
-                  <div class="col-4"><input type="text" name="reacaoGatilho{{$index}}" class="form-control" [(ngModel)]="reacao.gatilho" placeholder="Gatilho (Quando atacado)" /></div>
-                  <div class="col-5"><input type="text" name="reacaoDesc{{$index}}" class="form-control" [(ngModel)]="reacao.descricao" placeholder="Descrição" /></div>
-                </div>
+            <button type="button" class="btn-secondary btn-sm" (click)="addReacao()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Reação</button>
+          </header>
+          @for (reacao of personagem.personagemReacoes; track $index) {
+            <article class="acao-card">
+              <div class="acao-topo">
+                <input type="text" name="reacaoNome{{$index}}" class="form-control acao-nome" [(ngModel)]="reacao.nome" placeholder="Nome" aria-label="Nome da reação" />
+                <button type="button" class="btn-remover" (click)="removeReacao($index)" title="Remover reação" aria-label="Remover reação"><i class="bi bi-trash3" aria-hidden="true"></i></button>
               </div>
-            }
-          </div>
+              <div class="campo">
+                <label class="form-label" for="reacaoGatilho{{$index}}">Gatilho</label>
+                <input id="reacaoGatilho{{$index}}" type="text" name="reacaoGatilho{{$index}}" class="form-control" [(ngModel)]="reacao.gatilho" placeholder="Quando uma criatura que ela vê a acerta com um ataque corpo a corpo" />
+              </div>
+              <textarea name="reacaoDesc{{$index}}" class="form-control" rows="2" [(ngModel)]="reacao.descricao" placeholder="Resposta: o que ela faz" aria-label="Descrição da reação"></textarea>
+            </article>
+          } @empty {
+            <p class="vazio">Nenhuma reação.</p>
+          }
+        </section>
 
-          <!-- Ações Lendárias -->
-          <div class="stat-block-section mt-4">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h4>Ações Lendárias</h4>
-              <button type="button" class="btn-primary" style="padding: 5px 15px;" (click)="addAcaoLendaria()">+ Ação Lendária</button>
+        <!-- Ações lendárias -->
+        <section class="bloco grupo-acoes">
+          <header class="grupo-cabeca">
+            <div>
+              <h3 class="bloco-titulo"><i class="bi bi-award" aria-hidden="true"></i> Ações lendárias <span class="contador">{{ personagem.personagemAcoesLendarias.length }}</span></h3>
+              <p class="dica">Usadas logo após o turno de outra criatura; costumam ser 3 usos por rodada. Típicas de vilões e chefes.</p>
             </div>
-            @for (lendaria of personagem.personagemAcoesLendarias; track $index) {
-              <div class="action-card mt-2 p-3" style="background: var(--tint-1); border-radius: 8px; position: relative; padding-right: 40px !important;">
-                <button type="button" class="btn-icon-danger" style="position: absolute; top: 10px; right: 10px;" (click)="removeAcaoLendaria($index)" title="Remover Ação Lendária">&times;</button>
-                <div class="form-group row">
-                  <div class="col-3"><input type="text" name="lendariaNome{{$index}}" class="form-control" [(ngModel)]="lendaria.nome" placeholder="Nome" /></div>
-                  <div class="col-2"><input type="number" name="lendariaCusto{{$index}}" class="form-control" [(ngModel)]="lendaria.custoAcao" placeholder="Custo (1)" /></div>
-                  <div class="col-7"><input type="text" name="lendariaDesc{{$index}}" class="form-control" [(ngModel)]="lendaria.descricao" placeholder="Descrição" /></div>
-                </div>
+            <button type="button" class="btn-secondary btn-sm" (click)="addAcaoLendaria()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ação lendária</button>
+          </header>
+          @for (lendaria of personagem.personagemAcoesLendarias; track $index) {
+            <article class="acao-card">
+              <div class="acao-topo">
+                <input type="text" name="lendariaNome{{$index}}" class="form-control acao-nome" [(ngModel)]="lendaria.nome" placeholder="Nome" aria-label="Nome da ação lendária" />
+                <label class="custo">
+                  <span>Custo</span>
+                  <input type="number" min="1" max="3" name="lendariaCusto{{$index}}" class="form-control" [(ngModel)]="lendaria.custoAcao" placeholder="1" aria-label="Custo em usos" />
+                </label>
+                <button type="button" class="btn-remover" (click)="removeAcaoLendaria($index)" title="Remover ação lendária" aria-label="Remover ação lendária"><i class="bi bi-trash3" aria-hidden="true"></i></button>
               </div>
-            }
-          </div>
+              <textarea name="lendariaDesc{{$index}}" class="form-control" rows="2" [(ngModel)]="lendaria.descricao" placeholder="O que faz" aria-label="Descrição da ação lendária"></textarea>
+            </article>
+          } @empty {
+            <p class="vazio">Nenhuma ação lendária.</p>
+          }
+        </section>
 
-        </div>
+        <datalist id="lista-tipos-dano">@for (t of tiposDeDano; track t) { <option [value]="t"></option> }</datalist>
       </ng-container>
 
-      <!-- BARRA FLUTUANTE DE SALVAR -->
+      <!-- BARRA DE SALVAR -->
       <div class="save-bar">
+        @if (!isEditMode && faltas.length > 0) {
+          <span class="save-status"><i class="bi bi-exclamation-circle" aria-hidden="true"></i> {{ faltas.length === 1 ? 'Falta 1 item' : 'Faltam ' + faltas.length + ' itens' }}</span>
+        }
         <a class="btn-secondary" routerLink="/personagens">Cancelar</a>
         <!-- Sem [disabled] pelo formulário: ao clicar com algo faltando, um aviso diz o que preencher -->
         <button type="submit" class="btn-primary" [disabled]="isSaving">
-          {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar alterações' : 'Salvar personagem') }}
+          {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar alterações' : 'Criar personagem') }}
         </button>
       </div>
 
+      <!-- Sugestões das regras (dá para digitar outra coisa, para conteúdo da casa) -->
+      <datalist id="lista-classes">@for (c of classes; track c.nome) { <option [value]="c.nome"></option> }</datalist>
+      <datalist id="lista-especies">@for (e of especies; track e) { <option [value]="e"></option> }</datalist>
+      <datalist id="lista-antecedentes">@for (a of antecedentes; track a) { <option [value]="a"></option> }</datalist>
+      <datalist id="lista-alinhamentos">@for (a of alinhamentos; track a) { <option [value]="a"></option> }</datalist>
+      <datalist id="lista-tamanhos">@for (t of tamanhos; track t) { <option [value]="t"></option> }</datalist>
+      <datalist id="lista-tipos-criatura">@for (t of tiposDeCriatura; track t) { <option [value]="t"></option> }</datalist>
     </form>
   </main>
 </div>

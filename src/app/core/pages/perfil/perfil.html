@@ -49,22 +49,13 @@
         @if (p.conta.beta) {
           <div class="plano-atual">
             <span class="plano-nome">Beta</span>
-            <span class="chip chip-hi">Mestre</span>
+            <span class="chip chip-hi">Acesso completo</span>
           </div>
-          <p class="texto">Durante o beta você tem acesso completo de Mestre: campanhas e jogadores sem limite. Os planos chegam quando o beta acabar.</p>
-        } @else if (p.conta.tipo === 'Jogador') {
-          <div class="plano-atual">
-            <span class="plano-nome">Jogador</span>
-            <span class="chip chip-ok">Gratuito</span>
-          </div>
-          <p class="texto">Você entra nas campanhas pelo convite do Mestre e cria os seus personagens. Quer mestrar a sua própria mesa?</p>
-          <button type="button" class="btn-primary" [disabled]="virandoMestre()" (click)="virarMestre()">
-            {{ virandoMestre() ? 'Ativando...' : 'Virar Mestre (Free)' }}
-          </button>
+          <p class="texto">Durante o beta você tem acesso completo: campanhas e jogadores sem limite. Os planos chegam quando o beta acabar.</p>
         } @else {
           <div class="plano-atual">
             <span class="plano-nome">{{ p.conta.nomePlano }}</span>
-            <span class="chip chip-hi">Mestre</span>
+            @if (p.conta.plano === 'Free') { <span class="chip chip-ok">Gratuito</span> }
           </div>
           <dl class="limites">
             <div>

@@ -40,12 +40,9 @@
             @if (usuario()?.podeCriarCampanha) {
               <p class="destaque-meta"><span>Crie uma campanha, convide os jogadores e registre a história.</span></p>
               <div class="destaque-acoes"><a class="btn-primary" routerLink="/campaigns/create">Criar campanha</a></div>
-            } @else if (usuario()?.papel === 'Mestre') {
+            } @else {
               <p class="destaque-meta"><span>O seu plano não permite mais campanhas. Veja os detalhes em Meu perfil.</span></p>
               <div class="destaque-acoes"><a class="btn-secondary" routerLink="/perfil">Ver meu plano</a></div>
-            } @else {
-              <p class="destaque-meta"><span>Peça o link de convite ao seu Mestre para entrar na mesa. Quer mestrar? Vire Mestre em Meu perfil.</span></p>
-              <div class="destaque-acoes"><a class="btn-secondary" routerLink="/perfil">Meu perfil</a></div>
             }
           </div>
         }

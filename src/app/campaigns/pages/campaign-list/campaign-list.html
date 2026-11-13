@@ -15,7 +15,7 @@
     </div>
     @if (usuario()?.podeCriarCampanha) {
       <a class="btn-primary" routerLink="/campaigns/create">+ Nova campanha</a>
-    } @else if (usuario()?.papel === 'Mestre') {
+    } @else if (usuario()) {
       <a class="btn-secondary" routerLink="/perfil" title="Você atingiu o limite de campanhas do seu plano">Limite do plano atingido</a>
     }
   </header>
@@ -78,17 +78,11 @@
             <strong>{{ total === 0 ? 'Comece sua primeira campanha' : 'Nova campanha' }}</strong>
             <small>Crie o mundo, convide os jogadores e registre a história.</small>
           </a>
-        } @else if (usuario()?.papel === 'Mestre') {
+        } @else {
           <a class="tomo tomo-novo" routerLink="/perfil">
             <span class="novo-mais" aria-hidden="true"><i class="bi bi-lock"></i></span>
             <strong>Limite do plano atingido</strong>
             <small>O seu plano não permite mais campanhas. Veja os detalhes em Meu perfil.</small>
-          </a>
-        } @else {
-          <a class="tomo tomo-novo" routerLink="/perfil">
-            <span class="novo-mais" aria-hidden="true"><i class="bi bi-envelope-open"></i></span>
-            <strong>{{ total === 0 ? 'Entre na sua primeira campanha' : 'Quer mestrar?' }}</strong>
-            <small>Peça o link de convite ao seu Mestre. Para criar a sua própria mesa, vire Mestre em Meu perfil.</small>
           </a>
         }
       </li>

@@ -22,6 +22,9 @@
         <a class="btn-secondary" routerLink="/anotacoes" [queryParams]="{ campanha: campaign.campanhaId }">
           <i class="bi bi-journal-text" aria-hidden="true"></i> Anotações
         </a>
+        <a class="btn-secondary" [routerLink]="['/campaigns', campaign.campanhaId, 'modelos']" title="Modelos 3D: peças de cenário e miniaturas">
+          <i class="bi bi-box" aria-hidden="true"></i> Biblioteca 3D
+        </a>
         @if (ehMestre) {
           <a class="btn-secondary" [routerLink]="['/campaigns', campaign.campanhaId, 'murais']" title="Quadros livres só seus">
             <i class="bi bi-easel2" aria-hidden="true"></i> Murais

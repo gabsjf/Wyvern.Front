@@ -896,3 +896,55 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
 @media (prefers-reduced-motion: reduce) {
   .ping-anel { animation: none; opacity: 0.7; transform: scale(0.6); }
 }
+
+/* ---- peças de cenário 3D no 2D (WYV-25): a área que ocupam, com o nome ---- */
+.peca-3d {
+  position: absolute;
+  z-index: 2; // abaixo dos marcadores e dos tokens
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  border: 2px dashed color-mix(in srgb, var(--hi) 70%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--hi) 12%, transparent);
+  color: var(--hi);
+  pointer-events: none;
+  overflow: hidden;
+
+  &.editavel { pointer-events: auto; cursor: grab; }
+  &.editavel:hover { background: color-mix(in srgb, var(--hi) 22%, transparent); }
+  &.selecionada { border-style: solid; border-color: var(--hi); box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi) 40%, transparent); }
+  &.arrastando { cursor: grabbing; z-index: 50; opacity: 0.85; }
+  &.escondida { opacity: 0.55; border-color: var(--muted); color: var(--muted); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+}
+.peca-icone {
+  font-size: 1.4rem;
+  transform-origin: center;
+  transition: transform 0.15s;
+}
+.peca-nome {
+  max-width: 100%;
+  padding: 0 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.botoes-linha { display: flex; gap: var(--spacing-xs, 0.4rem); flex-wrap: wrap; }
+.opcoes-peca select { max-width: 11rem; }
+
+/* inspetor da peça de cenário: três eixos lado a lado, como nas engines */
+.inspetor {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  legend { padding: 0; margin-bottom: 0.2rem; font-size: 0.8rem; color: var(--muted); }
+  label { display: grid; gap: 0.1rem; font-size: 0.75rem; color: var(--muted); }
+  input { width: 100%; min-width: 0; font-variant-numeric: tabular-nums; }
+}

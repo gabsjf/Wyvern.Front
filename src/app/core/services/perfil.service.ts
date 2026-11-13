@@ -10,18 +10,16 @@ export interface Perfil {
   email: string;
   /** E-mail novo aguardando o clique no link; nulo se não há troca pendente. */
   emailPendente: string | null;
-  papel: string;
   criadoEm: string;
   fotoVersao: number;
   conta: Conta;
 }
 
-/** Tipo de conta, plano, limites e uso. Limite nulo = sem limite. */
+/** Plano, limites e uso. Limite nulo = sem limite. */
 export interface Conta {
-  tipo: 'Mestre' | 'Jogador';
   plano: string;
   nomePlano: string;
-  /** No beta toda conta tem acesso completo de Mestre. */
+  /** No beta toda conta tem acesso completo, sem limites. */
   beta: boolean;
   podeCriarCampanha: boolean;
   motivoBloqueio: string | null;
@@ -92,12 +90,6 @@ export class PerfilService {
     return this.http.post<{ message: string }>(`${this.apiUrl}/email`, { novoEmail, senhaAtual });
   }
 
-  /** Conta Jogador passa a ser Mestre no plano Free. */
-  virarMestre(): Observable<Conta> {
-    return this.http.post<Conta>(`${this.apiUrl}/virar-mestre`, null).pipe(
-      tap(c => this.auth.atualizarUsuario({ papel: c.tipo, podeCriarCampanha: c.podeCriarCampanha }))
-    );
-  }
 
   /** O que acontece com as campanhas da pessoa se ela excluir a conta agora. */
   previaDeExclusao(): Observable<PreviaDeExclusao> {
@@ -146,7 +138,6 @@ export class PerfilService {
       nome: perfil.nome,
       email: perfil.email,
       fotoVersao: perfil.fotoVersao,
-      papel: perfil.conta.tipo,
       podeCriarCampanha: perfil.conta.podeCriarCampanha,
     });
   }

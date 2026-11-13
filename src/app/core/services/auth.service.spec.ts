@@ -27,19 +27,19 @@ describe('AuthService (detalhes da sessão)', () => {
     await login;
   }
 
-  it('resposta antiga sem foto nem permissão de campanha ganha os valores padrão', async () => {
+  it('resposta antiga sem foto nem permissão de campanha ganha os valores padrão, e o papel da conta é ignorado (WYV-09)', async () => {
     await entrar({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', papel: 'Mestre' });
-    expect(auth.usuarioLogado()).toEqual({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', papel: 'Mestre', fotoVersao: 0, podeCriarCampanha: true });
+    expect(auth.usuarioLogado()).toEqual({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', fotoVersao: 0, podeCriarCampanha: true });
   });
 
   it('o token que vier no corpo do login não fica guardado no usuário', async () => {
-    await entrar({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', papel: 'Mestre', token: 'segredo', refreshToken: 'r' });
+    await entrar({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', token: 'segredo', refreshToken: 'r' });
     expect(JSON.stringify(auth.usuarioLogado())).not.toContain('segredo');
     expect(auth.tokenParaApi()).toBeNull(); // na web a sessão é o cookie
   });
 
   it('atualizarUsuario reflete na hora o nome e a foto novos', async () => {
-    await entrar({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', papel: 'Mestre', fotoVersao: 1 });
+    await entrar({ usuarioId: 1, nome: 'Ana', email: 'ana@x.com', fotoVersao: 1 });
     auth.atualizarUsuario({ nome: 'Ana Tempestade', fotoVersao: 2 });
     expect(auth.usuarioLogado()).toMatchObject({ usuarioId: 1, nome: 'Ana Tempestade', fotoVersao: 2 });
   });

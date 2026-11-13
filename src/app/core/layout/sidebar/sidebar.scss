@@ -39,7 +39,14 @@ $ponto: 900px;
   }
 }
 
-.brand-curto { display: none; }
+.brand-curto {
+  display: none;
+  width: 36px;
+  height: auto;
+  transition: transform 0.2s;
+}
+
+.brand:hover .brand-curto { transform: scale(1.08); }
 
 /* recolhida: só os ícones */
 .rail.recolhida {
@@ -52,7 +59,7 @@ $ponto: 900px;
   }
 
   .brand-completo { display: none; }
-  .brand-curto { display: inline; }
+  .brand-curto { display: block; margin: 0 auto; }
 
   .links a,
   .rail-btn {

@@ -28,6 +28,7 @@ export const routes: Routes = [
         {path: 'campaigns', loadComponent: () => import('./campaigns/pages/campaign-list/campaign-list').then(m => m.CampaignList)},
     {path: 'campaigns/create', loadComponent: () => import('./campaigns/pages/campaign-create/campaign-create').then(m => m.CampaignCreate)},
     {path: 'anotacoes', title: 'Anotações · Wyvern', loadComponent: () => import('./campaigns/pages/anotacoes/anotacoes-pagina').then(m => m.AnotacoesPagina)},
+    {path: 'campaigns/:id/modelos', title: 'Biblioteca 3D · Wyvern', loadComponent: () => import('./campaigns/pages/modelos-3d/modelos-3d').then(m => m.Modelos3d)},
     {path: 'campaigns/:id/murais', title: 'Murais · Wyvern', loadComponent: () => import('./campaigns/pages/murais/murais').then(m => m.Murais)},
     {path: 'campaigns/:id/murais/:muralId', title: 'Mural · Wyvern', loadComponent: () => import('./campaigns/pages/murais/mural-editor/mural-editor').then(m => m.MuralEditor)},
     {path: 'campaigns/:id/timeline', loadComponent: () => import('./campaigns/pages/linha-do-tempo/linha-do-tempo').then(m => m.LinhaDoTempo)},

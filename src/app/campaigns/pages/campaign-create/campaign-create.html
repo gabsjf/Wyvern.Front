@@ -12,11 +12,7 @@
     <div class="aviso-plano" role="status">
       <i class="bi bi-lock" aria-hidden="true"></i>
       <p>
-        @if (usuario()!.papel === 'Mestre') {
-          O seu plano já chegou ao limite de campanhas.
-        } @else {
-          Contas de Jogador entram em campanhas pelo convite do Mestre. Para criar a sua própria mesa, vire Mestre.
-        }
+        O seu plano já chegou ao limite de campanhas.
         <a routerLink="/perfil">Ver meu plano</a>
       </p>
     </div>

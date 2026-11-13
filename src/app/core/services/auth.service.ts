@@ -10,10 +10,9 @@ export interface UsuarioLogado {
   usuarioId: number;
   nome: string;
   email: string;
-  papel: string;
   /** 0 = sem foto; sobe a cada foto nova. */
   fotoVersao: number;
-  /** Conta Mestre com vaga no plano (ou qualquer conta no beta). O servidor confere de novo ao criar. */
+  /** Conta com vaga no plano (ou qualquer conta no beta). O servidor confere de novo ao criar. */
   podeCriarCampanha: boolean;
 }
 
@@ -218,8 +217,8 @@ export class AuthService {
   }
 
   private semToken(resposta: RespostaAuth): UsuarioLogado {
-    const { usuarioId, nome, email, papel, fotoVersao, podeCriarCampanha } = resposta;
-    return { usuarioId, nome, email, papel, fotoVersao: fotoVersao ?? 0, podeCriarCampanha: podeCriarCampanha ?? true };
+    const { usuarioId, nome, email, fotoVersao, podeCriarCampanha } = resposta;
+    return { usuarioId, nome, email, fotoVersao: fotoVersao ?? 0, podeCriarCampanha: podeCriarCampanha ?? true };
   }
 
   private cabecalhosDeEntrada(): HttpHeaders {

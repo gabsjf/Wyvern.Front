@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../environments/environments';
 import { AuthService } from '../../core/services/auth.service';
-import { Cena, Marcador, MarcadorForm, MovimentoToken, Parede, ParedeForm, Traco, TokenCena, TokenForm } from '../models/cena';
+import { Cena, Marcador, MarcadorForm, MovimentoToken, ObjetoCena, Parede, ParedeForm, Traco, TokenCena, TokenForm } from '../models/cena';
 
 export interface PingDoMapa {
   usuarioId: number;
@@ -40,6 +40,7 @@ export interface OuvintesDoMapa {
   cenaAtualizada?: () => void;
   tokenAtualizado?: (token: TokenCena) => void;
   tokenMovido?: (movimento: MovimentoToken) => void;
+  tokenGirado?: (giro: { tokenId: number; cenaId: number; rotacao: number }) => void;
   /** Um retângulo de quadrados foi revelado ou coberto pelo Mestre. */
   neblinaAlterada?: (n: { cenaId: number; coluna: number; linha: number; largura: number; altura: number; revelar: boolean }) => void;
   /** A névoa foi ligada, desligada ou coberta/revelada por inteiro: buscar de novo. */
@@ -54,6 +55,11 @@ export interface OuvintesDoMapa {
   /** Paredes ou portas mudaram: buscar de novo. */
   paredesAtualizadas?: (r: { cenaId: number }) => void;
   tokenRemovido?: (ref: { tokenId: number; cenaId: number }) => void;
+  /** Peça de cenário criada, movida ou alterada. */
+  objetoAtualizado?: (o: ObjetoCena) => void;
+  objetoRemovido?: (r: { objetoId: number; cenaId: number }) => void;
+  /** A biblioteca de modelos ou a miniatura de alguém mudou: recarregar tokens e peças. */
+  modelosAtualizados?: () => void;
   /** A conexão caiu e voltou: o que passou nesse intervalo precisa ser recarregado. */
   reconectou?: () => void;
 }
@@ -222,6 +228,7 @@ export class CenaService {
     conexao.on('CenaAtualizada', () => ouvintes.cenaAtualizada?.());
     conexao.on('TokenAtualizado', (t: TokenCena) => ouvintes.tokenAtualizado?.(t));
     conexao.on('TokenMovido', (m: MovimentoToken) => ouvintes.tokenMovido?.(m));
+    conexao.on('TokenGirado', (g: { tokenId: number; cenaId: number; rotacao: number }) => ouvintes.tokenGirado?.(g));
     conexao.on('NeblinaAlterada', n => ouvintes.neblinaAlterada?.(n));
     conexao.on('NeblinaAtualizada', n => ouvintes.neblinaAtualizada?.(n));
     conexao.on('ParedesAtualizadas', (r: { cenaId: number }) => ouvintes.paredesAtualizadas?.(r));
@@ -233,6 +240,9 @@ export class CenaService {
     conexao.on('ReguaCompartilhada', (r: ReguaDeOutro) => ouvintes.reguaCompartilhada?.(r));
     conexao.on('Ping', (p: PingDoMapa) => ouvintes.ping?.(p));
     conexao.on('TokenRemovido', (r: { tokenId: number; cenaId: number }) => ouvintes.tokenRemovido?.(r));
+    conexao.on('ObjetoAtualizado', (o: ObjetoCena) => ouvintes.objetoAtualizado?.(o));
+    conexao.on('ObjetoRemovido', (r: { objetoId: number; cenaId: number }) => ouvintes.objetoRemovido?.(r));
+    conexao.on('ModelosAtualizados', () => ouvintes.modelosAtualizados?.());
     conexao.onreconnected(async () => {
       await conexao.invoke('EntrarNaCena', campanhaId).catch(() => undefined);
       ouvintes.reconectou?.();
@@ -277,5 +287,10 @@ export class CenaService {
       throw new Error('Sem conexão com a mesa. Tente de novo em instantes.');
     }
     await this.conexao.invoke('MoverToken', this.campanhaId, tokenId, coluna, linha);
+  }
+
+  /** Gira a miniatura do token (graus, sentido horário visto de cima). Quem pode mover pode girar. */
+  async girar(tokenId: number, rotacao: number): Promise<void> {
+    await this.invocar('GirarToken', tokenId, rotacao);
   }
 }

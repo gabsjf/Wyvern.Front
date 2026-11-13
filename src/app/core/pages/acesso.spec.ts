@@ -84,7 +84,7 @@ describe('Login', () => {
 });
 
 describe('Register', () => {
-  const dados = { nome: 'Ana', email: 'ana@x.com', senha: 'segredo', papel: 'Jogador' };
+  const dados = { nome: 'Ana', email: 'ana@x.com', senha: 'segredo' };
 
   it('cadastra e troca o formulário pelo aviso de verificar o e-mail', () => {
     const register = vi.fn(() => of({ message: 'Enviamos um link.' }));
@@ -114,9 +114,10 @@ describe('Register', () => {
     expect(el.querySelector('.auth-aceite a[href="/privacidade"]')).not.toBeNull();
   });
 
-  it('fora do beta, mostra a escolha de tipo de conta', () => {
-    const { c } = montar(Register, {});
-    expect(c.beta()).toBe(false);
+  it('não pede tipo de conta: o papel é definido em cada campanha (WYV-09)', () => {
+    const { c, el } = montar(Register, {});
+    expect(Object.keys(c.registerForm.controls)).toEqual(['nome', 'email', 'senha']);
+    expect(el.querySelector('input[type="radio"]')).toBeNull();
   });
 
   it('erro da API aparece e destrava o botão', () => {

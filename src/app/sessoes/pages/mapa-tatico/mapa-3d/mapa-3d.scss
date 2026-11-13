@@ -26,6 +26,12 @@
   backdrop-filter: blur(6px);
 }
 
+/* editor de cenário: no canto de baixo à esquerda, longe dos comandos da câmera */
+.comandos.editor {
+  right: auto;
+  left: 0.75rem;
+}
+
 .cmd {
   display: grid;
   place-items: center;

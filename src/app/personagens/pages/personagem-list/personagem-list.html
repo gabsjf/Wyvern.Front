@@ -24,19 +24,26 @@
     <label class="busca">
       <span class="visually-hidden">Buscar personagem</span>
       <i class="bi bi-search" aria-hidden="true"></i>
-      <input type="search" class="form-control" placeholder="Buscar por nome ou descrição" [value]="busca" (input)="busca = $any($event.target).value" />
+      <input type="search" class="form-control" placeholder="Buscar por nome, jogador ou campanha" [value]="busca" (input)="buscar($any($event.target).value)" />
     </label>
 
     @if (campanhasDosPersonagens.length > 1) {
       <div class="filtros" role="group" aria-label="Filtrar por campanha">
         @for (c of campanhasDosPersonagens; track c.id) {
-          <button type="button" class="filtro" [class.ativo]="campanhaFiltro === c.id" [attr.aria-pressed]="campanhaFiltro === c.id" (click)="alternarCampanha(c.id)">{{ c.nome }}</button>
+          <button type="button" class="filtro" [class.ativo]="campanhaFiltro === c.id" [attr.aria-pressed]="campanhaFiltro === c.id" (click)="alternarCampanha(c.id)">{{ c.nome }} <span class="num">{{ c.total }}</span></button>
         }
       </div>
     }
   </div>
 
-  <ul class="galeria">
+  @if (erro) {
+    <div class="alert-error" role="alert">
+      Não foi possível carregar os personagens.
+      <button type="button" class="btn-secondary btn-sm" (click)="loadPersonagens()">Tentar de novo</button>
+    </div>
+  }
+
+  <ul class="galeria" [class.carregando]="carregando" [attr.aria-busy]="carregando">
     @for (personagem of filteredPersonagens; track personagem.personagemId) {
       <li>
         <article class="carta" [class.carta-inimigo]="personagem.tipoId !== 1">
@@ -48,7 +55,17 @@
               <span class="chip" [class.chip-hi]="personagem.tipoId === 1" [class.chip-danger]="personagem.tipoId !== 1">{{ rotuloTipo(personagem) }}</span>
             </p>
             <h2>{{ personagem.nome }}</h2>
-            <p class="carta-campanha">{{ nomeDaCampanha(personagem.campanhaId) }}</p>
+            <dl class="carta-origem">
+              <div>
+                <dt><i class="bi bi-book" aria-hidden="true"></i><span class="visually-hidden">Campanha</span></dt>
+                <dd class="carta-campanha" [title]="'Campanha: ' + nomeDaCampanha(personagem)">{{ nomeDaCampanha(personagem) }}</dd>
+              </div>
+              <div>
+                <dt><i class="bi" [class.bi-person]="personagem.tipoId === 1" [class.bi-pencil]="personagem.tipoId !== 1" aria-hidden="true"></i>
+                  <span class="visually-hidden">{{ personagem.tipoId === 1 ? 'Jogador' : 'Criado por' }}</span></dt>
+                <dd class="carta-dono" [class.meu]="ehMeu(personagem)">{{ donoDe(personagem) }}</dd>
+              </div>
+            </dl>
             <p class="carta-desc" [class.vazio]="!personagem.descricao">{{ personagem.descricao || 'Sem descrição.' }}</p>
           </div>
           <div class="carta-acoes">
@@ -61,12 +78,19 @@
         </article>
       </li>
     } @empty {
-      <li class="galeria-vazia">
-        <h2>{{ busca || campanhaFiltro !== null ? 'Ninguém encontrado' : 'O elenco está vazio' }}</h2>
-        <p>{{ busca || campanhaFiltro !== null ? 'Tente outro nome ou limpe os filtros.' : 'Use “Novo personagem” para criar o primeiro.' }}</p>
-      </li>
+      @if (pagina) {
+        <li class="galeria-vazia">
+          <h2>{{ busca || campanhaFiltro !== null ? 'Ninguém encontrado' : 'O elenco está vazio' }}</h2>
+          <p>{{ busca || campanhaFiltro !== null ? 'Tente outro nome ou limpe os filtros.' : 'Use “Novo personagem” para criar o primeiro.' }}</p>
+        </li>
+      }
     }
   </ul>
+
+  @if (pagina; as p) {
+    <app-paginacao [pagina]="p.pagina" [totalPaginas]="p.totalPaginas" [total]="p.total" [tamanhoPagina]="p.tamanhoPagina"
+                   rotulo="personagens" (mudar)="irPara($event)" />
+  }
 </div>
 
 @if (duplicando) {

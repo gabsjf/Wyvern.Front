@@ -1,5 +1,5 @@
 import {
-  ajustarAoPalco, distanciaEmPes, distanciaEmQuadrados, iniciais, limitarAoMapa, quadradoEm, telaParaMundo, zoomEmTorno, ZOOM_MAX,
+  ajustarAoPalco, distanciaEmPes, distanciaEmQuadrados, iniciais, centroDoQuadrado, limitarAoMapa, quadradoEm, telaParaMundo, zoomEmTorno, ZOOM_MAX,
 } from './mapa-geometria';
 
 describe('mapa-geometria', () => {
@@ -30,6 +30,15 @@ describe('mapa-geometria', () => {
   it('acha o quadrado que contém o ponto', () => {
     expect(quadradoEm(0, 0, 70)).toEqual({ coluna: 0, linha: 0 });
     expect(quadradoEm(139, 140, 70)).toEqual({ coluna: 1, linha: 2 });
+  });
+
+  it('áreas de magia partem do centro do quadrado, nunca do vértice (WYV-24)', () => {
+    expect(centroDoQuadrado(0, 0, 70)).toEqual({ x: 35, y: 35 });
+    expect(centroDoQuadrado(69.9, 1, 70)).toEqual({ x: 35, y: 35 });
+    expect(centroDoQuadrado(70, 139, 70)).toEqual({ x: 105, y: 105 });
+    // de centro a centro, 4 quadrados em linha reta medem exatamente 4 casas
+    const a = centroDoQuadrado(10, 10, 70), b = centroDoQuadrado(300, 10, 70);
+    expect((b.x - a.x) / 70).toBe(4);
   });
 
   it('mantém o token inteiro dentro do mapa, qualquer que seja o tamanho', () => {

@@ -1,0 +1,25 @@
+<div class="legal">
+  <header class="legal-topo">
+    <a routerLink="/" class="legal-marca">
+      <img src="assets/images/logo-dragao.png" alt="" />
+      <span>Wyvern</span>
+    </a>
+    <a routerLink="/" class="legal-voltar">&larr; Voltar ao início</a>
+  </header>
+
+  <main class="legal-corpo">
+    <p class="legal-eyebrow">Atualizado em {{ dados.atualizadoEm }}</p>
+    <h1>{{ titulo() }}</h1>
+    <article class="legal-texto">
+      <ng-content />
+    </article>
+  </main>
+
+  <footer class="legal-rodape">
+    <nav aria-label="Documentos legais">
+      <a routerLink="/termos" routerLinkActive="ativo" ariaCurrentWhenActive="page">Termos de uso</a>
+      <a routerLink="/privacidade" routerLinkActive="ativo" ariaCurrentWhenActive="page">Política de privacidade</a>
+    </nav>
+    <p>Dúvidas? <a [href]="'mailto:' + dados.emailPrivacidade">{{ dados.emailPrivacidade }}</a></p>
+  </footer>
+</div>

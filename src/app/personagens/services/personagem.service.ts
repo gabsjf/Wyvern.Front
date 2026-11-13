@@ -1,8 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
-import { Personagem } from '../models/personagem';
+import { EscolhasDeNivel, Personagem, ProximoNivel, ResultadoSubida } from '../models/personagem';
 import { ResultadoDescanso } from '../utils/regras-descanso';
+import { ContagemPorCampanha, Pagina, TAMANHO_PAGINA, paramsDe } from '../../shared/models/pagina';
+
+/** Página do elenco: `totalHerois` e `totalMonstros` contam as abas; `porCampanha`, os filtros da aba pedida. */
+export interface PaginaDePersonagens extends Pagina<Personagem> {
+  totalHerois: number;
+  totalMonstros: number;
+  porCampanha: ContagemPorCampanha[];
+}
 
 /** Mudança parcial no estado de jogo da ficha: só o que vier preenchido é alterado. */
 export interface EstadoParcial {
@@ -26,6 +34,13 @@ export class PersonagemService {
 
   getAll() {
     return this.http.get<Personagem[]>(this.apiUrl);
+  }
+
+  /** O elenco paginado de uma aba, com as contagens das abas e de cada campanha. */
+  getPagina(filtro: { pagina: number; tipo: 'herois' | 'monstros'; busca?: string; campanhaId?: number | null }, tamanho = TAMANHO_PAGINA) {
+    return this.http.get<PaginaDePersonagens>(`${this.apiUrl}/pagina`, {
+      params: paramsDe({ pagina: filtro.pagina, tamanho, tipo: filtro.tipo, busca: filtro.busca?.trim(), campanhaId: filtro.campanhaId }),
+    });
   }
   getPericias() {
     return this.http.get<any[]>(`${environment.apiUrl}/Pericia`);
@@ -72,9 +87,29 @@ export class PersonagemService {
     return this.http.post<Personagem>(`${this.apiUrl}/${id}/duplicar`, opcoes);
   }
 
+  /** O jogador leva uma cópia do próprio herói para outra campanha (chega descansado, com o mesmo nível). */
+  trazer(id: number, campanhaId: number) {
+    return this.http.post<Personagem>(`${this.apiUrl}/${id}/trazer`, { campanhaId });
+  }
+
   /** Muda só o estado de jogo (PV, condições, espaços de magia...), sem reenviar a ficha inteira. */
   atualizarEstado(id: number, estado: EstadoParcial) {
     return this.http.put<Personagem>(`${this.apiUrl}/${id}/estado`, estado);
+  }
+
+  /** O que muda no próximo nível (regras do D&D 2024) e se já dá para subir. */
+  proximoNivel(id: number) {
+    return this.http.get<ProximoNivel>(`${this.apiUrl}/${id}/proximo-nivel`);
+  }
+
+  /** Sobe um nível com as escolhas do jogador. Só depois que o Mestre liberou (por XP ou marco). */
+  subirNivel(id: number, escolhas: EscolhasDeNivel) {
+    return this.http.post<ResultadoSubida>(`${this.apiUrl}/${id}/subir-nivel`, escolhas);
+  }
+
+  /** Só o Mestre: muda o XP e/ou libera um nível por marco. */
+  atualizarProgressao(id: number, progressao: { xp?: number; nivelLiberado?: number }) {
+    return this.http.put<Personagem>(`${this.apiUrl}/${id}/progressao`, progressao);
   }
 
   /** Registra o resultado de um descanso curto ou longo (já calculado; o servidor só confere os limites). */

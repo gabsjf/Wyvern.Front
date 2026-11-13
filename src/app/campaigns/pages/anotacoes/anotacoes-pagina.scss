@@ -1,0 +1,79 @@
+// A página ocupa a altura da tela: o caderno estica e cada coluna rola por conta própria.
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100dvh;
+  min-height: 0;
+  padding: clamp(1rem, 2.5vh, 1.75rem) clamp(1rem, 2.5vw, 2.25rem) 1rem;
+}
+
+.topo {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+
+  h1 { margin: 0; }
+  .eyebrow { margin: 0 0 0.25rem; }
+}
+
+.topo-campanha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  > i { color: var(--muted); font-size: 1.1rem; }
+}
+
+.seletor {
+  min-height: 44px;
+  max-width: min(22rem, 70vw);
+  padding: 0 2.2rem 0 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { border-color: var(--hi); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+}
+
+.btn-sm { min-height: 44px; }
+
+.caderno {
+  flex: 1;
+  min-height: 0;
+}
+
+.estado { margin: 0; color: var(--muted); }
+
+.vazio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  max-width: 30rem;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--muted);
+
+  i { font-size: 3rem; opacity: 0.55; }
+  h2 { margin: 0; color: var(--fg); }
+  p { margin: 0 0 0.75rem; line-height: 1.6; }
+}
+
+// no celular a página rola inteira (o caderno alterna lista e nota)
+@media (max-width: 900px) {
+  :host { height: auto; min-height: 100%; }
+  .seletor { max-width: 100%; flex: 1; }
+  .topo-campanha { width: 100%; }
+}

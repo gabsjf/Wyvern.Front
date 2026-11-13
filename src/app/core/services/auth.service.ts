@@ -10,10 +10,9 @@ export interface UsuarioLogado {
   usuarioId: number;
   nome: string;
   email: string;
-  papel: string;
   /** 0 = sem foto; sobe a cada foto nova. */
   fotoVersao: number;
-  /** Conta Mestre com vaga no plano (ou qualquer conta no beta). O servidor confere de novo ao criar. */
+  /** Conta com vaga no plano (ou qualquer conta no beta). O servidor confere de novo ao criar. */
   podeCriarCampanha: boolean;
 }
 
@@ -104,6 +103,11 @@ export class AuthService {
 
   confirmarEmail(token: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/confirmar-email`, { token }, { headers: this.cabecalhosDeEntrada() });
+  }
+
+  /** Outro link de confirmação: responde igual exista a conta ou não; só sai e-mail para cadastro pendente. */
+  reenviarConfirmacao(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reenviar-confirmacao`, { email }, { headers: this.cabecalhosDeEntrada() });
   }
 
   logout(): void {
@@ -213,8 +217,8 @@ export class AuthService {
   }
 
   private semToken(resposta: RespostaAuth): UsuarioLogado {
-    const { usuarioId, nome, email, papel, fotoVersao, podeCriarCampanha } = resposta;
-    return { usuarioId, nome, email, papel, fotoVersao: fotoVersao ?? 0, podeCriarCampanha: podeCriarCampanha ?? true };
+    const { usuarioId, nome, email, fotoVersao, podeCriarCampanha } = resposta;
+    return { usuarioId, nome, email, fotoVersao: fotoVersao ?? 0, podeCriarCampanha: podeCriarCampanha ?? true };
   }
 
   private cabecalhosDeEntrada(): HttpHeaders {

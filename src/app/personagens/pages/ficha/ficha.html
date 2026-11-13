@@ -4,8 +4,48 @@
 
       <h2 class="text-accent character-name">{{ personagem?.nome || 'Carregando...' }}</h2>
       <p class="text-secondary character-class">{{ personagem?.personagemPlayer?.classe || 'Sem Classe' }} Nv. {{ personagem?.personagemPlayer?.nivel || 1 }}</p>
+      @if (personagem?.personagemId) {
+        <a class="editar-ficha" [routerLink]="['/personagens', personagem.personagemId, 'edit']"><i class="bi bi-pencil" aria-hidden="true"></i> Editar ficha</a>
+      }
     </div>
-    
+
+    <!-- XP e nível: o Mestre libera, o jogador sobe fazendo as escolhas -->
+    @if (ehHeroi) {
+      <section class="progressao" aria-label="Experiência e nível">
+        <div class="xp-linha">
+          <span class="xp-rotulo">XP</span>
+          <span class="num">{{ xp.xp }}@if (xp.fim != null) { <small> / {{ xp.fim }}</small> }</span>
+        </div>
+        <div class="xp-barra" role="progressbar" [attr.aria-valuenow]="xp.pct | number:'1.0-0'" aria-valuemin="0" aria-valuemax="100"
+             [attr.aria-label]="'Progresso até o próximo nível'"><i [style.width.%]="xp.pct"></i></div>
+
+        @if (nivelPendente) {
+          <a class="btn-primary w-100 subir" [routerLink]="['/ficha', personagem.personagemId, 'subir-nivel']">
+            <i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Subir para o nível {{ personagem.personagemPlayer.nivel + 1 }}
+          </a>
+        } @else if (!ehMestre && personagem.personagemPlayer.nivel < 20) {
+          <p class="progressao-dica">O próximo nível é liberado pelo Mestre (por XP ou marco).</p>
+        }
+
+        @if (ehMestre) {
+          <div class="mestre-xp">
+            <label class="visually-hidden" for="xp-ganho">XP a dar</label>
+            <input id="xp-ganho" type="number" class="form-control num" placeholder="+ XP" [(ngModel)]="xpGanho" (keyup.enter)="darXp()" />
+            <button type="button" class="btn-secondary" (click)="darXp()" [disabled]="!xpGanho || salvandoProgressao">Dar XP</button>
+          </div>
+          @if (personagem.personagemPlayer.nivel < 20) {
+            @if (marcoAtivo) {
+              <button type="button" class="link-acao" (click)="cancelarMarco()" [disabled]="salvandoProgressao">Cancelar liberação do nível {{ personagem.personagemPlayer.nivelLiberado }}</button>
+            } @else if (!nivelPendente) {
+              <button type="button" class="link-acao" (click)="liberarMarco()" [disabled]="salvandoProgressao">
+                <i class="bi bi-flag" aria-hidden="true"></i> Liberar nível {{ personagem.personagemPlayer.nivel + 1 }} por marco
+              </button>
+            }
+          }
+        }
+      </section>
+    }
+
     <nav class="ficha-nav" role="tablist" aria-label="Seções da ficha">
       <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'atributos'" [attr.aria-selected]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos</button>
       <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>

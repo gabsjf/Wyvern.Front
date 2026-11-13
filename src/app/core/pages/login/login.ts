@@ -16,6 +16,8 @@ export class Login implements OnInit {
   loginForm: FormGroup;
   loading = false;
   errorMessage = '';
+  /** A senha conferiu, mas o cadastro ainda espera a confirmação do e-mail: a tela oferece outro link. */
+  emailNaoConfirmado = false;
   returnUrl: string = '/campaigns';
 
   private authService = inject(AuthService);
@@ -42,6 +44,7 @@ export class Login implements OnInit {
 
     this.loading = true;
     this.errorMessage = '';
+    this.emailNaoConfirmado = false;
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
@@ -49,6 +52,7 @@ export class Login implements OnInit {
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Erro ao realizar login';
+        this.emailNaoConfirmado = err.error?.codigo === 'email-nao-confirmado';
         this.loading = false;
         this.cdr.markForCheck();
       }

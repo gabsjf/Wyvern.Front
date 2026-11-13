@@ -33,6 +33,7 @@ export class Sidebar {
     { rota: '/campaigns', rotulo: 'Campanhas', icone: 'bi-journal-bookmark' },
     { rota: '/personagens', rotulo: 'Personagens', icone: 'bi-person-lines-fill' },
     { rota: '/sessoes', rotulo: 'Sessões', icone: 'bi-calendar-event' },
+    { rota: '/anotacoes', rotulo: 'Anotações', icone: 'bi-journal-text' },
   ];
 
   get temaAtual(): 'claro' | 'escuro' {

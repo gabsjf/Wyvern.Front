@@ -1,0 +1,147 @@
+<div class="container animate-fade-in">
+  @if (voltar) {
+    <a class="voltar" [href]="voltar" (click)="$event.preventDefault(); voltarAoMapa()">← Voltar ao mapa</a>
+  } @else {
+    <a class="voltar" [routerLink]="['/campaigns', campanhaId]">← {{ campanhaNome() || 'Campanha' }}</a>
+  }
+
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Modelos .glb da campanha</p>
+      <h1>Biblioteca 3D</h1>
+      <p class="sub">
+        Peças de cenário para pôr no mapa (árvores, mesas, estátuas) e miniaturas para heróis, NPCs, vilões e monstros.
+        Tudo aparece na visão 3D do mapa.
+      </p>
+    </div>
+  </header>
+
+  @if (carregando()) {
+    <p class="estado" role="status">Carregando a biblioteca...</p>
+  } @else if (semAcesso()) {
+    <div class="vazio">
+      <i class="bi bi-lock" aria-hidden="true"></i>
+      <h2>Biblioteca indisponível</h2>
+      <p>Só quem participa desta campanha vê os modelos dela.</p>
+    </div>
+  } @else if (biblioteca(); as b) {
+    <section class="envio panel" aria-labelledby="tit-envio">
+      <h2 id="tit-envio" class="rotulo-secao">Subir modelo</h2>
+      <form #formEnvio (submit)="$event.preventDefault(); enviar(formEnvio)">
+        <div class="linha-envio">
+          <label class="arquivo">
+            <span class="form-label">Arquivo .glb, .gltf, .stl ou .3mf</span>
+            <input type="file" multiple accept=".glb,.gltf,.stl,.3mf,.bin,.png,.jpg,.jpeg,.webp,.ktx2,model/gltf-binary,model/gltf+json,model/stl" class="form-control" [disabled]="convertendo()" (change)="escolherArquivo($event)" />
+            @if (convertendo()) { <small class="convertendo" role="status"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Convertendo para .glb...</small> }
+          </label>
+          <label class="campo-nome">
+            <span class="form-label">Nome</span>
+            <input type="text" name="nome" class="form-control" [(ngModel)]="nome" maxlength="80" placeholder="Ex.: Goblin arqueiro" autocomplete="off" />
+          </label>
+        </div>
+        @if (ehMestre()) {
+          <div class="categorias" role="radiogroup" aria-label="Tipo de modelo">
+            <label class="categoria" [class.ativa]="categoria === 'Cenario'">
+              <input type="radio" name="categoria" value="Cenario" [(ngModel)]="categoria" />
+              <i class="bi bi-tree" aria-hidden="true"></i>
+              <span><strong>Cenário</strong><small>Peça para pôr no mapa</small></span>
+            </label>
+            <label class="categoria" [class.ativa]="categoria === 'Miniatura'">
+              <input type="radio" name="categoria" value="Miniatura" [(ngModel)]="categoria" />
+              <i class="bi bi-person-standing" aria-hidden="true"></i>
+              <span><strong>Miniatura</strong><small>Figura de um personagem ou token</small></span>
+            </label>
+          </div>
+        } @else {
+          <p class="dica">Você sobe miniaturas para o seu herói. Depois, escolha a miniatura na ficha dele.</p>
+        }
+        <div class="acoes-envio">
+          <button type="submit" class="btn-primary" [disabled]="!arquivo || enviando() || convertendo()">
+            <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> {{ otimizando() ? 'Otimizando para a mesa...' : enviando() ? 'Enviando...' : 'Subir para a biblioteca' }}
+          </button>
+          <div class="uso" [title]="formatar(b.espacoUsado) + ' de ' + formatar(b.espacoTotal)">
+            <span>{{ formatar(b.espacoUsado) }} de {{ formatar(b.espacoTotal) }}</span>
+            <span class="barra-uso" role="progressbar" [attr.aria-valuenow]="usoPct()" aria-valuemin="0" aria-valuemax="100" aria-label="Espaço usado da biblioteca">
+              <span [style.width.%]="usoPct()" [class.cheia]="usoPct() >= 90"></span>
+            </span>
+          </div>
+        </div>
+        <p class="dica">
+          Todo modelo é otimizado para a mesa antes de subir: miniaturas ficam com até {{ milharesDe(metas.Miniatura) }} triângulos e peças de cenário com até {{ milharesDe(metas.Cenario) }} (arquivos de impressão 3D vêm com milhões, que travam o 3D e não aparecem no tamanho do grid).<br />
+          <strong>.glb</strong> (glTF binário, com as texturas dentro), até {{ formatar(b.tamanhoMaximoArquivo) }}. No Blender: Exportar → glTF 2.0 → “glTF Binary”. Arquivos com compressão Draco ainda não abrem.<br />
+          <strong>.gltf</strong>: selecione junto (Ctrl+clique) o .bin e as texturas que vêm com ele; o Wyvern junta tudo num .glb aqui no navegador, sem mudar nada do modelo.<br />
+          <strong>.stl</strong> (miniaturas de impressão 3D): o Wyvern converte para .glb aqui no navegador, já em pé e em cinza de miniatura sem pintura (.stl não tem cor). Depois de convertido, o limite de {{ formatar(b.tamanhoMaximoArquivo) }} vale igual.<br />
+          <strong>.3mf</strong> (impressão 3D, com cor): convertido aqui também, com as cores do arquivo. A pintura multicor feita no Bambu Studio ou no PrusaSlicer não vem (fica num formato só deles); sem cor, vira o mesmo cinza do .stl.
+        </p>
+      </form>
+    </section>
+
+    @if (previa(); as p) {
+      <section class="previa panel" aria-labelledby="tit-previa">
+        <header>
+          <h2 id="tit-previa" class="rotulo-secao">{{ p.nome }}</h2>
+          <button type="button" class="link" (click)="previa.set(null)" aria-label="Fechar a prévia"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </header>
+        @for (atual of [p]; track atual.modeloId) {
+          <app-visualizador-glb [buscar]="buscarPrevia" [nome]="atual.nome" (medidas)="medidasDaPrevia.set($event)" />
+        }
+        @if (p.categoria === 'Miniatura') {
+        <div class="escala-previa">
+          <label class="campo-escala">
+            <span class="form-label">Escala</span>
+            <select class="form-control" [ngModel]="p.escala" (ngModelChange)="trocarEscala(p, $event)" [disabled]="!podeApagar(p)">
+              @for (e of escalas; track e.valor) { <option [ngValue]="e.valor">{{ e.nome }} · {{ e.descricao }}</option> }
+            </select>
+          </label>
+          @if (naMesa(); as nm) {
+            <dl class="medidas">
+              <div><dt>Altura na mesa</dt><dd>{{ quadrados(nm.altura) }} quadrado(s) · {{ mm(nm.alturaMm) }} impressa</dd></div>
+              <div><dt>Base</dt><dd>{{ quadrados(nm.largura) }} quadrado(s) · {{ mm(nm.larguraMm) }}</dd></div>
+              <div><dt>Tamanho D&amp;D</dt><dd>{{ nm.tamanho.nome }} · token {{ nm.tamanho.lado }}×{{ nm.tamanho.lado }}</dd></div>
+            </dl>
+            <p class="dica">Pela mesa física do D&amp;D: 1 quadrado = 25,4 mm (base de 1 polegada) = 1,5 m. Um humano impresso tem uns 30 mm. Se o tamanho estiver errado, troque a escala.</p>
+          } @else if (p.escala === 'Encaixar') {
+            <p class="dica">Com “Encaixar no token”, a miniatura ignora as medidas do arquivo e cabe na base do token, qualquer que seja o tamanho.</p>
+          } @else if (medidasDaPrevia()) {
+            <p class="dica">Este é um modelo de jogo (medidas em metros, cada autor escolhe o tamanho): na escala automática ele cabe na base do token, e o tamanho do token manda. Para usar as medidas do arquivo, escolha “Tamanho real”.</p>
+          }
+        </div>
+        }
+      </section>
+    }
+
+    @for (grupo of grupos(); track grupo.titulo) {
+      <section class="grupo" [attr.aria-label]="grupo.titulo">
+        <h2 class="titulo-grupo"><i [class]="'bi ' + grupo.icone" aria-hidden="true"></i> {{ grupo.titulo }} <span class="contagem">{{ grupo.itens.length }}</span></h2>
+        <p class="uso-grupo"><i class="bi bi-info-circle" aria-hidden="true"></i> {{ grupo.uso }}</p>
+        @if (grupo.itens.length === 0) {
+          <p class="vazio-curto">{{ grupo.vazio }}</p>
+        } @else {
+          <ul class="grade">
+            @for (m of grupo.itens; track m.modeloId) {
+              <li class="cartao" [class.em-previa]="previa()?.modeloId === m.modeloId">
+                <button type="button" class="abrir" (click)="verPrevia(m)" [attr.aria-label]="'Ver ' + m.nome + ' em 3D'">
+                  <span class="icone" aria-hidden="true"><i class="bi bi-box"></i></span>
+                  <strong>{{ m.nome }}</strong>
+                  <small>{{ formatar(m.tamanho) }} · {{ m.enviadoPorNome || 'conta excluída' }} · {{ m.criadoEm | date: 'dd/MM/yyyy' }}</small>
+                </button>
+                @if (podeApagar(m) && pesado(m)) {
+                  <button type="button" class="btn-icone otimizar" (click)="otimizarExistente(m)" [disabled]="otimizandoId() !== null"
+                          [attr.aria-label]="'Otimizar ' + m.nome + ' para a mesa'"
+                          [title]="otimizandoId() === m.modeloId ? 'Otimizando...' : 'Pesado para a mesa: otimizar (mapas, tokens e fichas que o usam acompanham)'">
+                    <i [class]="otimizandoId() === m.modeloId ? 'bi bi-arrow-repeat girando' : 'bi bi-lightning-charge'" aria-hidden="true"></i>
+                  </button>
+                }
+                @if (podeApagar(m)) {
+                  <button type="button" class="btn-icone perigo" (click)="apagar(m)" [attr.aria-label]="'Apagar ' + m.nome" title="Apagar">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>

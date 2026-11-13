@@ -61,6 +61,32 @@
 .auth-conteudo { width: 100%; max-width: 360px; }
 .auth-brand-mobile { display: none; color: var(--fg); margin-bottom: 2.5rem; }
 
+/* termos e privacidade, embaixo de todas as telas de acesso */
+.auth-legal {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 2rem;
+  font-size: 0.85rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--muted);
+    text-decoration: none;
+
+    &:hover { color: var(--fg); }
+  }
+}
+
+/* aviso de aceite no cadastro */
+.auth-aceite {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 /* ---- peças compartilhadas pelas telas ---- */
 .auth-titulo {
   margin: 0 0 0.5rem;

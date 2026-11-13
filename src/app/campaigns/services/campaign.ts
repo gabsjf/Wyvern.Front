@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
-import { Campaign, Convite, Membro } from '../models/campaign';
+import { CampanhaNaLista, Campaign, Convite, Membro } from '../models/campaign';
+import { Pagina, TAMANHO_PAGINA, paramsDe } from '../../shared/models/pagina';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +13,11 @@ export class CampaignService {
 
   getAll() {
     return this.http.get<Campaign[]>(this.apiUrl);
+  }
+
+  /** A estante paginada, da mais nova para a mais antiga, já com papel e números de cada capa. */
+  getPagina(pagina: number, busca = '', tamanho = TAMANHO_PAGINA) {
+    return this.http.get<Pagina<CampanhaNaLista>>(`${this.apiUrl}/pagina`, { params: paramsDe({ pagina, tamanho, busca: busca.trim() }) });
   }
   getById(id: number) {
     return this.http.get<Campaign>(`${this.apiUrl}/${id}`);

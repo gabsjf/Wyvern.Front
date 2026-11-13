@@ -7,7 +7,7 @@ import { authInterceptor } from './auth.interceptor';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environments';
 
-const USUARIO = { usuarioId: 7, nome: 'Aria', email: 'aria@teste.com', papel: 'Jogador' };
+const USUARIO = { usuarioId: 7, nome: 'Aria', email: 'aria@teste.com' };
 
 describe('authInterceptor', () => {
   let http: HttpClient;

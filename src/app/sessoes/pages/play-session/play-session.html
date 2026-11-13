@@ -21,7 +21,8 @@
     </header>
 
     <div class="content-panel" id="painel-sessao" role="tabpanel"
-         [class.rolavel]="activeTab !== 'mapa'"
+         [class.rolavel]="activeTab === 'combate'"
+         [class.caderno]="activeTab === 'anotacoes'"
          [attr.aria-labelledby]="'aba-' + activeTab">
       @if (activeTab === 'combate') {
         <app-combate-tracker [sessaoId]="sessaoId" [campanhaId]="sessao.campanhaId"></app-combate-tracker>

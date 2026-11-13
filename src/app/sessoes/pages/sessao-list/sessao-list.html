@@ -3,45 +3,75 @@
     <div>
       <p class="eyebrow">Diário de mesa</p>
       <h1>Sessões</h1>
-      <p class="sub">{{ sessoes.length }} {{ sessoes.length === 1 ? 'sessão registrada' : 'sessões registradas' }} nas suas campanhas.</p>
+      @if (pagina) {
+        <p class="sub">{{ total }} {{ total === 1 ? 'sessão registrada' : 'sessões registradas' }} {{ campanhaFiltro !== null ? 'nesta campanha' : 'nas suas campanhas' }}.</p>
+      }
     </div>
     @if (podeCriarSessao) {
       <a class="btn-primary" routerLink="/sessoes/create">+ Nova sessão</a>
     }
   </header>
 
-  @for (grupo of porCampanha; track grupo.campanhaId) {
-    <section class="grupo" [attr.aria-label]="grupo.nome">
-      <h2 class="rotulo-secao">{{ grupo.nome }} <span class="rotulo-extra">{{ grupo.sessoes.length }} {{ grupo.sessoes.length === 1 ? 'sessão' : 'sessões' }}</span></h2>
-
-      <ul class="mural">
-        @for (sessao of grupo.sessoes; track sessao.sessaoId; let primeira = $first) {
-          <li [class.destaque]="primeira">
-            <article class="folha" [class.agendada]="agendada(sessao)">
-              <span class="folha-numero num" aria-hidden="true">{{ sessao.numeroSessao }}</span>
-              <div class="folha-corpo">
-                <p class="folha-sobre">
-                  Sessão <span class="num">{{ sessao.numeroSessao }}</span>
-                  @if (agendada(sessao)) { <span class="chip chip-hi">Agendada</span> }
-                  @else if (primeira) { <span class="chip">Mais recente</span> }
-                </p>
-                <h3>{{ sessao.nome }}</h3>
-                <p class="folha-data num">{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</p>
-                @if (sessao.obs) { <p class="folha-obs">{{ sessao.obs }}</p> }
-              </div>
-              <div class="folha-acoes">
-                <a class="btn-primary btn-sm" [routerLink]="['/play', sessao.sessaoId]">Jogar</a>
-                <a class="btn-secondary btn-sm" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</a>
-              </div>
-            </article>
-          </li>
-        }
-      </ul>
-    </section>
-  } @empty {
-    <div class="vazio">
-      <h2>O diário está em branco</h2>
-      <p>Nenhuma sessão registrada ainda.@if (podeCriarSessao) { Use “Nova sessão” para criar a primeira. }</p>
+  @if ((pagina?.porCampanha?.length ?? 0) > 1) {
+    <div class="filtros" role="group" aria-label="Filtrar por campanha">
+      @for (c of pagina!.porCampanha; track c.campanhaId) {
+        <button type="button" class="filtro" [class.ativo]="campanhaFiltro === c.campanhaId" [attr.aria-pressed]="campanhaFiltro === c.campanhaId"
+                (click)="alternarCampanha(c.campanhaId)">{{ c.nome }} <span class="num">{{ c.total }}</span></button>
+      }
     </div>
+  }
+
+  @if (erro) {
+    <div class="alert-error" role="alert">
+      Não foi possível carregar as sessões.
+      <button type="button" class="btn-secondary btn-sm" (click)="loadSessoes()">Tentar de novo</button>
+    </div>
+  }
+
+  <div [class.carregando]="carregando" [attr.aria-busy]="carregando">
+    @for (grupo of porCampanha; track grupo.campanhaId) {
+      <section class="grupo" [attr.aria-label]="grupo.nome">
+        <h2 class="rotulo-secao">
+          {{ grupo.nome }}@if (grupo.continuacao) { <span class="continua">(continuação)</span> }
+          <span class="rotulo-extra">{{ totalDaCampanha(grupo.campanhaId) }} {{ totalDaCampanha(grupo.campanhaId) === 1 ? 'sessão' : 'sessões' }}</span>
+        </h2>
+
+        <ul class="mural">
+          @for (sessao of grupo.sessoes; track sessao.sessaoId; let primeira = $first) {
+            <li [class.destaque]="primeira && !grupo.continuacao">
+              <article class="folha" [class.agendada]="agendada(sessao)">
+                <span class="folha-numero num" aria-hidden="true">{{ sessao.numeroSessao }}</span>
+                <div class="folha-corpo">
+                  <p class="folha-sobre">
+                    Sessão <span class="num">{{ sessao.numeroSessao }}</span>
+                    @if (agendada(sessao)) { <span class="chip chip-hi">Agendada</span> }
+                    @else if (primeira && !grupo.continuacao) { <span class="chip">Mais recente</span> }
+                  </p>
+                  <h3>{{ sessao.nome }}</h3>
+                  <p class="folha-data num">{{ sessao.dataSessao | date:'dd/MM/yyyy' }}</p>
+                  @if (sessao.obs) { <p class="folha-obs">{{ sessao.obs }}</p> }
+                </div>
+                <div class="folha-acoes">
+                  <a class="btn-primary btn-sm" [routerLink]="['/play', sessao.sessaoId]">Jogar</a>
+                  <a class="btn-secondary btn-sm" [routerLink]="['/sessoes', sessao.sessaoId]">Detalhes</a>
+                </div>
+              </article>
+            </li>
+          }
+        </ul>
+      </section>
+    } @empty {
+      @if (pagina) {
+        <div class="vazio">
+          <h2>O diário está em branco</h2>
+          <p>Nenhuma sessão registrada ainda.@if (podeCriarSessao) { Use “Nova sessão” para criar a primeira. }</p>
+        </div>
+      }
+    }
+  </div>
+
+  @if (pagina; as p) {
+    <app-paginacao [pagina]="p.pagina" [totalPaginas]="p.totalPaginas" [total]="p.total" [tamanhoPagina]="p.tamanhoPagina"
+                   rotulo="sessões" (mudar)="irPara($event)" />
   }
 </div>

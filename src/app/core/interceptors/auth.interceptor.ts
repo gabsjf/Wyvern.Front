@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environments';
 import { AuthService } from '../services/auth.service';
 
 // Nestes um 401 é a resposta normal (credencial errada, refresh recusado): renovar a sessão não ajuda e causaria laço.
-const SEM_RENOVACAO = ['login', 'register', 'confirmar-email', 'esqueci-senha', 'redefinir-senha', 'refresh', 'logout'].map(p => `${environment.apiUrl}/Auth/${p}`);
+const SEM_RENOVACAO = ['login', 'register', 'confirmar-email', 'reenviar-confirmacao', 'esqueci-senha', 'redefinir-senha', 'refresh', 'logout'].map(p => `${environment.apiUrl}/Auth/${p}`);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);

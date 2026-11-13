@@ -1,0 +1,29 @@
+@if (carregando()) {
+  <p class="estado" role="status">Procurando os seus heróis...</p>
+} @else if (candidatos().length === 0) {
+  <p class="estado">Você ainda não tem heróis em outras campanhas.</p>
+} @else {
+  <ul class="candidatos">
+    @for (c of candidatos(); track c.personagem.personagemId) {
+      <li class="candidato">
+        <app-emblema [nome]="c.personagem.nome" [tamanho]="52" />
+        <span class="candidato-info">
+          <strong>{{ c.personagem.nome }}</strong>
+          <small>
+            @if (resumo(c.personagem)) { {{ resumo(c.personagem) }} · }
+            de {{ c.personagem.campanhaNome || 'outra campanha' }}
+          </small>
+        </span>
+        @if (c.jaTrouxe) {
+          <span class="chip chip-ok"><i class="bi bi-check2" aria-hidden="true"></i> Nesta campanha</span>
+        } @else {
+          <button type="button" class="btn-primary btn-sm" (click)="trazer(c)" [disabled]="trazendo() !== null"
+                  [attr.aria-label]="'Trazer ' + c.personagem.nome + ' para esta campanha'">
+            {{ trazendo() === c.personagem.personagemId ? 'Trazendo...' : 'Trazer' }}
+          </button>
+        }
+      </li>
+    }
+  </ul>
+  <p class="nota">Vem uma cópia da ficha, descansada e com o mesmo nível. A original continua na campanha de onde veio, e o Mestre pode ajustar o que precisar.</p>
+}

@@ -53,6 +53,20 @@
             </div>
           }
 
+          @for (o of objetosVisiveis(); track o.objetoId) {
+            @let op = posicaoDoObjeto(o);
+            <div class="peca-3d" [class.selecionada]="objetoSelecionadoId() === o.objetoId" [class.escondida]="o.oculto"
+                 [class.arrastando]="arrastoObjeto()?.objetoId === o.objetoId" [class.editavel]="ehMestre() && ferramenta() === 'mover'"
+                 [style.left.px]="op.x" [style.top.px]="op.y"
+                 [style.width.px]="o.tamanho * c.tamanhoCelula" [style.height.px]="o.tamanho * c.tamanhoCelula"
+                 [attr.role]="ehMestre() ? 'button' : null" [attr.tabindex]="ehMestre() ? 0 : null"
+                 [attr.aria-label]="'Peça de cenário: ' + o.nome + (o.oculto ? ', escondida dos jogadores' : '')"
+                 (pointerdown)="aoApertarObjeto($event, o)" (keydown.enter)="ehMestre() && selecionarObjeto(o)">
+              <i class="bi bi-box peca-icone" [style.transform]="'rotate(' + o.rotacao + 'deg)'" aria-hidden="true"></i>
+              <span class="peca-nome">{{ o.nome }}</span>
+            </div>
+          }
+
           @for (m of marcadores(); track m.marcadorId) {
             @let mp = posicaoDoMarcador(m);
             <div class="ponto-interesse" role="button" tabindex="0" [attr.aria-label]="m.titulo + (m.visivel ? '' : ', escondido dos jogadores')"
@@ -176,13 +190,19 @@
     </div>
 
     @if (modo3d() && cena(); as c3) {
-      <app-mapa-3d [cena]="c3" [imagemUrl]="imagemUrl()" [tokens]="tokensVisiveis()" [paredes]="paredesVisiveis()"
+      <app-mapa-3d [cena]="c3" [imagemUrl]="imagemUrl()" [tokens]="tokensVisiveis()" [paredes]="paredes()"
                    [selecionadoId]="selecionadoId()" [ehMestre]="ehMestre()" [retratoDe]="retratoDe3d" [infoDe]="info3d"
                    [podeMover]="podeMover3d" [neblina]="neblinaCanvas()" [versaoNeblina]="versaoNeblina()"
-                   [alcance]="alcanceCanvas()" [versaoAlcance]="versaoAlcance()" [ferramenta]="ferramenta() === 'regua' ? 'regua' : 'mover'"
+                   [alcance]="alcanceCanvas()" [versaoAlcance]="versaoAlcance()" [ferramenta]="ferramenta()"
                    [reguas]="reguas3d()" [custo]="custo3d()" [escuro]="escuro3d()"
+                   [tracos]="tracos3d()" [areaDeMagia]="area3d()" [pings]="pings3d()"
+                   [rascunhoDeParede]="rascunhoDeParede3d()" [retanguloDeNevoa]="retanguloDeNevoa3d()"
+                   [objetos]="objetosVisiveis()" [arquivoDoModelo]="arquivoDoModelo" [escalaDe]="escalaDoModelo()" (modeloFalhou)="aoModeloFalhar($event)"
+                   [editarCenario]="ehMestre()" [objetoSelecionadoId]="objetoSelecionadoId()" (selecionarObjeto)="selecionarObjeto3d($event)"
+                   (porObjeto)="porObjeto3d($event)" (transformarObjeto)="transformarObjeto3d($event)"
+                   (apagarObjeto)="apagarObjeto3d($event)" (duplicarObjeto)="duplicarObjeto3d($event)" (girarToken)="girarToken3d($event)"
                    (selecionar)="selecionar($event)" (mover)="mover3d($event)" (arrastando)="arrastando3d($event)"
-                   (reguaPonto)="reguaDe3d($event)" (falhou)="falhou3d()" />
+                   (gesto)="gesto3d($event)" (ping)="ping3d($event)" (toque)="toque3d($event)" (falhou)="falhou3d()" />
     }
 
     <!-- ferramentas flutuando sobre o mapa -->
@@ -210,7 +230,7 @@
                 title="Régua: mede a distância em quadrados e pés" aria-label="Régua" [attr.aria-pressed]="ferramenta() === 'regua'">
           <i class="bi bi-rulers" aria-hidden="true"></i>
         </button>
-        <button type="button" class="barra-btn so-2d" [class.ativo]="ferramenta() === 'area'" (click)="escolherFerramenta('area')"
+        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'area'" (click)="escolherFerramenta('area')"
                 title="Área de magia: esfera, cone ou linha" aria-label="Área de magia" [attr.aria-pressed]="ferramenta() === 'area'">
           <i class="bi bi-bullseye" aria-hidden="true"></i>
         </button>
@@ -241,11 +261,15 @@
         </div>
       }
       @if (cena()) {
-        <div class="barra-grupo so-2d">
+        <div class="barra-grupo">
           @if (ehMestre()) {
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'marcador'" (click)="escolherFerramenta('marcador')"
+            <button type="button" class="barra-btn so-2d" [class.ativo]="ferramenta() === 'marcador'" (click)="escolherFerramenta('marcador')"
                     title="Marcador: clique no mapa para fixar um ponto de interesse" aria-label="Marcador" [attr.aria-pressed]="ferramenta() === 'marcador'">
               <i class="bi bi-geo-alt" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'objeto'" (click)="escolherFerramenta('objeto')"
+                    title="Cenário 3D: clique no mapa para pôr a peça escolhida (árvores, mesas, estátuas...)" aria-label="Cenário 3D" [attr.aria-pressed]="ferramenta() === 'objeto'">
+              <i class="bi bi-box" aria-hidden="true"></i>
             </button>
           }
           <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'desenhar'" (click)="escolherFerramenta('desenhar')"
@@ -255,6 +279,27 @@
           <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'borracha'" (click)="escolherFerramenta('borracha')"
                   title="Borracha: clique sobre um traço (você apaga os seus; o Mestre apaga todos)" aria-label="Borracha" [attr.aria-pressed]="ferramenta() === 'borracha'">
             <i class="bi bi-eraser-fill" aria-hidden="true"></i>
+          </button>
+        </div>
+      }
+      @if (ferramenta() === 'objeto' && ehMestre()) {
+        <div class="barra-grupo opcoes-peca">
+          @if (pecasDeCenario().length) {
+            <label class="pes">
+              <select [ngModel]="pecaEscolhida()" (ngModelChange)="pecaEscolhida.set($event)" aria-label="Peça de cenário">
+                @for (m of pecasDeCenario(); track m.modeloId) { <option [ngValue]="m.modeloId">{{ m.nome }}</option> }
+              </select>
+            </label>
+            <label class="pes">
+              <select [ngModel]="ladoDaPeca()" (ngModelChange)="ladoDaPeca.set(+$event)" aria-label="Tamanho da peça em quadrados">
+                @for (n of ladosDePeca; track n) { <option [ngValue]="n">{{ n }}×{{ n }}</option> }
+              </select>
+            </label>
+          } @else {
+            <span class="barra-titulo">Nenhuma peça de cenário ainda</span>
+          }
+          <button type="button" class="barra-btn largo" (click)="abrirBiblioteca()" title="Subir e organizar os modelos 3D da campanha">
+            <i class="bi bi-collection" aria-hidden="true"></i><span class="so-largo">Biblioteca</span>
           </button>
         </div>
       }
@@ -280,7 +325,7 @@
         </div>
       }
       @if (ehMestre() && cena()) {
-        <div class="barra-grupo so-2d">
+        <div class="barra-grupo">
           <button type="button" class="barra-btn largo" [class.ativo]="neblinaAtiva()" (click)="alternarNeblina()"
                   title="Névoa de guerra: os jogadores só veem o que você revelar" [attr.aria-pressed]="neblinaAtiva()">
             <i class="bi bi-cloud-fog2" aria-hidden="true"></i><span class="so-largo">Névoa</span>
@@ -294,23 +339,25 @@
                     title="Cobrir: arraste sobre os quadrados" aria-label="Cobrir" [attr.aria-pressed]="ferramenta() === 'cobrir'">
               <i class="bi bi-cloud-fill" aria-hidden="true"></i>
             </button>
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'parede'" (click)="escolherFerramenta('parede')"
-                    title="Parede: arraste de um canto da grade a outro; ela bloqueia a visão" aria-label="Parede" [attr.aria-pressed]="ferramenta() === 'parede'">
-              <i class="bi bi-bricks" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'porta'" (click)="escolherFerramenta('porta')"
-                    title="Porta: como a parede, mas abre e fecha com um clique (na ferramenta Mover)" aria-label="Porta" [attr.aria-pressed]="ferramenta() === 'porta'">
-              <i class="bi bi-door-closed" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'janela'" (click)="escolherFerramenta('janela')"
-                    title="Janela: bloqueia o movimento, mas não a visão" aria-label="Janela" [attr.aria-pressed]="ferramenta() === 'janela'">
-              <i class="bi bi-border-all" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'apagar'" (click)="escolherFerramenta('apagar')"
-                    title="Apagar parede ou porta: clique sobre ela" aria-label="Apagar parede" [attr.aria-pressed]="ferramenta() === 'apagar'">
-              <i class="bi bi-eraser" aria-hidden="true"></i>
-            </button>
           }
+        </div>
+        <div class="barra-grupo">
+          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'parede'" (click)="escolherFerramenta('parede')"
+                  title="Parede: arraste de um canto da grade a outro; ela bloqueia a visão" aria-label="Parede" [attr.aria-pressed]="ferramenta() === 'parede'">
+            <i class="bi bi-bricks" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'porta'" (click)="escolherFerramenta('porta')"
+                  title="Porta: como a parede, mas abre e fecha com um clique (na ferramenta Mover)" aria-label="Porta" [attr.aria-pressed]="ferramenta() === 'porta'">
+            <i class="bi bi-door-closed" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'janela'" (click)="escolherFerramenta('janela')"
+                  title="Janela: bloqueia o movimento, mas não a visão" aria-label="Janela" [attr.aria-pressed]="ferramenta() === 'janela'">
+            <i class="bi bi-border-all" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'apagar'" (click)="escolherFerramenta('apagar')"
+                  title="Apagar parede ou porta: clique sobre ela" aria-label="Apagar parede" [attr.aria-pressed]="ferramenta() === 'apagar'">
+            <i class="bi bi-eraser" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="barra-grupo">
           <button type="button" class="barra-btn largo" (click)="abrirAdicionar()" title="Adicionar um token ao mapa">
@@ -322,6 +369,17 @@
             </button>
           }
         </div>
+        @if (vezAtual(); as vez) {
+          <div class="barra-grupo turno-combate" aria-live="polite">
+            <span class="barra-titulo vez" [title]="'Rodada ' + vez.rodada + ' · vez de ' + vez.nome">
+              <span class="rodada">R{{ vez.rodada }}</span><span class="nome-vez">{{ vez.nome }}</span>
+            </span>
+            <button type="button" class="barra-btn largo" (click)="passarTurno()" [disabled]="passandoTurno()"
+                    title="Passar para o próximo da ordem de combate">
+              <i class="bi bi-skip-forward-fill" aria-hidden="true"></i><span class="so-largo">Passar turno</span>
+            </button>
+          </div>
+        }
       }
       <div class="barra-grupo fim">
         @if (cena()) {
@@ -410,6 +468,15 @@
           </label>
         }
         <label>Nome <input type="text" name="nomeToken" [(ngModel)]="novoToken.nome" maxlength="60" required /></label>
+        <label>Miniatura 3D
+          <select name="miniaturaNovo" [(ngModel)]="novoToken.modeloId">
+            <option [ngValue]="null">{{ novoToken.personagemId ? 'A da ficha (se tiver)' : 'Nenhuma (cartão)' }}</option>
+            @for (m of miniaturas(); track m.modeloId) { <option [ngValue]="m.modeloId">{{ m.nome }}</option> }
+          </select>
+        </label>
+        @if (!miniaturas().length) {
+          <p class="dica">Nenhuma miniatura na <button type="button" class="link" (click)="abrirBiblioteca()">Biblioteca 3D</button> ainda.</p>
+        }
         <div class="campo">
           <span class="campo-rotulo">Tamanho</span>
           <div class="segmentos">
@@ -434,6 +501,38 @@
         <label class="marcador"><input type="checkbox" name="inimigoNovo" [(ngModel)]="novoToken.inimigo" /> Inimigo</label>
         <button type="submit" class="btn-primary" [disabled]="!novoToken.nome.trim()">Colocar no mapa</button>
       </form>
+    } @else if (objetoSelecionado(); as ob) {
+      <div class="painel-bloco detalhe">
+        <header>
+          <h3><i class="bi bi-box" aria-hidden="true"></i> {{ ob.nome }}</h3>
+          <button type="button" class="link" (click)="objetoSelecionadoId.set(null)" aria-label="Fechar detalhes"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </header>
+        @if (ehMestre()) {
+          <div class="campo">
+            <span class="campo-rotulo">Girar ({{ ob.rotacao | number: '1.0-0' }}°)</span>
+            <div class="botoes-linha">
+              <button type="button" class="btn-secondary" (click)="girarObjeto(ob, -45)" aria-label="Girar 45 graus para a esquerda"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> 45°</button>
+              <button type="button" class="btn-secondary" (click)="girarObjeto(ob, 45)" aria-label="Girar 45 graus para a direita"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> 45°</button>
+            </div>
+          </div>
+          <!-- inspetor, como nas engines: os valores exatos que o gizmo do 3D mexe -->
+          @for (grupo of camposDaPeca; track grupo.rotulo) {
+            <fieldset class="inspetor">
+              <legend>{{ grupo.rotulo }}</legend>
+              @for (c of grupo.campos; track c.chave) {
+                <label>
+                  <span>{{ c.eixo }}</span>
+                  <input type="number" [step]="c.passo" [value]="ob[c.chave] | number: '1.0-2':'en-US'"
+                         (change)="mudarCampoDaPeca(ob, c.chave, $event)" [attr.aria-label]="grupo.rotulo + ' ' + c.eixo" />
+                </label>
+              }
+            </fieldset>
+          }
+          <label class="marcador"><input type="checkbox" [ngModel]="ob.oculto" (change)="salvarObjeto(ob, { oculto: $any($event.target).checked })" /> Escondida dos jogadores</label>
+          <p class="dica">No 3D, clique na peça para mover (W), girar (E) e escalar (R) com o gizmo. No 2D, arraste para mudar de lugar.</p>
+          <button type="button" class="btn-danger" (click)="removerObjeto(ob)"><i class="bi bi-trash" aria-hidden="true"></i> Tirar do mapa</button>
+        }
+      </div>
     } @else if (selecionadoMarcador(); as mk) {
       <div class="painel-bloco detalhe">
         <header>
@@ -482,8 +581,18 @@
               <div class="barra-movimento" role="img" [attr.aria-label]="o.restante + ' de ' + o.total + ' quadrados restantes'">
                 <span [style.width.%]="o.total ? (o.restante / o.total) * 100 : 0"></span>
               </div>
-              <p class="dica">Restam {{ o.restante }} de {{ o.total }} nesta rodada ({{ metros(o.restante) }} m).</p>
+              <p class="dica">Restam {{ o.restante }} de {{ o.total }} neste turno ({{ metros(o.restante) }} m).</p>
             }
+          </div>
+        }
+        @if (t.miniaturaId && podeMover(t)) {
+          <div class="campo">
+            <span class="campo-rotulo">Virar a miniatura ({{ t.rotacao | number: '1.0-0' }}°)</span>
+            <div class="botoes-linha">
+              <button type="button" class="btn-secondary" (click)="girarToken(t, t.rotacao - 45)" aria-label="Virar 45 graus para a esquerda"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> 45°</button>
+              <button type="button" class="btn-secondary" (click)="girarToken(t, t.rotacao + 45)" aria-label="Virar 45 graus para a direita"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> 45°</button>
+            </div>
+            <p class="dica">No 3D, arraste o anel em volta da miniatura selecionada.</p>
           </div>
         }
         @if (podeEditarCondicoes(t)) {
@@ -532,8 +641,14 @@
                    [attr.placeholder]="t.deslocamentoDaFicha !== null ? 'ficha: ' + fmtM(t.deslocamentoDaFicha) : 'sem limite'" />
           </label>
           @if (orcamentoDe(t)?.emCombate) {
-            <button type="button" class="btn-secondary" (click)="alterarToken(t, { restaurarMovimento: true })">Restaurar movimento da rodada</button>
+            <button type="button" class="btn-secondary" (click)="alterarToken(t, { restaurarMovimento: true })">Restaurar movimento do turno</button>
           }
+          <label>Miniatura 3D
+            <select [ngModel]="t.modeloId ?? null" (ngModelChange)="alterarToken(t, { modeloId: $event })">
+              <option [ngValue]="null">{{ t.personagemId ? 'A da ficha' + (t.miniaturaId ? ' (' + nomeDoModelo(t.miniaturaId) + ')' : ' (nenhuma)') : 'Nenhuma (cartão)' }}</option>
+              @for (m of miniaturas(); track m.modeloId) { <option [ngValue]="m.modeloId">{{ m.nome }}</option> }
+            </select>
+          </label>
           <label>Visão (com névoa ligada)
             <select [ngModel]="t.visao" (ngModelChange)="alterarToken(t, { visao: $event })">
               @for (v of opcoesDeVisao; track v) { <option [ngValue]="v">{{ v === 0 ? 'Não enxerga' : fmtM(pesParaMetros(v)) + ' m' }}</option> }

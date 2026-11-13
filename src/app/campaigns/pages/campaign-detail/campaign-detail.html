@@ -19,7 +19,16 @@
 
       <div class="acoes">
         <a class="btn-primary" [routerLink]="['/campaigns', campaign.campanhaId, 'timeline']">Abrir a crônica</a>
+        <a class="btn-secondary" routerLink="/anotacoes" [queryParams]="{ campanha: campaign.campanhaId }">
+          <i class="bi bi-journal-text" aria-hidden="true"></i> Anotações
+        </a>
+        <a class="btn-secondary" [routerLink]="['/campaigns', campaign.campanhaId, 'modelos']" title="Modelos 3D: peças de cenário e miniaturas">
+          <i class="bi bi-box" aria-hidden="true"></i> Biblioteca 3D
+        </a>
         @if (ehMestre) {
+          <a class="btn-secondary" [routerLink]="['/campaigns', campaign.campanhaId, 'murais']" title="Quadros livres só seus">
+            <i class="bi bi-easel2" aria-hidden="true"></i> Murais
+          </a>
           <button type="button" class="btn-secondary" [disabled]="inviteBusy" (click)="generateInvite()">Convidar jogadores</button>
           <button type="button" class="btn-danger" (click)="deleteCampaign()">Excluir</button>
         } @else {
@@ -65,7 +74,7 @@
       <div class="hub-principal">
         <section aria-labelledby="tit-sessoes">
           <h2 class="rotulo-secao" id="tit-sessoes">Sessões
-            @if (ehMestre) { <a class="rotulo-extra" routerLink="/sessoes/create">+ Nova sessão</a> }
+            @if (ehMestre) { <a class="rotulo-extra" routerLink="/sessoes/create" [queryParams]="{ campanha: campaign?.campanhaId }">+ Nova sessão</a> }
           </h2>
           @if (sessoes.length > 0) {
             <ol class="sessoes">
@@ -88,7 +97,18 @@
         </section>
 
         <section aria-labelledby="tit-herois">
-          <h2 class="rotulo-secao" id="tit-herois">Heróis <a class="rotulo-extra" routerLink="/personagens/create">+ Novo personagem</a></h2>
+          <h2 class="rotulo-secao" id="tit-herois">
+            Heróis
+            <span class="rotulo-acoes">
+              <button type="button" class="rotulo-extra botao-texto" (click)="trazendoHeroi = !trazendoHeroi" [attr.aria-expanded]="trazendoHeroi">Trazer de outra campanha</button>
+              <a class="rotulo-extra" routerLink="/personagens/create" [queryParams]="{ campanha: campaign.campanhaId }">+ Novo personagem</a>
+            </span>
+          </h2>
+          @if (trazendoHeroi) {
+            <div class="trazer-painel">
+              <app-trazer-heroi [campanhaId]="campaign.campanhaId!" (trazido)="aoTrazerHeroi()" />
+            </div>
+          }
           @if (herois.length > 0) {
             <ul class="herois">
               @for (h of herois; track h.personagemId) {

@@ -14,6 +14,12 @@ import { PersonagemService } from '../../../../personagens/services/personagem.s
 import { CampaignService } from '../../../../campaigns/services/campaign';
 import { MODELO_ROTEIRO, Mencionavel, alternarTarefa, prepararMarkdown } from '../../../utils/anotacao-markdown';
 
+const CHAVE_LISTA_RECOLHIDA = 'wyvern.anotacoes.listaRecolhida';
+
+function lerListaRecolhida(): boolean {
+  try { return localStorage.getItem(CHAVE_LISTA_RECOLHIDA) === '1'; } catch { return false; }
+}
+
 @Component({
   selector: 'app-anotacoes',
   imports: [CommonModule, FormsModule],
@@ -61,6 +67,39 @@ export class Anotacoes implements OnInit, OnChanges {
   newPastaName = '';
   newPastaPublic = false;
 
+  /** Modo foco: a lista some e a nota fica com a tela toda. Lembrado neste aparelho. */
+  listaRecolhida = lerListaRecolhida();
+  /** Pastas fechadas na lista (0 = "Geral", as notas sem pasta). */
+  private pastasFechadas = new Set<number>();
+
+  /** A pasta da nota aberta (ou da que está sendo escrita); nula = "Geral". */
+  get pastaAtual(): PastaAnotacao | null {
+    const id = this.isEditing ? this.pastaSelecionada?.pastaId : this.anotacaoSelecionada?.pastaId;
+    return id ? this.pastas.find(p => p.pastaId === id) ?? null : null;
+  }
+
+  alternarLista() {
+    this.listaRecolhida = !this.listaRecolhida;
+    try { localStorage.setItem(CHAVE_LISTA_RECOLHIDA, this.listaRecolhida ? '1' : '0'); } catch { /* só não lembra */ }
+  }
+
+  pastaFechada(id: number): boolean {
+    return this.pastasFechadas.has(id);
+  }
+
+  alternarPasta(id: number) {
+    if (this.pastasFechadas.has(id)) this.pastasFechadas.delete(id);
+    else this.pastasFechadas.add(id);
+  }
+
+  /** Ctrl+S (ou Cmd+S) salva enquanto escreve, em vez de abrir o "salvar página" do navegador. */
+  aoTeclarEditor(ev: KeyboardEvent) {
+    if (this.isEditing && (ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's') {
+      ev.preventDefault();
+      this.salvarAnotacao();
+    }
+  }
+
   ngOnInit() {
     this.currentUserId = this.authService.usuarioLogado()?.usuarioId ?? 0;
     this.carregarPapel();
@@ -69,6 +108,13 @@ export class Anotacoes implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['campanhaId'] && !changes['campanhaId'].firstChange) {
+      // outra campanha: a nota aberta e as pastas fechadas eram da anterior
+      this.anotacaoSelecionada = null;
+      this.isEditing = false;
+      this.isCreatingPasta = false;
+      this.pastasFechadas.clear();
+      this.anotacoes = [];
+      this.pastas = [];
       this.carregarPapel();
       this.carregarDados();
     }

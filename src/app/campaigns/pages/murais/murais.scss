@@ -1,0 +1,99 @@
+.voltar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  text-decoration: none;
+
+  &:hover { color: var(--fg); }
+}
+
+.estado { color: var(--muted); }
+
+.novo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 32rem;
+  margin-bottom: var(--spacing-lg);
+
+  .form-control { flex: 1 1 14rem; }
+}
+
+.grade {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--spacing-md);
+  margin: 0;
+  padding: 0;
+}
+
+.cartao {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+
+  &:hover { border-color: var(--hi); }
+}
+
+.abrir {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 0 1rem;
+  color: var(--fg);
+  text-decoration: none;
+
+  strong { padding: 0 1rem; font-size: 1.05rem; }
+  small { padding: 0 1rem; color: var(--muted); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -2px; }
+}
+
+.miniatura {
+  display: grid;
+  place-items: center;
+  height: 7rem;
+  margin-bottom: 0.5rem;
+  background:
+    radial-gradient(circle, var(--line) 1px, transparent 1.5px) 0 0 / 16px 16px,
+    var(--surface-2);
+  color: var(--hi);
+  font-size: 2.2rem;
+}
+
+.btn-icone {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--muted);
+  cursor: pointer;
+
+  &:hover { color: var(--danger); }
+  &:focus-visible { outline: 2px solid var(--hi); }
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 30rem;
+  margin: 3rem auto;
+  text-align: center;
+  color: var(--muted);
+
+  i { font-size: 3rem; opacity: 0.55; }
+  h2 { margin: 0; color: var(--fg); font-size: 1.4rem; }
+  p { margin: 0; line-height: 1.6; }
+}

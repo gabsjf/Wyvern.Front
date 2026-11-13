@@ -1,3 +1,5 @@
+@use '../../ui/tomo';
+
 .page-head .eyebrow { color: var(--hi); letter-spacing: 0.14em; }
 
 .estante {
@@ -7,81 +9,13 @@
   gap: var(--spacing-lg);
 }
 
-.tomo {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+.tomo:hover {
+  border-color: var(--hi);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 
-  &:hover {
-    border-color: var(--hi);
-    transform: translateY(-4px);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-
-    .tomo-abrir { color: var(--hi); letter-spacing: 0.08em; }
-    .capa-marca { transform: translateY(-50%) rotate(0deg) scale(1.06); opacity: 0.6; }
-  }
-}
-
-.capa {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 11rem;
-  padding: 1rem 1.1rem;
-  overflow: hidden;
-  border-bottom: 3px solid var(--accent);
-}
-
-.capa-marca {
-  position: absolute;
-  right: -0.5rem;
-  top: 50%;
-  transform: translateY(-50%) rotate(8deg);
-  opacity: 0.4;
-  transition: transform 0.3s, opacity 0.3s;
-}
-
-.capa-topo { position: relative; display: flex; flex-wrap: wrap; gap: 0.4rem; }
-
-.capa-sistema {
-  position: relative;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(246, 234, 214, 0.85);
-}
-
-.tomo-corpo {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 0.35rem;
-  padding: var(--spacing-md) 1.1rem 1.1rem;
-
-  h2 { margin: 0; font-size: 1.9rem; line-height: 1; overflow-wrap: anywhere; }
-}
-
-.tomo-mestre { margin: 0; color: var(--muted); font-size: 0.9rem; }
-
-.tomo-numeros {
-  display: flex;
-  gap: var(--spacing-xl);
-  margin: var(--spacing-sm) 0 var(--spacing-md);
-  padding: var(--spacing-sm) 0;
-  border-block: 1px solid var(--line);
-
-  dt { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-  dd { font-size: 1.9rem; line-height: 1.1; color: var(--hi); }
+  .tomo-abrir { color: var(--hi); letter-spacing: 0.08em; }
+  .capa-marca { transform: translateY(-50%) rotate(0deg) scale(1.06); opacity: 0.6; }
 }
 
 .tomo-abrir {
@@ -122,4 +56,27 @@
   font-size: 2.2rem;
   line-height: 1;
   color: var(--hi);
+}
+
+// busca: só aparece quando a estante passa de seis campanhas (ou já há uma busca)
+.busca-estante {
+  position: relative;
+  display: block;
+  max-width: 28rem;
+  margin-bottom: var(--spacing-lg);
+
+  i { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .form-control { padding-left: 2.5rem; border-radius: 999px; }
+}
+
+// enquanto a próxima página chega, a atual fica esmaecida em vez de sumir
+.estante.carregando { opacity: 0.55; transition: opacity 0.15s; }
+
+.estante-vazia {
+  grid-column: 1 / -1;
+  padding: 2rem 0;
+  color: var(--muted);
+
+  h2 { margin: 0 0 0.3rem; color: var(--fg); font-size: 1.3rem; }
+  p { margin: 0; }
 }

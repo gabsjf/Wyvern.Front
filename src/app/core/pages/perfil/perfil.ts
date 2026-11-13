@@ -47,7 +47,6 @@ export class PerfilComponent implements OnInit {
   readonly erroSenha = signal('');
 
   readonly encerrando = signal<string | null>(null);
-  readonly virandoMestre = signal(false);
 
   // ---------- excluir conta ----------
   readonly exclusaoAberta = signal(false);
@@ -156,30 +155,6 @@ export class PerfilComponent implements OnInit {
     });
   }
 
-  // ---------- plano ----------
-
-  async virarMestre(): Promise<void> {
-    const ok = await this.confirm.confirmar({
-      titulo: 'Virar Mestre',
-      mensagem: 'A sua conta passa a ser Mestre no plano Free: você poderá criar 1 campanha com até 2 jogadores. Continua podendo jogar nas campanhas dos outros.',
-      confirmar: 'Virar Mestre',
-    });
-    if (!ok) return;
-
-    this.virandoMestre.set(true);
-    this.perfilService.virarMestre().subscribe({
-      next: conta => {
-        this.virandoMestre.set(false);
-        this.perfil.update(p => (p ? { ...p, conta } : p));
-        this.toast.ok('Pronto! Agora você é Mestre.');
-      },
-      error: err => {
-        this.virandoMestre.set(false);
-        this.toast.erro(this.mensagem(err, 'Não foi possível ativar a conta de Mestre.'));
-      },
-    });
-  }
-
   // ---------- excluir conta ----------
 
   abrirExclusao(): void {
@@ -264,13 +239,17 @@ export class PerfilComponent implements OnInit {
       this.erroSenha.set('A confirmação não bate com a nova senha.');
       return;
     }
+    if (this.novaSenha === this.senhaAtual) {
+      this.erroSenha.set('A nova senha precisa ser diferente da atual.');
+      return;
+    }
 
     this.trocandoSenha.set(true);
     this.perfilService.trocarSenha(this.senhaAtual, this.novaSenha).subscribe({
       next: () => {
         this.trocandoSenha.set(false);
         this.senhaAtual = this.novaSenha = this.confirmacaoSenha = '';
-        this.toast.ok('Senha alterada. As outras sessões foram encerradas.');
+        this.toast.ok('Senha alterada. Os outros aparelhos foram desconectados e enviamos um aviso para o seu e-mail.');
         this.carregarSessoes();
       },
       error: err => {

@@ -7,6 +7,7 @@
   <div *ngIf="mensagemEnviado" class="alert-ok" role="status">
     <p>{{ mensagemEnviado }}</p>
     <p>Depois de confirmar, <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }">entre na sua conta</a>.</p>
+    <p>Não chegou? <a [routerLink]="['/reenviar-confirmacao']" [queryParams]="{ email: registerForm.value.email }">Peça outro link</a>.</p>
   </div>
 
   <form *ngIf="!mensagemEnviado" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
@@ -28,18 +29,10 @@
       <div *ngIf="registerForm.get('senha')?.invalid && registerForm.get('senha')?.touched" class="text-error">A senha deve ter pelo menos 6 caracteres.</div>
     </div>
 
-    <!-- Fora do beta a pessoa escolhe o tipo de conta; no beta todo mundo é Mestre -->
-    <fieldset *ngIf="!beta()" class="form-group tipo-conta">
-      <legend class="form-label">Como você vai usar o Wyvern?</legend>
-      <label class="opcao">
-        <input type="radio" formControlName="papel" value="Jogador">
-        <span><strong>Vou jogar</strong> <small>Grátis. Entro nas mesas pelo convite do Mestre.</small></span>
-      </label>
-      <label class="opcao">
-        <input type="radio" formControlName="papel" value="Mestre">
-        <span><strong>Vou mestrar</strong> <small>Começo no plano Free: 1 campanha com até 2 jogadores.</small></span>
-      </label>
-    </fieldset>
+    <p class="auth-aceite">
+      Ao criar a conta, você concorda com os <a routerLink="/termos" target="_blank">Termos de uso</a>
+      e declara ter lido a <a routerLink="/privacidade" target="_blank">Política de privacidade</a>.
+    </p>
 
     <button type="submit" class="btn-primary auth-submit" [disabled]="registerForm.invalid || loading">
       <span *ngIf="!loading">Criar conta</span>

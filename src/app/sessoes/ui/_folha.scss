@@ -1,0 +1,61 @@
+// Cartão de sessão do diário ("folha"): número em marca d'água, título, data e resumo.
+// Usado pela lista de sessões e pela prévia da tela de criar/editar sessão.
+
+.folha {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 12.5rem;
+  overflow: hidden;
+  padding: var(--spacing-md) 1.1rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition: border-color 0.2s, transform 0.2s;
+
+  &.agendada { border-left-color: var(--hi); }
+}
+
+// o número da sessão vira marca d'água
+.folha-numero {
+  position: absolute;
+  right: 0.6rem;
+  bottom: -2.2rem;
+  font-family: var(--font-display);
+  font-size: 11rem;
+  line-height: 1;
+  color: var(--hi);
+  opacity: 0.07;
+  pointer-events: none;
+  user-select: none;
+}
+
+.folha-corpo { position: relative; flex: 1; }
+
+.folha-sobre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hi);
+}
+
+.folha h3 { margin: 0.2rem 0 0.15rem; font-size: 1.7rem; line-height: 1; overflow-wrap: anywhere; }
+
+.folha-data { margin: 0; color: var(--muted); }
+
+.folha-obs {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: var(--spacing-sm) 0 0;
+  color: var(--muted);
+  max-width: 34rem;
+}
+

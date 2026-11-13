@@ -1,0 +1,122 @@
+// Layout das telas de criação (campanha, sessão): etapas numeradas à esquerda e a prévia fixa à direita.
+
+.page-head .eyebrow { color: var(--hi); letter-spacing: 0.14em; }
+.page-head .sub { max-width: 52ch; }
+
+.criacao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  max-width: 1400px;
+}
+
+.forja { display: flex; flex-direction: column; gap: clamp(2rem, 4vw, 3rem); min-width: 0; }
+
+.etapa .rotulo-secao { font-size: 0.95rem; }
+.etapa-num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 1px solid var(--hi);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+
+// título grande, só com a linha de baixo, como o título de um livro
+.nome-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0 0.4rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--muted);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+
+  &::placeholder { color: var(--muted); opacity: 0.45; }
+  &:hover { border-bottom-color: var(--fg); }
+  &:focus { outline: 0; border-bottom: 2px solid var(--hi); margin-bottom: -1px; }
+}
+
+.dica { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.9rem; }
+
+// cartão escolhível (sistema, campanha)
+.opcao {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  &:hover { border-color: var(--muted); background: var(--tint-1); }
+
+  &.ativo {
+    border-color: var(--hi);
+    background: color-mix(in srgb, var(--hi) 10%, var(--surface));
+    box-shadow: inset 0 0 0 1px var(--hi);
+  }
+
+  .marca { position: absolute; top: 0.55rem; right: 0.7rem; color: var(--hi); }
+}
+
+.erro { margin: 0; a { margin-left: 0.35rem; font-weight: 600; } }
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--line);
+}
+
+.criar { min-height: 52px; padding-inline: 2.25rem; font-size: 1.1rem; letter-spacing: 0.12em; }
+.falta { color: var(--muted); font-size: 0.9rem; }
+
+// prévia
+.lado {
+  position: sticky;
+  top: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.lado-titulo { margin: 0 0 0.75rem; color: var(--hi); letter-spacing: 0.14em; }
+
+.depois ol {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+
+  li { display: flex; gap: 0.8rem; align-items: flex-start; }
+  i { flex: none; margin-top: 0.1rem; font-size: 1.15rem; color: var(--hi); }
+  strong { display: block; font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.03em; }
+  span { color: var(--muted); font-size: 0.88rem; }
+}
+
+@media (max-width: 1000px) {
+  .criacao { grid-template-columns: 1fr; }
+  .lado { position: static; }
+  .lado > * { max-width: 26rem; }
+}
+
+@media (max-width: 560px) {
+  .criar { width: 100%; }
+}

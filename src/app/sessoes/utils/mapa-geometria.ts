@@ -39,6 +39,12 @@ export function quadradoEm(x: number, y: number, celula: number): { coluna: numb
   return { coluna: Math.floor(x / celula), linha: Math.floor(y / celula) };
 }
 
+/** O centro do quadrado sob o ponto (x, y), em pixels do mapa. É de onde partem a régua e as áreas de magia. */
+export function centroDoQuadrado(x: number, y: number, celula: number): { x: number; y: number } {
+  const q = quadradoEm(x, y, celula);
+  return { x: (q.coluna + 0.5) * celula, y: (q.linha + 0.5) * celula };
+}
+
 /** Mantém um token de `tamanho` quadrados inteiro dentro do mapa. */
 export function limitarAoMapa(
   coluna: number, linha: number, tamanho: number, mapaL: number, mapaA: number, celula: number,

@@ -1,0 +1,52 @@
+<div class="container animate-fade-in">
+  <a class="voltar" [routerLink]="['/campaigns', campanhaId]">← {{ campanhaNome() || 'Campanha' }}</a>
+
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Só você, Mestre, vê os murais</p>
+      <h1>Murais</h1>
+      <p class="sub">Quadros livres para ligar pistas, facções, NPCs e o que mais a campanha pedir.</p>
+    </div>
+  </header>
+
+  @if (carregando()) {
+    <p class="estado" role="status">Carregando os murais...</p>
+  } @else if (semPermissao()) {
+    <div class="vazio">
+      <i class="bi bi-lock" aria-hidden="true"></i>
+      <h2>Os murais são do Mestre</h2>
+      <p>Só o Mestre desta campanha cria e vê os murais.</p>
+    </div>
+  } @else {
+    <form class="novo" (submit)="$event.preventDefault(); criar()">
+      <label class="visually-hidden" for="nome-mural">Nome do novo mural</label>
+      <input id="nome-mural" class="form-control" name="nome" [(ngModel)]="nome" maxlength="100" placeholder="Ex.: Intrigas da corte" autocomplete="off" />
+      <button type="submit" class="btn-primary" [disabled]="criando()">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ criando() ? 'Criando...' : 'Novo mural' }}
+      </button>
+    </form>
+
+    @if (lista().length === 0) {
+      <div class="vazio">
+        <i class="bi bi-easel" aria-hidden="true"></i>
+        <h2>Nenhum mural ainda</h2>
+        <p>Crie o primeiro: notas, setas, formas, imagens e cartões dos personagens, tudo num quadro sem limites.</p>
+      </div>
+    } @else {
+      <ul class="grade">
+        @for (m of lista(); track m.muralId) {
+          <li class="cartao">
+            <a class="abrir" [routerLink]="['/campaigns', campanhaId, 'murais', m.muralId]">
+              <span class="miniatura" aria-hidden="true"><i class="bi bi-easel2"></i></span>
+              <strong>{{ m.nome }}</strong>
+              <small>Editado em {{ m.atualizadoEm | date: 'dd/MM/yyyy HH:mm' }}</small>
+            </a>
+            <button type="button" class="btn-icone perigo" (click)="excluir(m)" [attr.aria-label]="'Excluir ' + m.nome" title="Excluir">
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

@@ -12,6 +12,7 @@ import { PersonagemService } from '../../../personagens/services/personagem.serv
 import { Personagem } from '../../../personagens/models/personagem';
 import { Emblema, matizDoNome } from '../../../shared/ui/emblema/emblema';
 import { TrazerHeroi } from '../../../personagens/components/trazer-heroi/trazer-heroi';
+import { environment } from '../../../../environments/environments';
 
 @Component({
   selector: 'app-campaign-detail',
@@ -122,9 +123,10 @@ export class CampaignDetail implements OnInit {
   inviteMessage = '';
   inviteBusy = false;
 
-  // O link sempre aponta para o domínio de produção, mesmo quando o Mestre está em localhost.
+  // Em produção, o link aponta sempre para o site público (no app do celular a página é http://localhost);
+  // no ng serve, para onde o app está aberto, que é o que conversa com a API local.
   private buildInviteUrl(token: string) {
-    return `${window.location.origin}/invite/${token}`;
+    return `${environment.urlDoSite || window.location.origin}/invite/${token}`;
   }
 
   private showInviteMessage(message: string) {

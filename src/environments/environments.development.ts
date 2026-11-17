@@ -3,6 +3,8 @@
 export const environment = {
     production: false,
     apiUrl: 'http://localhost:5098',
+    // Vazio: os links (convites) usam o endereço em que o app está aberto, o que bate com a API local.
+    urlDoSite: '',
     // Vazio: erros do desenvolvimento não vão para o Sentry (preencha só para testar a integração).
     sentryDsn: ''
 }

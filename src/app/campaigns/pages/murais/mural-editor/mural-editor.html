@@ -223,7 +223,7 @@
 
   <!-- ===== seletor de cartões ===== -->
   @if (cartoesAbertos()) {
-    <div class="modal-overlay" (click)="cartoesAbertos.set(false)">
+    <div class="modal-overlay" (click)="cartoesAbertos.set(false)" appCamada (fecharCamada)="cartoesAbertos.set(false)">
       <div class="modal-content seletor-de-cartoes" role="dialog" aria-modal="true" aria-labelledby="tit-cartoes" (click)="$event.stopPropagation()">
         <h2 id="tit-cartoes">Adicionar cartão</h2>
         <p class="ajuda">Personagens e sessões desta campanha. O cartão leva direto à ficha ou à sessão.</p>

@@ -36,7 +36,8 @@
                 "output": "/assets/dice-box/"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.scss"],
+            "stylePreprocessorOptions": { "includePaths": ["src/styles"] }
           },
           "configurations": {
             "production": {
@@ -49,7 +50,7 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "12kB",
-                  "maximumError": "24kB"
+                  "maximumError": "32kB"
                 }
               ],
               "outputHashing": "all",

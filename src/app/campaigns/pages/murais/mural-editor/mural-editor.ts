@@ -1,3 +1,4 @@
+import { Camada } from '../../../../shared/ui/camada.directive';
 import { Component, DestroyRef, ElementRef, HostListener, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -45,7 +46,7 @@ interface OpcaoDeCartao {
  */
 @Component({
   selector: 'app-mural-editor',
-  imports: [RouterLink],
+  imports: [RouterLink, Camada],
   templateUrl: './mural-editor.html',
   styleUrl: './mural-editor.scss',
 })

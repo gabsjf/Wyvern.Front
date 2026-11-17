@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, SimpleChanges, OnChanges, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, Input, SimpleChanges, OnChanges, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,7 @@ import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { ConfirmService } from '../../../../shared/ui/confirm/confirm.service';
 import { PersonagemService } from '../../../../personagens/services/personagem.service';
 import { CampaignService } from '../../../../campaigns/services/campaign';
+import { LayoutService } from '../../../../core/layout/layout.service';
 import { MODELO_ROTEIRO, Mencionavel, alternarTarefa, prepararMarkdown } from '../../../utils/anotacao-markdown';
 
 const CHAVE_LISTA_RECOLHIDA = 'wyvern.anotacoes.listaRecolhida';
@@ -220,6 +221,7 @@ export class Anotacoes implements OnInit, OnChanges {
     this.isEditing = false;
     this.showPreview = true;
     this.updatePreview(a.conteudo);
+    this.sincronizarVoltar();
     this.cdr.detectChanges();
   }
 
@@ -232,6 +234,7 @@ export class Anotacoes implements OnInit, OnChanges {
     this.editConteudo = '';
     this.editIsPublica = false;
     this.updatePreview('');
+    this.sincronizarVoltar();
   }
 
   editarAnotacao() {
@@ -257,10 +260,28 @@ export class Anotacoes implements OnInit, OnChanges {
     return this.userRole === 'Mestre' || (p.criadoPorId != null && p.criadoPorId === this.currentUserId);
   }
 
-  // No celular, lista e nota se alternam: este botão volta para a lista
+  // No celular, lista e nota se alternam: o botão voltar do Android também volta para a lista.
+  private layout = inject(LayoutService);
+  private soltarVoltar: (() => void) | null = null;
+  private soltarAoDestruir = inject(DestroyRef).onDestroy(() => this.soltarVoltar?.());
+
+  private sincronizarVoltar() {
+    const aberta = this.isEditing || !!this.anotacaoSelecionada;
+    if (aberta && !this.soltarVoltar && window.matchMedia?.('(max-width: 900px)').matches) {
+      this.soltarVoltar = this.layout.abrirCamada(() => {
+        this.soltarVoltar = null;
+        this.voltarParaLista();
+      });
+    } else if (!aberta && this.soltarVoltar) {
+      this.soltarVoltar();
+      this.soltarVoltar = null;
+    }
+  }
+
   voltarParaLista() {
     this.isEditing = false;
     this.anotacaoSelecionada = null;
+    this.sincronizarVoltar();
     this.cdr.detectChanges();
   }
 

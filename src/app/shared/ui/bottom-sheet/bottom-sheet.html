@@ -1,0 +1,36 @@
+@if (visivel()) {
+  @if (modo() === 'modal') {
+    <div class="fundo" (click)="fechar.emit()" aria-hidden="true"></div>
+  }
+  <section #painel class="painel" tabindex="-1"
+           [attr.role]="modo() === 'modal' ? 'dialog' : 'region'"
+           [attr.aria-modal]="modo() === 'modal' ? true : null"
+           [attr.aria-label]="titulo() || null"
+           [attr.data-parada]="parada()"
+           [class.arrastando]="arrastando()"
+           [style.transform]="arrasto() ? 'translateY(' + arrasto() + 'px)' : null"
+           (keydown)="teclar($event)">
+    <header class="topo" (pointerdown)="pegar($event)" (pointermove)="mover($event)" (pointerup)="soltar()" (pointercancel)="soltar()">
+      @if (modo() === 'fixo') {
+        <button type="button" class="alca" (click)="tocarAlca()"
+                [attr.aria-label]="parada() === paradas()[0] || !parada() ? 'Expandir o painel' : 'Recolher o painel'"
+                [attr.aria-expanded]="!!parada() && parada() !== paradas()[0]"><span></span></button>
+      } @else {
+        <span class="alca" aria-hidden="true"><span></span></span>
+      }
+      @if (titulo()) {
+        <div class="cabecalho">
+          <h2>{{ titulo() }}</h2>
+          <ng-content select="[sheet-acoes]" />
+          @if (modo() === 'modal') {
+            <button type="button" class="fechar" (click)="fechar.emit()" aria-label="Fechar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+          }
+        </div>
+      }
+    </header>
+    <div class="corpo">
+      <ng-content />
+    </div>
+    <ng-content select="[sheet-rodape]" />
+  </section>
+}

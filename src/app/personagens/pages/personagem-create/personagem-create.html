@@ -11,7 +11,20 @@
         </p>
       }
 
-      <nav class="top-nav-tabs" aria-label="Partes da ficha">
+      @if (emPassos) {
+        <!-- celular: em que passo está e quantos faltam -->
+        <div class="passos" role="group" aria-label="Passos da criação">
+          <p class="passo-atual"><span class="num">{{ indiceDoPasso + 1 }}/{{ abasVisiveis.length }}</span> {{ abasVisiveis[indiceDoPasso].nome }}</p>
+          <ol class="passo-trilho">
+            @for (aba of abasVisiveis; track aba.id; let i = $index) {
+              <li [class.feito]="i < indiceDoPasso" [class.atual]="i === indiceDoPasso" [class.pendente]="pendentesNaAba(aba.id) > 0 && i < indiceDoPasso">
+                <button type="button" (click)="setTab(aba.id)" [attr.aria-label]="'Passo ' + (i + 1) + ': ' + aba.nome" [attr.aria-current]="i === indiceDoPasso ? 'step' : null"></button>
+              </li>
+            }
+          </ol>
+        </div>
+      }
+      <nav class="top-nav-tabs" [class.escondida]="emPassos" aria-label="Partes da ficha">
         @for (aba of abasVisiveis; track aba.id) {
           <button type="button" class="tab-btn" [class.active]="activeTab === aba.id" (click)="setTab(aba.id)">
             {{ aba.nome }}
@@ -539,7 +552,23 @@
         <datalist id="lista-tipos-dano">@for (t of tiposDeDano; track t) { <option [value]="t"></option> }</datalist>
       </ng-container>
 
-      <!-- BARRA DE SALVAR -->
+      <!-- BARRA DE SALVAR (no celular, criando: Voltar e Próximo até o último passo) -->
+      @if (emPassos) {
+        <div class="save-bar passos-barra">
+          @if (indiceDoPasso > 0) {
+            <button type="button" class="btn-secondary" (click)="irParaPasso(-1)"><i class="bi bi-arrow-left" aria-hidden="true"></i> Voltar</button>
+          } @else {
+            <a class="btn-secondary" routerLink="/personagens">Cancelar</a>
+          }
+          @if (!ultimoPasso) {
+            <button type="button" class="btn-primary" (click)="irParaPasso(1)">
+              Próximo @if (pendentesNaAba(abasVisiveis[indiceDoPasso].id) > 0) { <span class="tab-pendente">{{ pendentesNaAba(abasVisiveis[indiceDoPasso].id) }}</span> } <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+          } @else {
+            <button type="submit" class="btn-primary" [disabled]="isSaving">{{ isSaving ? 'Salvando...' : 'Criar personagem' }}</button>
+          }
+        </div>
+      } @else {
       <div class="save-bar">
         @if (!isEditMode && faltas.length > 0) {
           <span class="save-status"><i class="bi bi-exclamation-circle" aria-hidden="true"></i> {{ faltas.length === 1 ? 'Falta 1 item' : 'Faltam ' + faltas.length + ' itens' }}</span>
@@ -550,6 +579,7 @@
           {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar alterações' : 'Criar personagem') }}
         </button>
       </div>
+      }
 
       <!-- Sugestões das regras (dá para digitar outra coisa, para conteúdo da casa) -->
       <datalist id="lista-classes">@for (c of classes; track c.nome) { <option [value]="c.nome"></option> }</datalist>

@@ -8,6 +8,10 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { ToastContainer } from './shared/ui/toast/toast-container';
 import { ConfirmDialog } from './shared/ui/confirm/confirm-dialog';
 import { LayoutService } from './core/layout/layout.service';
+import { PlataformaService } from './core/plataforma/plataforma.service';
+
+/** Telas de onde o botão voltar do Android sai do app em vez de voltar. */
+const TELAS_RAIZ = ['/', '/login', '/dashboard', '/campaigns', '/personagens', '/sessoes'];
 
 @Component({
   selector: 'app-root',
@@ -20,6 +24,8 @@ export class App implements OnInit {
   authService = inject(AuthService);
   router = inject(Router);
   layout = inject(LayoutService);
+  // Criado já na abertura: liga teclado, barras do sistema, orientação e a classe html.nativo.
+  private plataforma = inject(PlataformaService);
 
   constructor() {
     // Os erros enviados ao Sentry levam só o id da conta logada.
@@ -29,10 +35,20 @@ export class App implements OnInit {
   /** Largura da barra lateral, para elementos flutuantes não ficarem por cima dela (no celular ela não existe). */
   get larguraLateral(): string {
     if (!this.authService.isLoggedIn() || this.layout.imersivo()) return "0px";
+    if (this.plataforma.trilhoEstreito()) return "80px";
     return this.layout.recolhida() ? "68px" : "208px";
   }
 
   ngOnInit() {
+    // Botão voltar do Android: fecha a camada aberta (sheet, diálogo); senão volta uma tela; nas telas da barra
+    // inferior (e fora da conta) o app vai para segundo plano, como os apps nativos.
+    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      if (this.layout.fecharCamadaDoTopo()) return;
+      const caminho = this.router.url.split(/[?#]/)[0];
+      if (!canGoBack || TELAS_RAIZ.includes(caminho)) CapacitorApp.minimizeApp();
+      else history.back();
+    });
+
     // Escuta eventos de Deep Link
     CapacitorApp.addListener('appUrlOpen', (event: any) => {
       const slug = event.url.split('.app').pop();

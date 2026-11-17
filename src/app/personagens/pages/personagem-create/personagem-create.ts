@@ -20,6 +20,7 @@ import { ArquivosDoGltfFaltando, converterGltfParaGlb, ehGltf } from '../../../s
 import { converter3mfParaGlb, eh3mf, limiteDo3mf } from '../../../sessoes/utils/modelo-3mf-para-glb';
 import { META_DE_TRIANGULOS, TexturasPerdidas, otimizarGlb } from '../../../sessoes/utils/otimizar-glb';
 import { VisualizadorGlb } from '../../../shared/ui/visualizador-glb/visualizador-glb';
+import { PlataformaService } from '../../../core/plataforma/plataforma.service';
 
 @Component({
   selector: 'app-personagem-create',
@@ -36,6 +37,9 @@ export class PersonagemCreate implements OnInit {
   private authService = inject(AuthService);
   private toast = inject(ToastService);
   private modelos3d = inject(Modelos3dService);
+  private plataforma = inject(PlataformaService);
+  /** Celular, criando: um passo por vez, com Voltar e Próximo na base (editando, as abas continuam livres). */
+  readonly compacto = this.plataforma.compacto;
 
   // Só o Mestre da campanha escolhida define o tipo (Jogador/NPC/Monstro); o servidor também impõe isso
   get ehMestreNaCampanha(): boolean {
@@ -119,6 +123,27 @@ export class PersonagemCreate implements OnInit {
 
   setTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  // ---- passo a passo no celular ----
+  get emPassos(): boolean {
+    return !this.isEditMode && this.compacto();
+  }
+
+  get indiceDoPasso(): number {
+    return Math.max(0, this.abasVisiveis.findIndex(a => a.id === this.activeTab));
+  }
+
+  get ultimoPasso(): boolean {
+    return this.indiceDoPasso >= this.abasVisiveis.length - 1;
+  }
+
+  irParaPasso(delta: number) {
+    const aba = this.abasVisiveis[this.indiceDoPasso + delta];
+    if (!aba) return;
+    this.activeTab = aba.id;
+    this.plataforma.vibrar('leve');
+    document.querySelector('.ficha-content')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }); // volta ao topo do passo novo
   }
 
   /** Herói qualquer um cria; NPC e Monstro só o Mestre da campanha escolhida. */

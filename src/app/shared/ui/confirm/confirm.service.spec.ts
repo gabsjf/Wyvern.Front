@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ConfirmService } from './confirm.service';
+import { LayoutService } from '../../../core/layout/layout.service';
 
 describe('ConfirmService', () => {
   let servico: ConfirmService;
@@ -40,5 +41,14 @@ describe('ConfirmService', () => {
 
   it('responder sem pergunta aberta não faz nada', () => {
     expect(() => servico.responder(true)).not.toThrow();
+  });
+
+  it('o botão voltar do Android cancela a pergunta', async () => {
+    const promessa = servico.confirmar({ titulo: 'Excluir', mensagem: 'Certeza?' });
+
+    expect(TestBed.inject(LayoutService).fecharCamadaDoTopo()).toBe(true);
+
+    expect(await promessa).toBe(false);
+    expect(servico.aberta()).toBeNull();
   });
 });

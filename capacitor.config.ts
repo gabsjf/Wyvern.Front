@@ -6,6 +6,18 @@ const config: CapacitorConfig = {
   webDir: 'dist/wyvern-front/browser',
   server: {
     cleartext: true
+  },
+  plugins: {
+    // O app esconde a abertura quando o Angular termina de carregar (PlataformaService), sem piscar tela branca.
+    SplashScreen: {
+      launchAutoHide: false,
+      backgroundColor: '#000000',
+      showSpinner: false
+    },
+    // O app desenha de ponta a ponta; as áreas seguras chegam ao CSS como --safe-area-inset-*.
+    SystemBars: {
+      insetsHandling: 'css'
+    }
   }
 };
 

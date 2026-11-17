@@ -1,7 +1,10 @@
+@use 'mobile';
+
 // O mural ocupa a tela inteira (modo imersivo): quadro pontilhado infinito com barras flutuando por cima.
 :host {
   position: fixed;
-  inset: 0;
+  // tela cheia, mas fora da barra de status, do entalhe e da barra de gestos do celular (no desktop tudo é 0)
+  inset: var(--seguro-topo) var(--seguro-dir) var(--seguro-base) var(--seguro-esq);
   z-index: 500;
   display: block;
   background: var(--bg);
@@ -401,7 +404,7 @@ textarea {
 
 .modal-acoes { display: flex; justify-content: flex-end; margin-top: 1rem; }
 
-@media (max-width: 700px) {
+@include mobile.compacto {
   .so-largo { display: none; }
   .topo { max-width: none; }
   .ferramentas { top: auto; bottom: 0.75rem; left: 0.75rem; flex-direction: row; flex-wrap: wrap; max-width: calc(100vw - 12rem); transform: none; }

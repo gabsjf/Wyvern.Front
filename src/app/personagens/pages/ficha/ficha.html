@@ -2,6 +2,9 @@
   <aside class="ficha-sidebar glass-panel">
     <div class="character-portrait-section">
 
+      <button type="button" class="menu-mais" (click)="menuAcoes.set(true)" aria-label="Mais ações da ficha" aria-haspopup="dialog">
+        <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+      </button>
       <h2 class="text-accent character-name">{{ personagem?.nome || 'Carregando...' }}</h2>
       <p class="text-secondary character-class">{{ personagem?.personagemPlayer?.classe || 'Sem Classe' }} Nv. {{ personagem?.personagemPlayer?.nivel || 1 }}</p>
       @if (personagem?.personagemId) {
@@ -47,11 +50,11 @@
     }
 
     <nav class="ficha-nav" role="tablist" aria-label="Seções da ficha">
-      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'atributos'" [attr.aria-selected]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos</button>
-      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
-      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'magias'" [attr.aria-selected]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
-      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'inventario'" [attr.aria-selected]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
-      <button type="button" role="tab" class="nav-btn" [class.active]="activeTab === 'caracteristicas'" [attr.aria-selected]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
+      <button type="button" role="tab" id="aba-atributos" class="nav-btn" [class.active]="activeTab === 'atributos'" [attr.aria-selected]="activeTab === 'atributos'" (click)="setTab('atributos')">Atributos</button>
+      <button type="button" role="tab" id="aba-combate" class="nav-btn" [class.active]="activeTab === 'combate'" [attr.aria-selected]="activeTab === 'combate'" (click)="setTab('combate')">Combate</button>
+      <button type="button" role="tab" id="aba-magias" class="nav-btn" [class.active]="activeTab === 'magias'" [attr.aria-selected]="activeTab === 'magias'" (click)="setTab('magias')">Magias</button>
+      <button type="button" role="tab" id="aba-inventario" class="nav-btn" [class.active]="activeTab === 'inventario'" [attr.aria-selected]="activeTab === 'inventario'" (click)="setTab('inventario')">Inventário</button>
+      <button type="button" role="tab" id="aba-caracteristicas" class="nav-btn" [class.active]="activeTab === 'caracteristicas'" [attr.aria-selected]="activeTab === 'caracteristicas'" (click)="setTab('caracteristicas')">Características</button>
     </nav>
 
     <!-- Descansos: valem para o dono da ficha e para o Mestre (o servidor confere) -->
@@ -79,7 +82,7 @@
   <main class="ficha-content">
     <app-ficha-header [personagem]="personagem" (rolar)="rolarTeste($event)" (recarregar)="recarregar()"></app-ficha-header>
     
-    <div class="ficha-main-area">
+    <div class="ficha-main-area" (touchstart)="aoTocar($event)" (touchend)="aoSoltar($event)">
       <!-- ABA: ATRIBUTOS E PERÍCIAS -->
       <ng-container *ngIf="activeTab === 'atributos'">
         <app-ficha-atributos [personagem]="personagem" (rolar)="rolarTeste($event)"></app-ficha-atributos>
@@ -298,19 +301,19 @@
 
 <!-- Modais -->
 <!-- Modal de Item -->
-<div class="modal-overlay" *ngIf="showItemModal">
+<div class="modal-overlay" *ngIf="showItemModal" appCamada (fecharCamada)="showItemModal = false">
   <div class="modal-content">
     <h3>Adicionar Item</h3>
     <div class="form-group">
       <label>Nome do Item</label>
       <input type="text" [(ngModel)]="novoItem.nome" placeholder="Ex: Poção de Cura">
     </div>
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
+    <div class="modal-linha">
+      <div class="form-group">
         <label>Tipo de Item</label>
         <input type="text" [(ngModel)]="novoItem.tipoItem" placeholder="Ex: Consumível">
       </div>
-      <div class="form-group" style="flex: 1;">
+      <div class="form-group">
         <label>Raridade</label>
         <input type="text" [(ngModel)]="novoItem.raridade" placeholder="Ex: Comum">
       </div>
@@ -327,7 +330,7 @@
 </div>
 
 <!-- Modal de Importação de PDF -->
-<div class="modal-overlay" *ngIf="showImportModal">
+<div class="modal-overlay" *ngIf="showImportModal" appCamada (fecharCamada)="showImportModal = false">
   <div class="modal-content">
     <h3>Importar Ficha</h3>
     <div class="form-group">
@@ -345,7 +348,7 @@
 </div>
 
 <!-- Modal de Detalhes -->
-<div class="modal-overlay" *ngIf="showDetalhesModal" (click)="showDetalhesModal = false">
+<div class="modal-overlay" *ngIf="showDetalhesModal" (click)="showDetalhesModal = false" appCamada (fecharCamada)="showDetalhesModal = false">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
       <h3 style="margin: 0; color: var(--text-primary);">{{ detalhes.titulo }}</h3>
@@ -357,29 +360,29 @@
 </div>
 
 <!-- Modal de Magia -->
-<div class="modal-overlay" *ngIf="showMagiaModal">
+<div class="modal-overlay" *ngIf="showMagiaModal" appCamada (fecharCamada)="showMagiaModal = false">
   <div class="modal-content">
     <h3>Adicionar Magia</h3>
     <div class="form-group">
       <label>Nome da Magia</label>
       <input type="text" [(ngModel)]="novaMagia.nome" placeholder="Ex: Bola de Fogo">
     </div>
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
+    <div class="modal-linha">
+      <div class="form-group">
         <label>Círculo (0 a 9)</label>
         <input type="number" [(ngModel)]="novaMagia.nivel" min="0" max="9">
       </div>
-      <div class="form-group" style="flex: 1;">
+      <div class="form-group">
         <label>Escola</label>
         <input type="text" [(ngModel)]="novaMagia.escola" placeholder="Ex: Evocação">
       </div>
     </div>
     <div class="form-group">
       <label>Componentes</label>
-      <div style="display: flex; gap: 15px; margin-top: 5px;">
-        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" [(ngModel)]="novaMagia.verbal"> Verbal (V)</label>
-        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" [(ngModel)]="novaMagia.somatico"> Somático (S)</label>
-        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" [(ngModel)]="novaMagia.material"> Material (M)</label>
+      <div class="componentes">
+        <label><input type="checkbox" [(ngModel)]="novaMagia.verbal"> Verbal (V)</label>
+        <label><input type="checkbox" [(ngModel)]="novaMagia.somatico"> Somático (S)</label>
+        <label><input type="checkbox" [(ngModel)]="novaMagia.material"> Material (M)</label>
       </div>
     </div>
     <div class="form-group">
@@ -394,29 +397,29 @@
 </div>
 
 <!-- Modal de Ataque -->
-<div class="modal-overlay" *ngIf="showAtaqueModal">
+<div class="modal-overlay" *ngIf="showAtaqueModal" appCamada (fecharCamada)="showAtaqueModal = false">
   <div class="modal-content">
     <h3>Adicionar Ataque</h3>
     <div class="form-group">
       <label>Nome do Ataque</label>
       <input type="text" [(ngModel)]="novoAtaque.nome" placeholder="Ex: Espada Longa">
     </div>
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
+    <div class="modal-linha">
+      <div class="form-group">
         <label>Bônus de Acerto</label>
         <input type="number" [(ngModel)]="novoAtaque.bonusAcerto" placeholder="Ex: 5">
       </div>
-      <div class="form-group" style="flex: 1;">
+      <div class="form-group">
         <label>Dano</label>
         <input type="text" [(ngModel)]="novoAtaque.dano" placeholder="Ex: 1d8+3">
       </div>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
+    <div class="modal-linha">
+      <div class="form-group">
         <label>Tipo de Dano</label>
         <input type="text" [(ngModel)]="novoAtaque.tipoDano" placeholder="Ex: Cortante">
       </div>
-      <div class="form-group" style="flex: 1;">
+      <div class="form-group">
         <label>Alcance</label>
         <input type="text" [(ngModel)]="novoAtaque.alcance" placeholder="Ex: 1,5m">
       </div>
@@ -434,10 +437,21 @@
 
 <!-- Descanso curto / longo -->
 @if (descansoAberto) {
-  <app-descanso-dialog [personagem]="personagem" [tipo]="descansoAberto" (fechar)="fecharDescanso()" (concluido)="aoConcluirDescanso($event)"></app-descanso-dialog>
+  <app-descanso-dialog appCamada (fecharCamada)="fecharDescanso()" [personagem]="personagem" [tipo]="descansoAberto" (fechar)="fecharDescanso()" (concluido)="aoConcluirDescanso($event)"></app-descanso-dialog>
 }
 
 <!-- Mesa ao vivo: o que a campanha está rolando -->
 @if (personagem?.campanhaId) {
   <app-mesa-ao-vivo [campanhaId]="personagem.campanhaId"></app-mesa-ao-vivo>
 }
+
+<!-- Celular: editar, importar e exportar ficam no menu "⋯" -->
+<app-bottom-sheet [aberto]="menuAcoes()" (fechar)="menuAcoes.set(false)" [titulo]="personagem?.nome || 'Ficha'">
+  <ul class="menu-lista">
+    @if (personagem?.personagemId) {
+      <li><a [routerLink]="['/personagens', personagem.personagemId, 'edit']" (click)="menuAcoes.set(false)"><i class="bi bi-pencil" aria-hidden="true"></i> Editar ficha</a></li>
+    }
+    <li><button type="button" (click)="menuAcoes.set(false); importPdf()"><i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> Importar PDF 5.5</button></li>
+    <li><button type="button" (click)="menuAcoes.set(false); exportPdf()"><i class="bi bi-file-earmark-arrow-down" aria-hidden="true"></i> Exportar PDF</button></li>
+  </ul>
+</app-bottom-sheet>

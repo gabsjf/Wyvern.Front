@@ -15,10 +15,12 @@ import { ToastService } from './toast.service';
     </div>
   `,
   styles: `
+    @use 'mobile';
+
     .toast-region {
       position: fixed;
-      right: max(1rem, env(safe-area-inset-right, 0px));
-      bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+      right: max(1rem, var(--seguro-dir));
+      bottom: max(1rem, var(--seguro-base));
       z-index: 2000;
       display: flex;
       flex-direction: column;
@@ -67,11 +69,11 @@ import { ToastService } from './toast.service';
     }
 
     /* No celular o aviso sobe para ficar acima da barra de navegação inferior */
-    @media (max-width: 900px) {
+    @include mobile.celular {
       .toast-region {
-        left: max(1rem, env(safe-area-inset-left, 0px));
-        right: max(1rem, env(safe-area-inset-right, 0px));
-        bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+        left: max(1rem, var(--seguro-esq));
+        right: max(1rem, var(--seguro-dir));
+        bottom: calc(var(--barra-inferior) + var(--seguro-base) + 0.5rem);
         width: auto;
       }
     }

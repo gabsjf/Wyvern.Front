@@ -1,3 +1,46 @@
+@use 'mobile';
+
+/* faixa fixa do celular (só aparece com o cartão de vida fora da tela) */
+.faixa-fixa { display: none; }
+
+@include mobile.compacto {
+  .faixa-fixa {
+    position: fixed;
+    top: calc(56px + var(--seguro-topo)); // logo abaixo da barra do app
+    left: 0;
+    right: 0;
+    z-index: 60; // acima das abas da ficha, abaixo da barra do app
+    height: var(--ficha-faixa);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.9rem;
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    animation: desce 0.18s ease-out;
+  }
+  .ff-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 1rem var(--font-display); }
+  .ff-pv, .ff-ca { display: inline-flex; align-items: baseline; gap: 0.25rem; font: 600 1.1rem var(--font-display); small { color: var(--muted); font-size: 0.8rem; } i { font-size: 0.8rem; } }
+  .ff-pv i { color: var(--ok); }
+  .ff-pv.low, .ff-pv.low i { color: var(--danger); }
+  .ff-temp { color: hsl(207 70% 62%) !important; }
+  .ff-ca i { color: var(--muted); }
+  .ff-ini { min-height: 32px; padding: 0 0.6rem; border: 1px solid var(--hi); border-radius: 999px; background: transparent; color: var(--hi); font: 600 0.85rem var(--font-body); }
+  .ff-barra {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--tint-2);
+    i { display: block; height: 100%; background: var(--ok); &.low { background: var(--danger); } }
+  }
+}
+@keyframes desce { from { transform: translateY(-100%); } }
+@media (prefers-reduced-motion: reduce) { .faixa-fixa { animation: none; } }
+
 .ficha-header {
   display: flex;
   flex-direction: column;
@@ -168,6 +211,20 @@
 
   &.fail button::after { border-color: var(--danger); }
   &.fail button.on::after { background: var(--danger); }
+}
+
+/* cartão estreito (celular, tablet em pé): o rótulo vai para cima das bolinhas, que encolhem um pouco */
+.vital-card.saves { container-type: inline-size; }
+
+@container (max-width: 250px) {
+  .save-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .dots { margin-left: -6px; }
+  .dots button { width: 38px; height: 34px; }
 }
 
 @media (min-width: 721px) {

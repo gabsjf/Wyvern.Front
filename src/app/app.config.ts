@@ -3,7 +3,7 @@ import {
 } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
@@ -19,7 +19,8 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'pt-BR' },
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(), 
-    provideRouter(routes), 
+    // Troca de tela com transição (o estilo fica em styles.scss, só no celular; some com movimento reduzido).
+    provideRouter(routes, withViewTransitions({ skipInitialTransition: true })),
     provideHttpClient(withInterceptors([authInterceptor])),
     // A sessão é um cookie que o JavaScript não lê: pergunta à API antes de abrir a primeira rota.
     provideAppInitializer(() => inject(AuthService).carregarSessao()),

@@ -1,3 +1,5 @@
+@use 'mobile';
+
 /* =====================================================================
    Wyvern · tema "Bestiário"
    Pedra escura quente, vermelho-vinho para ações, dourado para destaque e turno ativo.
@@ -55,6 +57,15 @@
   --font-body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-main: var(--font-body);
+
+  /* áreas seguras do aparelho (entalhe, barra de status, barra de gestos). No Android o Capacitor 8 injeta
+     --safe-area-inset-* com os valores certos; o env() cobre o navegador e o iOS. */
+  --seguro-topo: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --seguro-base: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --seguro-esq: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --seguro-dir: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  /* altura da barra inferior de navegação no celular (sem a área segura) */
+  --barra-inferior: 60px;
 
   /* ---- nomes antigos (alias) ---- */
   --bg-dark: var(--bg);
@@ -602,4 +613,153 @@ input[type='number']::-webkit-outer-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* =====================================================================
+   Celular e app nativo
+   ===================================================================== */
+
+/* No app (html.nativo): toque sem o realce azul do navegador, sem o "puxão" elástico da página inteira,
+   sem o atraso de toque duplo e sem selecionar texto de botões e abas por engano. */
+html.nativo {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+
+  body { overscroll-behavior: none; }
+
+  button,
+  a,
+  [role='tab'],
+  [role='button'],
+  label {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  img { -webkit-touch-callout: none; }
+
+  /* resposta ao toque no lugar do hover, que não existe no dedo */
+  .btn-primary:active:not(:disabled),
+  .btn-secondary:active:not(:disabled),
+  .btn-danger:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+@include mobile.compacto {
+  /* inputs com 16px: abaixo disso o navegador dá zoom ao focar */
+  input, select, textarea { font-size: max(1rem, 16px); }
+
+  .page-head { margin-bottom: var(--spacing-lg); padding-bottom: 0.85rem; }
+  .page-head h1, .page-head h2 { font-size: clamp(1.7rem, 8vw, 2.2rem); }
+
+  /* abas roláveis de ponta a ponta, sem barra de rolagem aparecendo */
+  .top-nav-tabs {
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    &::-webkit-scrollbar { display: none; }
+  }
+  .tab-btn { scroll-snap-align: start; font-size: 1rem; padding-inline: 0.85rem; }
+
+  /* Todo .modal-overlay vira bottom sheet: sobe da base, cantos de cima arredondados e alça de arrasto. */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: var(--seguro-topo) 0 0;
+    animation: fundoAparece 0.2s ease;
+  }
+  .modal-content {
+    position: relative;
+    max-width: none;
+    max-height: calc(100dvh - var(--seguro-topo) - 1.5rem);
+    padding: 1.75rem var(--spacing-md) calc(var(--spacing-lg) + var(--seguro-base));
+    border: 0;
+    border-top: 3px solid var(--accent);
+    border-radius: 14px 14px 0 0;
+    overscroll-behavior: contain;
+    animation: sheetSobe 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0.55rem;
+      left: 50%;
+      width: 40px;
+      height: 4px;
+      margin-left: -20px;
+      border-radius: 2px;
+      background: var(--line);
+    }
+  }
+}
+
+@keyframes sheetSobe {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fundoAparece {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- troca de tela (View Transitions do router) ---------- */
+/* As barras do app ficam paradas; só o conteúdo desliza. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.18s;
+}
+
+@include mobile.compacto {
+  ::view-transition-old(root) { animation: 0.2s ease both telaSai; }
+  ::view-transition-new(root) { animation: 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both telaEntra; }
+}
+
+@keyframes telaSai {
+  to { opacity: 0; transform: translateX(-6%); }
+}
+@keyframes telaEntra {
+  from { opacity: 0; transform: translateX(8%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ---------- puxar para atualizar (diretiva appPuxarAtualizar) ---------- */
+[appPuxarAtualizar] { position: relative; }
+.puxar-indicador {
+  position: absolute;
+  top: -2.5rem;
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  font-size: 1.2rem;
+  opacity: 0;
+  transform: translate(-50%, 0);
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.puxar-indicador.pronto { color: var(--hi); }
+
+/* Ação que no celular vira botão flutuante (<app-fab>): some do cabeçalho */
+@include mobile.celular {
+  .esconde-celular { display: none !important; }
+
+  /* telas com botão flutuante: folga no fim da lista para ele não cobrir o último cartão */
+  .app-container:not(.no-sidebar) .main-content:has(app-fab) {
+    padding-bottom: calc(var(--barra-inferior) + var(--seguro-base) + 88px);
+  }
 }

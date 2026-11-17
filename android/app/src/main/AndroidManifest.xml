@@ -19,7 +19,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
+
             <!-- Configuração do Deep Link para capturar o domínio da Vercel -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

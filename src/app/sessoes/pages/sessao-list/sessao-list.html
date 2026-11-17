@@ -1,4 +1,4 @@
-<div class="container animate-fade-in">
+<div class="container animate-fade-in" appPuxarAtualizar (atualizar)="loadSessoes(pagina?.pagina ?? 1)">
   <header class="page-head">
     <div>
       <p class="eyebrow">Diário de mesa</p>
@@ -8,7 +8,8 @@
       }
     </div>
     @if (podeCriarSessao) {
-      <a class="btn-primary" routerLink="/sessoes/create">+ Nova sessão</a>
+      <a class="btn-primary esconde-celular" routerLink="/sessoes/create">+ Nova sessão</a>
+      <app-fab rotulo="Nova sessão" link="/sessoes/create" />
     }
   </header>
 

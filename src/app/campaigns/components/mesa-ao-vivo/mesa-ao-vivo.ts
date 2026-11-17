@@ -1,7 +1,9 @@
-import { Component, DestroyRef, Input, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, Input, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { MesaService, RolagemMesa } from '../../services/mesa.service';
 import { Emblema } from '../../../shared/ui/emblema/emblema';
+import { BottomSheet } from '../../../shared/ui/bottom-sheet/bottom-sheet';
+import { PlataformaService } from '../../../core/plataforma/plataforma.service';
 
 /**
  * Botão flutuante da mesa ao vivo: mostra, em tempo real, o que a campanha inteira está rolando.
@@ -9,7 +11,8 @@ import { Emblema } from '../../../shared/ui/emblema/emblema';
  */
 @Component({
   selector: 'app-mesa-ao-vivo',
-  imports: [DatePipe, Emblema],
+  imports: [DatePipe, NgTemplateOutlet, Emblema, BottomSheet],
+  host: { '[class.sem-botao]': '!botaoNoCelular()' },
   templateUrl: './mesa-ao-vivo.html',
   styleUrl: './mesa-ao-vivo.scss',
 })
@@ -18,6 +21,9 @@ export class MesaAoVivo implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   @Input({ required: true }) campanhaId!: number;
+  /** No celular, false esconde o botão flutuante: a tela abre a mesa por conta própria (ex.: aba "Dados" da sessão). */
+  readonly botaoNoCelular = input(true);
+  protected plataforma = inject(PlataformaService);
 
   aberta = signal(false);
   aviso = signal<RolagemMesa | null>(null);
@@ -37,6 +43,7 @@ export class MesaAoVivo implements OnInit {
       untracked(() => {
         if (!this.pronta || !ultima || ultima.id === this.ultimoId) return;
         this.ultimoId = ultima.id;
+        this.plataforma.vibrar(this.natural(ultima) === 20 ? 'sucesso' : 'leve');
         if (this.aberta()) {
           this.vistas.set(lista.length);
         } else {

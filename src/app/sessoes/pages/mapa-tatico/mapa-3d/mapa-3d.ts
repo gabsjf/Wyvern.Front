@@ -113,7 +113,8 @@ const COR_DO_TOKEN: Record<CorToken, string> = {
 const ALTURA_PAREDE = 1.05; // baixa o bastante para enxergar o interior das salas de uma câmera inclinada
 const ALTURA_PORTA = 0.95;
 const INCLINACAO = 0.92; // ângulo polar da vista inclinada (rad, ~53°)
-const SOMBRAS_MAX = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 2 : 4; // sombras de luz pontual custam caro
+const TELA_DE_TOQUE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+const SOMBRAS_MAX = TELA_DE_TOQUE ? 2 : 4; // sombras de luz pontual custam caro
 const LIMITE_ARRASTO = 0.15; // quadrados que o ponteiro precisa andar para contar como arrasto
 const LIMITE_TOQUE_PX = 6; // na tela: mais que isso já é arrastar a câmera, não um clique
 const TOQUE_LONGO_MS = 550; // segurar parado vira um ping, como no 2D
@@ -259,7 +260,12 @@ interface VistaDaParede {
       </div>
     }
     <p class="dica">
-      @if (editarCenario() && ferramenta() === 'objeto') { Clique para pôr a peça (em cima de outra, ela empilha) · W move · E gira · R escala · Ctrl solta o encaixe }
+      @if (telaDeToque) {
+        @if (editarCenario() && ferramenta() === 'objeto') { Toque no chão para pôr a peça · toque numa peça para editar }
+        @else if (ferramenta() === 'mover') { Um dedo anda · dois dedos giram e aproximam · segure para chamar a mesa }
+        @else { Arraste no chão para usar a ferramenta · dois dedos giram e aproximam }
+      }
+      @else if (editarCenario() && ferramenta() === 'objeto') { Clique para pôr a peça (em cima de outra, ela empilha) · W move · E gira · R escala · Ctrl solta o encaixe }
       @else if (editarCenario() && ferramenta() === 'mover') { Clique numa peça para editar · W move · E gira · R escala · Del apaga · Ctrl+D duplica · Esc solta }
       @else if (ferramenta() === 'mover') { Arraste o fundo para andar · botão direito gira · roda aproxima · duplo clique chama a mesa }
       @else { Arraste no chão para usar a ferramenta · botão direito gira · roda aproxima }
@@ -331,6 +337,7 @@ export class Mapa3d {
 
   protected readonly pronto = signal(false);
   protected readonly modoDoGizmo = signal<ModoDoGizmo>('translate');
+  protected readonly telaDeToque = TELA_DE_TOQUE;
   protected readonly encaixe = signal(true);
   protected readonly visaoDeCima = signal(false);
   protected readonly escuroManual = signal(false);

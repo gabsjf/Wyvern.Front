@@ -1,3 +1,5 @@
+@use 'mobile';
+
 :host { display: block; height: 100%; }
 
 /* linhas da grade: uma escura e uma clara, lado a lado, para aparecer sobre qualquer imagem (clara ou escura) */
@@ -272,18 +274,11 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
   button { pointer-events: auto; margin-top: 0.5rem; }
 }
 
-// ---------- barra de ferramentas ----------
-.barra {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  right: 0.75rem;
-  z-index: 30;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  pointer-events: none;
-}
+// ---------- barras sobre o mapa ----------
+// topo (cena, vez, 2D/3D) · coluna de ferramentas à esquerda · faixa de opções ao lado dela · zoom no canto de baixo
+$margem: 0.75rem;
+$alto-topo: 44px;
+$largura-ferr: 60px;
 
 .barra-grupo {
   display: flex;
@@ -291,18 +286,18 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
   pointer-events: auto;
   background: color-mix(in srgb, var(--surface) 93%, transparent);
   border: 1px solid var(--line);
+  border-radius: 10px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(6px);
-
-  &.fim { margin-left: auto; }
+  overflow: hidden;
 }
 
 .barra-titulo, .barra-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  min-width: 42px;
-  height: 42px;
+  min-width: $alto-topo;
+  height: $alto-topo;
   padding: 0 0.7rem;
   justify-content: center;
   background: transparent;
@@ -316,19 +311,199 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
 }
 .barra-titulo { cursor: default; }
 .barra-btn:hover { background: var(--tint-2); }
-.barra-btn.ativo { background: var(--hi); color: var(--hi-fg); }
+.barra-btn.ativo { background: var(--tint-2); color: var(--hi); }
 .barra-btn:focus-visible { outline: 2px solid var(--hi); outline-offset: -3px; }
 .barra-btn + .barra-btn { border-left: 1px solid var(--line); }
 .barra-btn:disabled { opacity: 0.55; cursor: progress; }
 
-// passar o turno direto do mapa: rodada e quem está na vez
-.turno-combate {
-  .vez { gap: 0.4rem; border-right: 1px solid var(--line); }
-  .rodada { color: var(--hi); font-variant-numeric: tabular-nums; }
-  .nome-vez { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topo {
+  position: absolute;
+  top: $margem;
+  left: $margem;
+  right: $margem;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
 }
+.topo-fim { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; pointer-events: none; }
+
+.cena-btn { min-width: 0; .seta { font-size: 0.8rem; opacity: 0.7; } }
 .nome-cena { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.offline { padding: 0 0.7rem; color: var(--danger); font-size: 1.2rem; }
+.ponto-jogo { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+
+// a vez no combate (e, para o Mestre, passar o turno)
+.vez-combate {
+  min-width: 0;
+  border-color: color-mix(in srgb, var(--hi) 55%, var(--line));
+  .vez { gap: 0.4rem; min-width: 0; }
+  .rodada { color: var(--hi); font-variant-numeric: tabular-nums; }
+  .nome-vez { max-width: 10rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barra-btn { border-left: 1px solid var(--line); color: var(--hi); }
+}
+
+.offline { display: grid; place-items: center; width: 32px; color: var(--danger); font-size: 1.2rem; pointer-events: auto; }
+
+// 2D | 3D: duas opções lado a lado, sempre à vista
+.seletor-vista {
+  padding: 3px;
+  gap: 3px;
+  button {
+    width: 44px;
+    height: calc(#{$alto-topo} - 8px);
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font: 700 0.95rem var(--font-display);
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    &:hover { color: var(--fg); background: var(--tint-2); }
+    &.ativo { background: var(--hi); color: var(--hi-fg); }
+    &:focus-visible { outline: 2px solid var(--hi); outline-offset: 1px; }
+  }
+}
+
+// zoom do 2D: no canto de baixo à direita, como os comandos de câmera do 3D
+.camera-2d {
+  position: absolute;
+  right: $margem;
+  bottom: $margem;
+  z-index: 30;
+}
+
+// ferramentas: ícone com o nome embaixo, para ninguém ter de adivinhar
+.ferramentas {
+  position: absolute;
+  top: calc(#{$margem} + #{$alto-topo} + 0.6rem);
+  left: $margem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: calc(100% - #{$alto-topo} - 2 * #{$margem} - 0.6rem - 4rem); // embaixo fica o botão da Mesa
+  overflow-y: auto;
+  scrollbar-width: none;
+  pointer-events: none;
+  &::-webkit-scrollbar { display: none; }
+}
+.ferr-grupo {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+.ferr-grupo.g-mestre { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+
+.ferr {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  width: $largura-ferr;
+  height: 54px;
+  padding: 0 2px;
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+  cursor: pointer;
+  pointer-events: auto;
+
+  i { font-size: 1.2rem; line-height: 1; }
+  span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 0.68rem/1.2 var(--font-body); letter-spacing: 0.02em; color: var(--muted); }
+  &:hover { background: var(--tint-2); }
+  &.ativo { background: var(--hi); color: var(--hi-fg); span { color: var(--hi-fg); } }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -3px; }
+
+  // a névoa está ligada: um ponto no canto do botão
+  .ligado { position: absolute; top: 6px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+}
+.trocar-vista { display: none; }
+
+// opções da ferramenta ativa: ao lado da coluna, com uma linha de ajuda
+.opcoes {
+  position: absolute;
+  top: calc(#{$margem} + #{$alto-topo} + 0.6rem);
+  left: calc(#{$margem} + #{$largura-ferr} + 0.6rem);
+  z-index: 31;
+  max-width: calc(100% - #{$largura-ferr} - 2 * #{$margem} - 3.6rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.35rem;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+  animation: aparece 0.15s ease-out;
+}
+@keyframes aparece { from { opacity: 0; transform: translateY(-4px); } }
+
+.opcoes-dica { padding: 0 0.4rem; color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+
+.opc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 38px;
+  padding: 0 0.75rem;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg);
+  font: 600 0.9rem var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+  &:hover { background: var(--tint-2); }
+  &.ativo { background: var(--hi); border-color: var(--hi); color: var(--hi-fg); }
+  &.perigo { color: var(--danger); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: 1px; }
+}
+// botões irmãos que são uma escolha só (forma da área, tipo de parede...)
+.segmentado {
+  display: inline-flex;
+  .opc { border-radius: 0; }
+  .opc + .opc { border-left: 0; }
+  .opc:first-child { border-radius: 8px 0 0 8px; }
+  .opc:last-child { border-radius: 0 8px 8px 0; }
+}
+.opc-select {
+  height: 38px;
+  max-width: 11rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--fg);
+  font: 600 0.9rem var(--font-body);
+}
+
+// liga/desliga da névoa
+.interruptor {
+  .trilho {
+    position: relative;
+    width: 30px;
+    height: 18px;
+    border-radius: 99px;
+    background: var(--tint-2);
+    border: 1px solid var(--line);
+    transition: background 0.15s;
+    &::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
+  }
+  &.ligado .trilho { background: color-mix(in srgb, var(--ok) 35%, transparent); border-color: var(--ok); }
+  &.ligado .trilho::after { transform: translateX(12px); background: var(--ok); }
+}
 
 .selo-jogo {
   padding: 0.05rem 0.45rem;
@@ -422,6 +597,7 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
   label { display: grid; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
   .dica { margin: 0; color: var(--muted); font-size: 0.9rem; }
   .contagem { color: var(--muted); font-size: 1.1rem; }
+  .acoes-lista { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.15rem; }
 }
 .painel-bloco.lista { flex: 1 1 auto; align-content: start; }
 
@@ -571,19 +747,152 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
 .calibragem { display: grid; gap: 0.75rem; }
 .calibre { display: flex; align-items: center; gap: 0.75rem; input[type='range'] { flex: 1; } input[type='number'] { width: 6rem; } }
 
-// ---------- telas estreitas: o mapa em cima, o painel embaixo ----------
-@media (max-width: 900px) {
-  :host { height: auto; }
-  .mapa { flex-direction: column; height: auto; }
-  .palco-moldura { flex: none; height: clamp(360px, calc(100dvh - 9rem), 720px); }
-  .painel { flex: none; overflow: visible; border-left: 0; border-top: 1px solid var(--line); }
-  .so-largo { display: none; }
-  .barra-btn, .barra-titulo { height: 46px; min-width: 46px; }
-  .nome-cena { max-width: 8rem; }
+// ---------- telas estreitas ----------
+// Tela de toque (tablet): alvos um pouco maiores para o dedo.
+@include mobile.toque {
+  .opc, .opc-select { height: 42px; }
 }
 
-@media (max-width: 480px) {
-  .barra { top: 0.5rem; left: 0.5rem; right: 0.5rem; }
+@include mobile.medio {
+  .so-largo { display: none; }
+  .nome-cena { max-width: 8rem; }
+  .vez-combate .nome-vez { max-width: 6rem; }
+}
+
+// Tablet: o painel não fica embaixo da barra de gestos do aparelho.
+@include mobile.tablet {
+  .painel { padding-bottom: max(var(--spacing-sm), var(--seguro-base)); }
+}
+
+// Tablet em pé: o mapa ocupa a largura toda e o painel de tokens fica embaixo, com rolagem própria
+// (o botão do painel recolhe e devolve a altura para o mapa).
+@include mobile.tablet-retrato {
+  .mapa { flex-direction: column; }
+  .painel {
+    flex: 0 0 auto;
+    max-height: 40%;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+
+// Celular deitado: pouca altura. O painel volta para a direita, estreito, e as ferramentas perdem o nome.
+@include mobile.paisagem-baixa {
+  :host { height: 100%; }
+  .mapa { flex-direction: row; height: 100%; }
+  .palco-moldura { flex: 1 1 auto; height: auto; }
+  .painel { flex: 0 0 min(300px, 38vw); overflow-y: auto; border-top: 0; border-left: 1px solid var(--line); padding-right: max(var(--spacing-sm), var(--seguro-dir)); }
+  .topo { top: 0.4rem; left: max(0.4rem, var(--seguro-esq)); right: 0.4rem; }
+  .barra-btn, .barra-titulo { height: 40px; min-width: 40px; }
+  .seletor-vista button { height: 32px; }
+  .ferramentas { top: calc(0.4rem + 40px + 0.4rem); left: max(0.4rem, var(--seguro-esq)); max-height: calc(100% - 40px - 1.2rem); gap: 0.35rem; }
+  .ferr { width: 44px; height: 40px; span { display: none; } }
+  .opcoes { top: calc(0.4rem + 40px + 0.4rem); left: calc(max(0.4rem, var(--seguro-esq)) + 44px + 0.5rem); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .camera-2d { right: 0.4rem; bottom: 0.4rem; }
+}
+
+// Celular em pé: o mapa enche a tela. Em cima, a cena, a vez e o 2D/3D; embaixo, as ferramentas numa faixa
+// como a barra de abas, logo acima do painel de tokens (um bottom sheet: espiar / meio / cheio).
+@include mobile.compacto {
+  :host {
+    height: 100%;
+    --sheet-base: calc(var(--barra-inferior) + var(--seguro-base)); // as abas da sessão ficam embaixo do painel
+    --sheet-pad-base: 0px;
+    --base-ferr: calc(var(--sheet-espiar, 4.75rem) + 0.5rem);
+  }
+  .mapa { flex-direction: column; height: 100%; }
+  .palco-moldura { flex: 1 1 auto; height: auto; }
+
+  .topo { top: 0.5rem; left: 0.5rem; right: 0.5rem; gap: 0.4rem; }
+  .topo-fim { gap: 0.4rem; }
+  .nome-cena { max-width: 5.5rem; }
+  .cena-btn { padding: 0 0.55rem; gap: 0.35rem; }
+  .vez-combate .nome-vez { max-width: 4.5rem; }
+  .vez-combate .barra-btn { min-width: 40px; padding: 0 0.5rem; }
+
+  // zoom: só o essencial, na lateral direita (a pinça já aproxima e afasta)
+  .camera-2d { top: calc(0.5rem + 44px + 0.5rem); bottom: auto; right: 0.5rem; flex-direction: column; }
+  .camera-2d .barra-btn { width: 40px; min-width: 40px; height: 40px; padding: 0; }
+  .camera-2d .barra-btn + .barra-btn { border-left: 0; border-top: 1px solid var(--line); }
+
+  .ferramentas {
+    top: auto;
+    bottom: var(--base-ferr);
+    left: 0.5rem;
+    right: 0.5rem;
+    flex-direction: row;
+    gap: 0;
+    max-height: none;
+    overflow: visible;
+    pointer-events: auto;
+    background: color-mix(in srgb, var(--surface) 95%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(6px);
+  }
+  .ferr-grupo { flex: 1 1 auto; flex-direction: row; background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; overflow: visible; }
+  .ferr { flex: 1 1 0; width: auto; min-width: 0; height: 56px; }
+  .trocar-vista {
+    display: grid;
+    flex: 0 0 64px;
+    border-left: 1px solid var(--line);
+    color: var(--accent-hover);
+    span { color: inherit; }
+  }
+
+  // Jogar x Mestre: cada vista mostra só o seu conjunto
+  :host(.vista-jogar) .g-mestre,
+  :host(.vista-mestre) .g-jogar { display: none; }
+
+  // as opções sobem logo acima das ferramentas, numa linha que rola de lado
+  .opcoes {
+    top: auto;
+    bottom: calc(var(--base-ferr) + 56px + 0.5rem);
+    left: 0.5rem;
+    right: auto;
+    max-width: calc(100% - 1rem);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+    > * { flex: none; }
+  }
+  .opcoes-dica { font-size: 0.8rem; }
+
+  // menu de cenas: sobe da base como um sheet
+  .menu-cenas {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1001;
+    width: auto;
+    max-height: 80dvh;
+    padding: 1.25rem var(--spacing-md) calc(var(--spacing-lg) + var(--seguro-base));
+    border: 0;
+    border-top: 3px solid var(--accent);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.45);
+    animation: sobe 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    li { min-height: 48px; }
+  }
+
+  // o conteúdo do painel dentro do sheet: sem a coluna, sem moldura dupla
+  .painel-sheet {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+    .painel-bloco { padding: 0.85rem; border-radius: 10px; }
+  }
+}
+
+// Celular bem estreito: a cena fica só com o ícone.
+@media (max-width: 380px) {
+  .nome-cena, .cena-btn .seta { display: none; }
+}
+
+@keyframes sobe {
+  from { transform: translateY(100%); }
 }
 
 // ---------- névoa de guerra ----------
@@ -620,11 +929,6 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
     stroke-width: calc(3px / var(--zoom, 1));
     stroke-linejoin: round;
   }
-}
-
-.opcoes-area {
-  .barra-btn.largo { font-size: 0.95rem; }
-  .pes select { height: 42px; border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--fg); font: 600 0.95rem var(--font-display); padding: 0 0.5rem; }
 }
 
 .par-botoes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -748,12 +1052,9 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
     filter: drop-shadow(0 0 1.5px black);
   }
 }
-.opcoes-desenho {
-  gap: 0.25rem;
-  padding: 0 0.5rem;
-  .cores-barra { display: inline-flex; gap: 0.3rem; align-items: center; }
-  .espessuras { display: inline-flex; gap: 0.25rem; margin-left: 0.4rem; }
-  .barra-btn { padding: 0 0.5rem; }
+.opcoes {
+  .cores-barra { display: inline-flex; gap: 0.3rem; align-items: center; padding: 0 0.2rem; }
+  .espessuras { display: inline-flex; gap: 0.25rem; }
 }
 .amostra.pequena { width: 22px; height: 22px; border-width: 2px; }
 .espessura {
@@ -934,7 +1235,6 @@ $linha-clara: color-mix(in srgb, white 45%, transparent);
   text-overflow: ellipsis;
 }
 .botoes-linha { display: flex; gap: var(--spacing-xs, 0.4rem); flex-wrap: wrap; }
-.opcoes-peca select { max-width: 11rem; }
 
 /* inspetor da peça de cenário: três eixos lado a lado, como nas engines */
 .inspetor {

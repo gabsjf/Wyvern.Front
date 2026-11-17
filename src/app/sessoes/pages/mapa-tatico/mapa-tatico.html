@@ -205,199 +205,224 @@
                    (gesto)="gesto3d($event)" (ping)="ping3d($event)" (toque)="toque3d($event)" (falhou)="falhou3d()" />
     }
 
-    <!-- ferramentas flutuando sobre o mapa -->
-    <div class="barra" role="toolbar" aria-label="Ferramentas do mapa">
+    <!-- topo: a cena, a vez no combate e a troca 2D/3D -->
+    <div class="topo" role="toolbar" aria-label="Mapa">
       @if (cena(); as c) {
-        <div class="barra-grupo cena-atual">
-          @if (ehMestre()) {
-            <button type="button" class="barra-btn largo" (click)="menuCenas.set(!menuCenas())" [attr.aria-expanded]="menuCenas()" aria-haspopup="true">
-              <i class="bi bi-layers" aria-hidden="true"></i>
-              <span class="nome-cena">{{ c.nome }}</span>
-              @if (c.ativa) { <span class="selo-jogo" title="Esta cena está em jogo">Em jogo</span> }
-              <i class="bi bi-chevron-down" aria-hidden="true"></i>
-            </button>
-          } @else {
-            <span class="barra-titulo"><i class="bi bi-map" aria-hidden="true"></i> <span class="nome-cena">{{ c.nome }}</span></span>
-          }
-        </div>
-      }
-      <div class="barra-grupo">
-        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'mover'" (click)="escolherFerramenta('mover')"
-                title="Mover tokens e o mapa" aria-label="Mover" [attr.aria-pressed]="ferramenta() === 'mover'">
-          <i class="bi bi-arrows-move" aria-hidden="true"></i>
-        </button>
-        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'regua'" (click)="escolherFerramenta('regua')"
-                title="Régua: mede a distância em quadrados e pés" aria-label="Régua" [attr.aria-pressed]="ferramenta() === 'regua'">
-          <i class="bi bi-rulers" aria-hidden="true"></i>
-        </button>
-        <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'area'" (click)="escolherFerramenta('area')"
-                title="Área de magia: esfera, cone ou linha" aria-label="Área de magia" [attr.aria-pressed]="ferramenta() === 'area'">
-          <i class="bi bi-bullseye" aria-hidden="true"></i>
-        </button>
-      </div>
-      @if (ferramenta() === 'area') {
-        <div class="barra-grupo opcoes-area">
-          @for (f of formasDeArea; track f.valor) {
-            <button type="button" class="barra-btn largo" [class.ativo]="formaDeArea() === f.valor" (click)="formaDeArea.set(f.valor)">{{ f.nome }}</button>
-          }
-          <label class="pes">
-            <select [ngModel]="pesDaArea()" (ngModelChange)="pesDaArea.set(+$event)" aria-label="Tamanho da área em pés">
-              @for (n of temposDeArea; track n) { <option [ngValue]="n">{{ fmtM(pesParaMetros(n)) }} m</option> }
-            </select>
-          </label>
-        </div>
-      }
-      <div class="barra-grupo so-2d">
-        <button type="button" class="barra-btn" (click)="ampliar(1 / 1.25)" title="Afastar" aria-label="Afastar"><i class="bi bi-zoom-out" aria-hidden="true"></i></button>
-        <button type="button" class="barra-btn" (click)="ampliar(1.25)" title="Aproximar" aria-label="Aproximar"><i class="bi bi-zoom-in" aria-hidden="true"></i></button>
-        <button type="button" class="barra-btn" (click)="centralizar()" title="Ver o mapa inteiro" aria-label="Ver o mapa inteiro"><i class="bi bi-fullscreen" aria-hidden="true"></i></button>
-      </div>
-      @if (ferramenta() === 'regua') {
-        <div class="barra-grupo">
-          <button type="button" class="barra-btn largo" [class.ativo]="compartilharRegua()" (click)="alternarCompartilharRegua()"
-                  title="Mostrar a sua régua aos outros da mesa" [attr.aria-pressed]="compartilharRegua()">
-            <i class="bi bi-broadcast" aria-hidden="true"></i><span class="so-largo">Compartilhar</span>
+        @if (ehMestre()) {
+          <button type="button" class="barra-grupo barra-btn cena-btn" (click)="menuCenas.set(!menuCenas())" [attr.aria-expanded]="menuCenas()"
+                  aria-haspopup="true" [attr.aria-label]="'Cena: ' + c.nome + '. Trocar ou ajustar a cena'" title="Trocar ou ajustar a cena">
+            <i class="bi bi-layers" aria-hidden="true"></i>
+            <span class="nome-cena">{{ c.nome }}</span>
+            @if (c.ativa) { <span class="ponto-jogo" title="Esta cena está em jogo"></span> }
+            <i class="bi bi-chevron-down seta" aria-hidden="true"></i>
           </button>
-        </div>
+        } @else {
+          <span class="barra-grupo barra-titulo cena-btn"><i class="bi bi-map" aria-hidden="true"></i> <span class="nome-cena">{{ c.nome }}</span></span>
+        }
       }
-      @if (cena()) {
-        <div class="barra-grupo">
-          @if (ehMestre()) {
-            <button type="button" class="barra-btn so-2d" [class.ativo]="ferramenta() === 'marcador'" (click)="escolherFerramenta('marcador')"
-                    title="Marcador: clique no mapa para fixar um ponto de interesse" aria-label="Marcador" [attr.aria-pressed]="ferramenta() === 'marcador'">
-              <i class="bi bi-geo-alt" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'objeto'" (click)="escolherFerramenta('objeto')"
-                    title="Cenário 3D: clique no mapa para pôr a peça escolhida (árvores, mesas, estátuas...)" aria-label="Cenário 3D" [attr.aria-pressed]="ferramenta() === 'objeto'">
-              <i class="bi bi-box" aria-hidden="true"></i>
-            </button>
-          }
-          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'desenhar'" (click)="escolherFerramenta('desenhar')"
-                  title="Desenhar à mão livre sobre o mapa" aria-label="Desenhar" [attr.aria-pressed]="ferramenta() === 'desenhar'">
-            <i class="bi bi-pencil" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'borracha'" (click)="escolherFerramenta('borracha')"
-                  title="Borracha: clique sobre um traço (você apaga os seus; o Mestre apaga todos)" aria-label="Borracha" [attr.aria-pressed]="ferramenta() === 'borracha'">
-            <i class="bi bi-eraser-fill" aria-hidden="true"></i>
-          </button>
-        </div>
-      }
-      @if (ferramenta() === 'objeto' && ehMestre()) {
-        <div class="barra-grupo opcoes-peca">
-          @if (pecasDeCenario().length) {
-            <label class="pes">
-              <select [ngModel]="pecaEscolhida()" (ngModelChange)="pecaEscolhida.set($event)" aria-label="Peça de cenário">
-                @for (m of pecasDeCenario(); track m.modeloId) { <option [ngValue]="m.modeloId">{{ m.nome }}</option> }
-              </select>
-            </label>
-            <label class="pes">
-              <select [ngModel]="ladoDaPeca()" (ngModelChange)="ladoDaPeca.set(+$event)" aria-label="Tamanho da peça em quadrados">
-                @for (n of ladosDePeca; track n) { <option [ngValue]="n">{{ n }}×{{ n }}</option> }
-              </select>
-            </label>
-          } @else {
-            <span class="barra-titulo">Nenhuma peça de cenário ainda</span>
-          }
-          <button type="button" class="barra-btn largo" (click)="abrirBiblioteca()" title="Subir e organizar os modelos 3D da campanha">
-            <i class="bi bi-collection" aria-hidden="true"></i><span class="so-largo">Biblioteca</span>
-          </button>
-        </div>
-      }
-      @if (ferramenta() === 'desenhar') {
-        <div class="barra-grupo opcoes-desenho">
-          <span class="cores-barra">
-            @for (c of cores; track c) {
-              <button type="button" [class]="'amostra pequena ' + corDe(c)" [class.ativo]="corDoTraco() === c" (click)="corDoTraco.set(c)"
-                      [attr.aria-label]="c" [attr.aria-pressed]="corDoTraco() === c"></button>
-            }
-          </span>
-          <span class="espessuras">
-            @for (e of espessurasDeTraco; track e) {
-              <button type="button" class="espessura" [class.ativo]="espessuraDoTraco() === e" (click)="espessuraDoTraco.set(e)"
-                      [attr.aria-label]="'Espessura ' + e" [attr.aria-pressed]="espessuraDoTraco() === e"><span [style.height.px]="e"></span></button>
-            }
+
+      @if (vezAtual(); as vez) {
+        <div class="barra-grupo vez-combate" aria-live="polite" [title]="'Rodada ' + vez.rodada + ' · vez de ' + vez.nome">
+          <span class="barra-titulo vez">
+            <span class="rodada">R{{ vez.rodada }}</span>
+            <span class="nome-vez">{{ vez.nome }}</span>
           </span>
           @if (ehMestre()) {
-            <button type="button" class="barra-btn largo" (click)="limparTracos()" title="Apagar todos os desenhos do mapa">
-              <i class="bi bi-trash" aria-hidden="true"></i><span class="so-largo">Limpar</span>
+            <button type="button" class="barra-btn" (click)="passarTurno()" [disabled]="passandoTurno()"
+                    title="Passar para o próximo da ordem de combate" aria-label="Passar o turno">
+              <i class="bi bi-skip-forward-fill" aria-hidden="true"></i><span class="so-largo">Passar</span>
             </button>
           }
         </div>
       }
-      @if (ehMestre() && cena()) {
-        <div class="barra-grupo">
-          <button type="button" class="barra-btn largo" [class.ativo]="neblinaAtiva()" (click)="alternarNeblina()"
-                  title="Névoa de guerra: os jogadores só veem o que você revelar" [attr.aria-pressed]="neblinaAtiva()">
-            <i class="bi bi-cloud-fog2" aria-hidden="true"></i><span class="so-largo">Névoa</span>
-          </button>
-          @if (neblinaAtiva()) {
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'revelar'" (click)="escolherFerramenta('revelar')"
-                    title="Revelar: arraste sobre os quadrados" aria-label="Revelar" [attr.aria-pressed]="ferramenta() === 'revelar'">
-              <i class="bi bi-brightness-high" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'cobrir'" (click)="escolherFerramenta('cobrir')"
-                    title="Cobrir: arraste sobre os quadrados" aria-label="Cobrir" [attr.aria-pressed]="ferramenta() === 'cobrir'">
-              <i class="bi bi-cloud-fill" aria-hidden="true"></i>
-            </button>
-          }
-        </div>
-        <div class="barra-grupo">
-          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'parede'" (click)="escolherFerramenta('parede')"
-                  title="Parede: arraste de um canto da grade a outro; ela bloqueia a visão" aria-label="Parede" [attr.aria-pressed]="ferramenta() === 'parede'">
-            <i class="bi bi-bricks" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'porta'" (click)="escolherFerramenta('porta')"
-                  title="Porta: como a parede, mas abre e fecha com um clique (na ferramenta Mover)" aria-label="Porta" [attr.aria-pressed]="ferramenta() === 'porta'">
-            <i class="bi bi-door-closed" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'janela'" (click)="escolherFerramenta('janela')"
-                  title="Janela: bloqueia o movimento, mas não a visão" aria-label="Janela" [attr.aria-pressed]="ferramenta() === 'janela'">
-            <i class="bi bi-border-all" aria-hidden="true"></i>
-          </button>
-          <button type="button" class="barra-btn" [class.ativo]="ferramenta() === 'apagar'" (click)="escolherFerramenta('apagar')"
-                  title="Apagar parede ou porta: clique sobre ela" aria-label="Apagar parede" [attr.aria-pressed]="ferramenta() === 'apagar'">
-            <i class="bi bi-eraser" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="barra-grupo">
-          <button type="button" class="barra-btn largo" (click)="abrirAdicionar()" title="Adicionar um token ao mapa">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i><span class="so-largo">Token</span>
-          </button>
-          @if (combate()) {
-            <button type="button" class="barra-btn largo" (click)="trazerCombatentes()" title="Colocar no mapa os combatentes que ainda não estão">
-              <i class="bi bi-people" aria-hidden="true"></i><span class="so-largo">Combatentes</span>
-            </button>
-          }
-        </div>
-        @if (vezAtual(); as vez) {
-          <div class="barra-grupo turno-combate" aria-live="polite">
-            <span class="barra-titulo vez" [title]="'Rodada ' + vez.rodada + ' · vez de ' + vez.nome">
-              <span class="rodada">R{{ vez.rodada }}</span><span class="nome-vez">{{ vez.nome }}</span>
-            </span>
-            <button type="button" class="barra-btn largo" (click)="passarTurno()" [disabled]="passandoTurno()"
-                    title="Passar para o próximo da ordem de combate">
-              <i class="bi bi-skip-forward-fill" aria-hidden="true"></i><span class="so-largo">Passar turno</span>
-            </button>
+
+      <div class="topo-fim">
+        @if (!conectado() && !carregando()) { <span class="offline" title="Sem conexão em tempo real" aria-label="Sem conexão em tempo real"><i class="bi bi-wifi-off" aria-hidden="true"></i></span> }
+        @if (cena()) {
+          <div class="barra-grupo seletor-vista" role="radiogroup" aria-label="Vista do mapa">
+            <button type="button" role="radio" [class.ativo]="!modo3d()" [attr.aria-checked]="!modo3d()" (click)="usar3d(false)" title="Mapa plano, visto de cima">2D</button>
+            <button type="button" role="radio" [class.ativo]="modo3d()" [attr.aria-checked]="modo3d()" (click)="usar3d(true)" title="Mapa em 3D (a grade e as regras são as mesmas)">3D</button>
           </div>
         }
-      }
-      <div class="barra-grupo fim">
-        @if (cena()) {
-          <button type="button" class="barra-btn largo" [class.ativo]="modo3d()" (click)="alternar3d()" [attr.aria-pressed]="modo3d()"
-                  title="Ver o mapa em 3D (a grade e as regras são as mesmas)">
-            <i class="bi bi-badge-3d" aria-hidden="true"></i><span class="so-largo">3D</span>
+        @if (!compacto()) {
+          <button type="button" class="barra-grupo barra-btn" [class.ativo]="painelAberto()" (click)="alternarPainel()" [attr.aria-expanded]="painelAberto()"
+                  title="Mostrar ou esconder a lista de tokens" aria-label="Lista de tokens">
+            <i class="bi bi-layout-sidebar-inset-reverse" aria-hidden="true"></i>
           </button>
         }
-        @if (!conectado() && !carregando()) { <span class="offline" title="Sem conexão em tempo real"><i class="bi bi-wifi-off" aria-hidden="true"></i></span> }
-        <button type="button" class="barra-btn" (click)="painelAberto.set(!painelAberto())" [attr.aria-expanded]="painelAberto()"
-                title="Mostrar ou esconder o painel" aria-label="Painel de tokens">
-          <i class="bi bi-layout-sidebar-inset-reverse" aria-hidden="true"></i>
-        </button>
       </div>
     </div>
 
+    @if (cena()) {
+      <!-- zoom do 2D (o 3D tem os seus comandos de câmera no mesmo canto) -->
+      <div class="barra-grupo camera-2d so-2d" role="group" aria-label="Zoom">
+        <button type="button" class="barra-btn" (click)="ampliar(1.25)" title="Aproximar" aria-label="Aproximar"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+        <button type="button" class="barra-btn" (click)="ampliar(1 / 1.25)" title="Afastar" aria-label="Afastar"><i class="bi bi-dash-lg" aria-hidden="true"></i></button>
+        <button type="button" class="barra-btn" (click)="centralizar()" title="Ver o mapa inteiro" aria-label="Ver o mapa inteiro"><i class="bi bi-fullscreen" aria-hidden="true"></i></button>
+      </div>
+
+      <!-- ferramentas: uma coluna à esquerda; no celular em pé, uma faixa embaixo, como a barra de abas -->
+      <div class="ferramentas" role="toolbar" aria-label="Ferramentas do mapa">
+        <div class="ferr-grupo g-jogar">
+          @for (b of ferramentasDeJogo; track b.grupo) {
+            <button type="button" class="ferr" [class.ativo]="grupoAtivo() === b.grupo" (click)="escolherGrupo(b.grupo)"
+                    [title]="b.dica" [attr.aria-pressed]="grupoAtivo() === b.grupo">
+              <i [class]="'bi ' + b.icone" aria-hidden="true"></i><span>{{ b.nome }}</span>
+            </button>
+          }
+        </div>
+        @if (ehMestre()) {
+          <div class="ferr-grupo g-mestre" role="group" aria-label="Ferramentas do Mestre">
+            @for (b of ferramentasDoMestre; track b.grupo) {
+              <button type="button" class="ferr" [class.so-2d]="b.so2d" [class.ativo]="grupoAtivo() === b.grupo" (click)="escolherGrupo(b.grupo)"
+                      [title]="b.dica" [attr.aria-pressed]="grupoAtivo() === b.grupo">
+                <i [class]="'bi ' + b.icone" aria-hidden="true"></i><span>{{ b.nome }}</span>
+                @if (b.grupo === 'nevoa' && neblinaAtiva()) { <span class="ligado" title="Névoa ligada"></span> }
+              </button>
+            }
+            <button type="button" class="ferr" [class.ativo]="adicionando()" (click)="abrirAdicionar()" title="Adicionar um token ao mapa">
+              <i class="bi bi-person-plus" aria-hidden="true"></i><span>Token</span>
+            </button>
+          </div>
+          @if (compacto()) {
+            <button type="button" class="ferr trocar-vista" (click)="alternarVistaCelular()" [attr.aria-pressed]="vistaCelular() === 'mestre'"
+                    [attr.aria-label]="vistaCelular() === 'mestre' ? 'Voltar para as ferramentas de jogo' : 'Mostrar as ferramentas do Mestre'">
+              <i class="bi" [class.bi-shield-lock]="vistaCelular() === 'jogar'" [class.bi-arrow-left]="vistaCelular() === 'mestre'" aria-hidden="true"></i>
+              <span>{{ vistaCelular() === 'mestre' ? 'Voltar' : 'Mestre' }}</span>
+            </button>
+          }
+        }
+      </div>
+
+      <!-- opções da ferramenta ativa: só aparecem quando ela tem alguma -->
+      @switch (grupoAtivo()) {
+        @case ('regua') {
+          <div class="opcoes" role="group" aria-label="Opções da régua">
+            <span class="opcoes-dica">{{ dicaDoGrupo() }}</span>
+            <button type="button" class="opc" [class.ativo]="compartilharRegua()" (click)="alternarCompartilharRegua()" [attr.aria-pressed]="compartilharRegua()"
+                    title="Mostrar a sua régua aos outros da mesa">
+              <i class="bi bi-broadcast" aria-hidden="true"></i> Mostrar à mesa
+            </button>
+          </div>
+        }
+        @case ('area') {
+          <div class="opcoes" role="group" aria-label="Opções da área de magia">
+            <span class="segmentado">
+              @for (f of formasDeArea; track f.valor) {
+                <button type="button" class="opc" [class.ativo]="formaDeArea() === f.valor" [attr.aria-pressed]="formaDeArea() === f.valor" (click)="formaDeArea.set(f.valor)">{{ f.nome }}</button>
+              }
+            </span>
+            <select class="opc-select" [ngModel]="pesDaArea()" (ngModelChange)="pesDaArea.set(+$event)" aria-label="Tamanho da área">
+              @for (n of temposDeArea; track n) { <option [ngValue]="n">{{ fmtM(pesParaMetros(n)) }} m</option> }
+            </select>
+            <span class="opcoes-dica">{{ dicaDoGrupo() }}</span>
+          </div>
+        }
+        @case ('desenhar') {
+          <div class="opcoes" role="group" aria-label="Opções do desenho">
+            <span class="segmentado">
+              <button type="button" class="opc" [class.ativo]="ferramenta() === 'desenhar'" [attr.aria-pressed]="ferramenta() === 'desenhar'" (click)="escolherFerramenta('desenhar')"
+                      title="Lápis" aria-label="Lápis">
+                <i class="bi bi-pencil" aria-hidden="true"></i><span class="so-largo">Lápis</span>
+              </button>
+              <button type="button" class="opc" [class.ativo]="ferramenta() === 'borracha'" [attr.aria-pressed]="ferramenta() === 'borracha'" (click)="escolherFerramenta('borracha')"
+                      title="Borracha: toque num traço (você apaga os seus; o Mestre apaga todos)" aria-label="Borracha">
+                <i class="bi bi-eraser-fill" aria-hidden="true"></i><span class="so-largo">Borracha</span>
+              </button>
+            </span>
+            @if (ferramenta() === 'desenhar') {
+              <span class="cores-barra">
+                @for (c of cores; track c) {
+                  <button type="button" [class]="'amostra pequena ' + corDe(c)" [class.ativo]="corDoTraco() === c" (click)="corDoTraco.set(c)"
+                          [attr.aria-label]="c" [attr.aria-pressed]="corDoTraco() === c"></button>
+                }
+              </span>
+              <span class="espessuras">
+                @for (e of espessurasDeTraco; track e) {
+                  <button type="button" class="espessura" [class.ativo]="espessuraDoTraco() === e" (click)="espessuraDoTraco.set(e)"
+                          [attr.aria-label]="'Espessura ' + e" [attr.aria-pressed]="espessuraDoTraco() === e"><span [style.height.px]="e"></span></button>
+                }
+              </span>
+            } @else {
+              <span class="opcoes-dica">Toque num traço para apagar</span>
+            }
+            @if (ehMestre()) {
+              <button type="button" class="opc perigo" (click)="limparTracos()" title="Apagar todos os desenhos do mapa" aria-label="Apagar todos os desenhos">
+                <i class="bi bi-trash" aria-hidden="true"></i><span class="so-largo">Limpar tudo</span>
+              </button>
+            }
+          </div>
+        }
+        @case ('nevoa') {
+          @if (ehMestre()) {
+            <div class="opcoes" role="group" aria-label="Opções da névoa">
+              <button type="button" class="opc interruptor" [class.ligado]="neblinaAtiva()" (click)="alternarNeblina()" [attr.aria-pressed]="neblinaAtiva()"
+                      [title]="neblinaAtiva() ? 'Desligar a névoa: os jogadores veem o mapa todo' : 'Ligar a névoa: o mapa começa coberto para os jogadores'">
+                <span class="trilho" aria-hidden="true"></span> {{ neblinaAtiva() ? 'Ligada' : 'Desligada' }}
+              </button>
+              @if (neblinaAtiva()) {
+                <span class="segmentado">
+                  <button type="button" class="opc" [class.ativo]="ferramenta() === 'revelar'" [attr.aria-pressed]="ferramenta() === 'revelar'" (click)="escolherFerramenta('revelar')">
+                    <i class="bi bi-brightness-high" aria-hidden="true"></i> Revelar
+                  </button>
+                  <button type="button" class="opc" [class.ativo]="ferramenta() === 'cobrir'" [attr.aria-pressed]="ferramenta() === 'cobrir'" (click)="escolherFerramenta('cobrir')">
+                    <i class="bi bi-cloud-fill" aria-hidden="true"></i> Cobrir
+                  </button>
+                </span>
+                <span class="opcoes-dica">{{ dicaDoGrupo() }}</span>
+                <button type="button" class="opc" (click)="neblinaTudo('revelar')">Revelar tudo</button>
+                <button type="button" class="opc" (click)="neblinaTudo('cobrir')">Cobrir tudo</button>
+              } @else {
+                <span class="opcoes-dica">Ligada, ela cobre o mapa dos jogadores e você revela o que eles veem.</span>
+              }
+            </div>
+          }
+        }
+        @case ('paredes') {
+          @if (ehMestre()) {
+            <div class="opcoes" role="group" aria-label="Tipo de parede">
+              <span class="segmentado">
+                <button type="button" class="opc" [class.ativo]="ferramenta() === 'parede'" [attr.aria-pressed]="ferramenta() === 'parede'" (click)="escolherFerramenta('parede')"
+                        title="Bloqueia a visão e o movimento"><i class="bi bi-bricks" aria-hidden="true"></i> Parede</button>
+                <button type="button" class="opc" [class.ativo]="ferramenta() === 'porta'" [attr.aria-pressed]="ferramenta() === 'porta'" (click)="escolherFerramenta('porta')"
+                        title="Como a parede, mas abre e fecha com um toque (na ferramenta Mover)"><i class="bi bi-door-closed" aria-hidden="true"></i> Porta</button>
+                <button type="button" class="opc" [class.ativo]="ferramenta() === 'janela'" [attr.aria-pressed]="ferramenta() === 'janela'" (click)="escolherFerramenta('janela')"
+                        title="Bloqueia o movimento, mas não a visão"><i class="bi bi-border-all" aria-hidden="true"></i> Janela</button>
+                <button type="button" class="opc" [class.ativo]="ferramenta() === 'apagar'" [attr.aria-pressed]="ferramenta() === 'apagar'" (click)="escolherFerramenta('apagar')"
+                        title="Toque numa parede, porta ou janela para apagar"><i class="bi bi-eraser" aria-hidden="true"></i> Apagar</button>
+              </span>
+              <span class="opcoes-dica">{{ ferramenta() === 'apagar' ? 'Toque sobre a parede' : dicaDoGrupo() }}</span>
+            </div>
+          }
+        }
+        @case ('marcador') {
+          <div class="opcoes" role="status"><span class="opcoes-dica">{{ dicaDoGrupo() }}</span></div>
+        }
+        @case ('objeto') {
+          @if (ehMestre()) {
+            <div class="opcoes" role="group" aria-label="Peça de cenário">
+              @if (pecasDeCenario().length) {
+                <select class="opc-select" [ngModel]="pecaEscolhida()" (ngModelChange)="pecaEscolhida.set($event)" aria-label="Peça de cenário">
+                  @for (m of pecasDeCenario(); track m.modeloId) { <option [ngValue]="m.modeloId">{{ m.nome }}</option> }
+                </select>
+                <select class="opc-select" [ngModel]="ladoDaPeca()" (ngModelChange)="ladoDaPeca.set(+$event)" aria-label="Tamanho da peça em quadrados">
+                  @for (n of ladosDePeca; track n) { <option [ngValue]="n">{{ n }}×{{ n }}</option> }
+                </select>
+                <span class="opcoes-dica">{{ dicaDoGrupo() }}</span>
+              } @else {
+                <span class="opcoes-dica">Nenhuma peça de cenário ainda.</span>
+              }
+              <button type="button" class="opc" (click)="abrirBiblioteca()" title="Subir e organizar os modelos 3D da campanha">
+                <i class="bi bi-collection" aria-hidden="true"></i> Biblioteca
+              </button>
+            </div>
+          }
+        }
+      }
+    }
+
     @if (menuCenas() && ehMestre()) {
-      <div class="menu-cenas" role="menu" aria-label="Cenas">
+      <div class="menu-cenas" role="menu" aria-label="Cenas" appCamada (fecharCamada)="menuCenas.set(false)">
         <p class="eyebrow">Cenas da campanha</p>
         <ul>
           @for (item of cenasDoMenu(); track item.cena.cenaId) {
@@ -435,22 +460,14 @@
             <label class="marcador"><input type="checkbox" name="soTurnoCena" [(ngModel)]="edicaoCena.soNoTurno" /> Jogadores só movem na vez do combate</label>
             <button type="submit" class="btn-secondary">Salvar</button>
           </form>
-          @if (neblinaAtiva()) {
-            <div class="grade-form">
-              <p class="eyebrow">Névoa</p>
-              <div class="par-botoes">
-                <button type="button" class="btn-secondary" (click)="neblinaTudo('revelar')">Revelar tudo</button>
-                <button type="button" class="btn-secondary" (click)="neblinaTudo('cobrir')">Cobrir tudo</button>
-              </div>
-            </div>
-          }
         }
         <button type="button" class="btn-primary nova" (click)="abrirNovaCena()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nova cena</button>
       </div>
     }
   </div>
 
-  <aside class="painel" aria-label="Tokens em cena">
+  <!-- Tokens em cena: coluna à direita; no celular em pé, um painel que sobe da base -->
+  <ng-template #conteudoPainel>
     @if (adicionando() && ehMestre()) {
       <form class="painel-bloco" (ngSubmit)="adicionarToken()">
         <header><h3>Novo token</h3><button type="button" class="link" (click)="adicionando.set(false)">Cancelar</button></header>
@@ -675,11 +692,20 @@
 
     <div class="painel-bloco lista">
       <header>
-        <h3>{{ combate() ? 'Ordem do combate' : 'Em cena' }}</h3>
-        <span class="contagem num">{{ tokensVisiveis().length }}</span>
+        <h3>{{ combate() ? 'Ordem do combate' : 'Em cena' }} <span class="contagem num">{{ tokensVisiveis().length }}</span></h3>
+        @if (ehMestre()) {
+          <span class="acoes-lista">
+            @if (combate()) {
+              <button type="button" class="link" (click)="trazerCombatentes()" title="Colocar no mapa os combatentes que ainda não estão">
+                <i class="bi bi-people" aria-hidden="true"></i> Combatentes
+              </button>
+            }
+            <button type="button" class="link" (click)="abrirAdicionar()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Token</button>
+          </span>
+        }
       </header>
       @if (tokens().length === 0) {
-        <p class="dica">{{ ehMestre() ? 'Nenhum token ainda. Use “Token” ou “Combatentes” na barra do mapa.' : 'Nenhum token no mapa por enquanto.' }}</p>
+        <p class="dica">{{ ehMestre() ? 'Nenhum token ainda. Use “Token” aqui em cima ou nas ferramentas do Mestre.' : 'Nenhum token no mapa por enquanto.' }}</p>
       } @else {
         <ul>
           @for (t of listaDoPainel(); track t.tokenId) {
@@ -714,7 +740,15 @@
         </ul>
       </div>
     }
-  </aside>
+  </ng-template>
+
+  @if (compacto()) {
+    <app-bottom-sheet modo="fixo" [titulo]="tituloPainel()" [(parada)]="paradaPainel">
+      <div class="painel painel-sheet"><ng-container [ngTemplateOutlet]="conteudoPainel" /></div>
+    </app-bottom-sheet>
+  } @else {
+    <aside class="painel" aria-label="Tokens em cena"><ng-container [ngTemplateOutlet]="conteudoPainel" /></aside>
+  }
 </section>
 
 @if (modalCena()) {

@@ -1,3 +1,5 @@
+import { Fab } from '../../../shared/ui/fab/fab';
+import { PuxarAtualizar } from '../../../shared/ui/puxar-atualizar.directive';
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -9,7 +11,7 @@ import { paginaDaUrl } from '../../../shared/models/pagina';
 
 @Component({
   selector: 'app-sessao-list',
-  imports: [CommonModule, RouterModule, Paginacao],
+  imports: [CommonModule, RouterModule, Paginacao, Fab, PuxarAtualizar],
   templateUrl: './sessao-list.html',
   styleUrl: './sessao-list.scss',
 })

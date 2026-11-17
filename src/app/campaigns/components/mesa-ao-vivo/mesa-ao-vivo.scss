@@ -1,3 +1,5 @@
+@use 'mobile';
+
 :host {
   // largura da barra lateral (definida em app.html); no celular ela não existe
   --recuo: calc(var(--lateral, 0px) + 1rem);
@@ -6,7 +8,7 @@
 .fab {
   position: fixed;
   left: var(--recuo);
-  bottom: 1rem;
+  bottom: calc(1rem + var(--seguro-base));
   z-index: 400;
   display: inline-flex;
   align-items: center;
@@ -46,7 +48,7 @@
 .aviso {
   position: fixed;
   left: var(--recuo);
-  bottom: 4.6rem;
+  bottom: calc(4.6rem + var(--seguro-base));
   z-index: 400;
   display: flex;
   align-items: center;
@@ -78,7 +80,7 @@
 .painel {
   position: fixed;
   left: var(--recuo);
-  bottom: 4.6rem;
+  bottom: calc(4.6rem + var(--seguro-base));
   z-index: 400;
   display: flex;
   flex-direction: column;
@@ -159,6 +161,19 @@
 
 .rol-rotulo { font-family: var(--font-display); font-size: 1.15rem; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.1; }
 .rol-detalhe { color: var(--muted); font-size: 0.8rem; }
+.rol-secreta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .rol-selo { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 .critico .rol-selo { color: var(--ok); }
 .falha .rol-selo { color: var(--danger); }
@@ -167,15 +182,22 @@
 .critico .rol-total { color: var(--ok); }
 .falha .rol-total { color: var(--danger); }
 
-@media (max-width: 900px) {
-  :host { --recuo: 0.75rem; }
-  // acima da barra inferior de navegação
-  .fab { bottom: calc(60px + 0.75rem + env(safe-area-inset-bottom, 0px)); }
-  .aviso, .painel { bottom: calc(60px + 4.3rem + env(safe-area-inset-bottom, 0px)); }
-  .fab-rotulo { display: none; }
-  .fab { padding: 0 0.9rem; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .aviso, .painel { animation: none; }
+}
+
+@include mobile.celular {
+  :host { --recuo: 0.75rem; }
+  // acima da barra inferior de navegação
+  .fab { bottom: calc(var(--barra-inferior) + 0.75rem + var(--seguro-base)); padding: 0 0.9rem; }
+  .aviso, .painel { bottom: calc(var(--barra-inferior) + 4.3rem + var(--seguro-base)); }
+  .fab-rotulo { display: none; }
+}
+
+@include mobile.compacto {
+  // na sessão a mesa abre pela aba "Dados": o aviso fica logo acima das abas
+  :host(.sem-botao) .aviso { bottom: calc(var(--barra-inferior) + 0.75rem + var(--seguro-base)); }
+  .vazio { padding-inline: 0; }
+  .lista { padding: 0; overflow: visible; }
 }

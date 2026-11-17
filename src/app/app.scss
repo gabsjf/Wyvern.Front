@@ -1,3 +1,5 @@
+@use 'mobile';
+
 .app-container {
   display: flex;
   min-height: 100vh;
@@ -6,19 +8,24 @@
 .main-content {
   flex: 1;
   min-width: 0;
+  // app nativo de ponta a ponta (tablet): o conteúdo não fica sob a barra de status nem a de gestos; no navegador é tudo 0
+  padding: var(--seguro-topo) var(--seguro-dir) var(--seguro-base) 0;
 }
+
+.app-container.no-sidebar .main-content { padding-left: var(--seguro-esq); }
 
 .main-content:focus {
   outline: none;
 }
 
-@media (max-width: 900px) {
+@include mobile.celular {
   .app-container {
     flex-direction: column;
   }
 
-  /* espaço para a barra inferior (60px) e a área segura do aparelho */
+  /* a barra de topo já cuida da barra de status; embaixo, espaço para a barra inferior e a área segura */
   .app-container:not(.no-sidebar) .main-content {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-top: 0;
+    padding-bottom: calc(var(--barra-inferior) + var(--seguro-base));
   }
 }

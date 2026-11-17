@@ -1,0 +1,47 @@
+// Pontos de quebra únicos do app. Em qualquer .scss: `@use 'mobile';` e `@include mobile.compacto { ... }`.
+// Arquivos antigos ainda têm larguras soltas (560, 600, 640...): migre para estes quando mexer neles.
+//
+// Faixas (largura da janela):
+//   celular em pé ........ até 720            barra inferior, painéis em bottom sheet
+//   celular deitado ...... pouca altura        barra inferior, ferramentas na lateral
+//   tablet em pé ......... 721 a 900           trilho lateral só com ícones, conteúdo em uma coluna
+//   tablet deitado ....... 901 a 1180          trilho lateral, layout de desktop com alvos de toque maiores
+//   desktop .............. acima de 1180
+
+$compacto: 720px; // celular em pé
+$medio: 900px;    // tablet em pé (e janelas estreitas): conteúdo em uma coluna
+$tablet: 1180px;  // tablet deitado
+
+@mixin compacto {
+  @media (max-width: $compacto) { @content; }
+}
+
+@mixin medio {
+  @media (max-width: $medio) { @content; }
+}
+
+// Celular deitado: pouca altura, então as ferramentas vão para a lateral.
+@mixin paisagem-baixa {
+  @media (orientation: landscape) and (max-height: 500px) { @content; }
+}
+
+// Celular, em pé ou deitado: é aqui que a navegação vira barra inferior (fora disso há o trilho lateral).
+// Manter igual a `PlataformaService.celular`.
+@mixin celular {
+  @media (max-width: $compacto), (orientation: landscape) and (max-height: 500px) and (max-width: 1000px) { @content; }
+}
+
+// Tablet (em pé ou deitado), com altura de sobra: não é celular nem desktop largo.
+@mixin tablet {
+  @media (min-width: $compacto + 1) and (max-width: $tablet) and (min-height: 501px) { @content; }
+}
+
+// Tablet em pé: estreito para o layout de desktop, largo para o de celular.
+@mixin tablet-retrato {
+  @media (min-width: $compacto + 1) and (max-width: $medio) and (min-height: 501px) { @content; }
+}
+
+// Tela de toque (celular ou tablet, no app ou no navegador): alvos maiores e nada que dependa de hover.
+@mixin toque {
+  @media (pointer: coarse) { @content; }
+}

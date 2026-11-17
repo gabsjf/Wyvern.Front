@@ -71,6 +71,28 @@ function completar(c: PersonagemCreate, nome = 'Lyra') {
 }
 
 describe('PersonagemCreate', () => {
+  describe('passo a passo (celular)', () => {
+    it('Próximo e Voltar andam pelas abas do tipo, sem passar das pontas', () => {
+      const { c } = montar();
+      expect(c.abasVisiveis.map(a => a.id)).toEqual(['basico', 'atributos', 'detalhes']);
+
+      c.irParaPasso(-1);
+      expect(c.activeTab).toBe('basico');
+      c.irParaPasso(1);
+      c.irParaPasso(1);
+      expect([c.activeTab, c.ultimoPasso]).toEqual(['detalhes', true]);
+      c.irParaPasso(1);
+      expect(c.activeTab).toBe('detalhes');
+      c.irParaPasso(-1);
+      expect([c.activeTab, c.indiceDoPasso]).toEqual(['atributos', 1]);
+    });
+
+    it('editando, nunca vira passo a passo', () => {
+      const { c } = montar({ id: '7', ficha: { personagemId: 7, nome: 'Lyra', tipoId: 1, campanhaId: 1 } });
+      expect(c.emPassos).toBe(false);
+    });
+  });
+
   describe('campanha e tipo', () => {
     it('sem indicação, abre na campanha em que a pessoa é Mestre', () => {
       expect(montar().c.personagem.campanhaId).toBe(2);

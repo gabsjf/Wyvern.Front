@@ -1,3 +1,16 @@
+<!-- celular: ao rolar a ficha, PV, CA e Iniciativa ficam presos no topo -->
+@if (encolhido() && combate) {
+  <div class="faixa-fixa" aria-hidden="true">
+    <span class="ff-nome">{{ personagem?.nome }}</span>
+    <span class="ff-pv num" [class.low]="vidaBaixa"><i class="bi bi-heart-fill"></i> {{ vidaAtual }}<small>/{{ vidaMaxima }}</small>
+      @if (vidaTemporaria > 0) { <small class="ff-temp">+{{ vidaTemporaria }}</small> }
+    </span>
+    <span class="ff-ca num"><i class="bi bi-shield-fill"></i> {{ personagem?.personagemCombate?.classeArmadura || 10 }}</span>
+    <button type="button" class="ff-ini num" tabindex="-1" (click)="rolarIniciativa()">Inic. {{ getIniciativaStr() }}</button>
+    <span class="ff-barra"><i [style.width.%]="vidaPct" [class.low]="vidaBaixa"></i></span>
+  </div>
+}
+
 <section class="ficha-header panel" aria-label="Resumo do personagem">
   <!-- Linha 1: números que mais se consulta na mesa -->
   <div class="stat-strip">
@@ -25,7 +38,7 @@
 
   <!-- Linha 2: vida e salvaguarda de morte -->
   <div class="vital">
-    <div class="vital-card hp" [class.low]="vidaBaixa">
+    <div #bloco class="vital-card hp" [class.low]="vidaBaixa">
       <div class="vital-head">
         <span class="stat-label">Pontos de vida</span>
         <span class="hp-max num">máx. {{ vidaMaxima }}</span>

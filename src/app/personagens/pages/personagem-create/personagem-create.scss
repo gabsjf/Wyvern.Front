@@ -120,7 +120,7 @@
 
 @media (max-width: 900px) {
   .save-bar {
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    bottom: calc(var(--barra-inferior) + var(--seguro-base) + 0.5rem);
 
     > * {
       flex: 1;
@@ -132,6 +132,35 @@
   .ficha-content {
     padding: var(--spacing-md);
   }
+}
+
+/* ---- celular, criando: passo a passo ---- */
+.top-nav-tabs.escondida { display: none; }
+
+.passos { display: grid; gap: 0.5rem; margin-top: var(--spacing-sm); }
+.passo-atual {
+  margin: 0;
+  font: 600 1.1rem var(--font-display);
+  letter-spacing: 0.04em;
+  .num { margin-right: 0.35rem; color: var(--hi); }
+}
+.passo-trilho {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  button { display: block; width: 100%; height: 6px; padding: 0; border: 0; border-radius: 99px; background: var(--tint-2); cursor: pointer; }
+  .feito button { background: color-mix(in srgb, var(--hi) 55%, transparent); }
+  .atual button { background: var(--hi); }
+  .pendente button { background: var(--danger); }
+}
+.passos-barra {
+  .btn-primary, .btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 50px; }
+  .tab-pendente { margin: 0; }
 }
 
 /* ---- escolha do tipo (Herói, NPC, Monstro) ---- */
@@ -561,3 +590,6 @@
 .subir-mini { position: relative; display: inline-flex; align-items: center; gap: 0.4rem; justify-content: center; cursor: pointer; }
 .subir-mini.desabilitado { opacity: 0.6; pointer-events: none; }
 .previa-mini { max-width: 22rem; margin-top: var(--spacing-sm); }
+
+// com o teclado aberto a barra de navegação some: a barra de salvar desce junto
+:host-context(html.teclado-aberto) .save-bar { bottom: 0.5rem; }

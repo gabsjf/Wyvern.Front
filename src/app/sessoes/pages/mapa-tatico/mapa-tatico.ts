@@ -1,7 +1,7 @@
 import {
-  AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, signal, viewChild,
+  AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked, viewChild,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -36,9 +36,40 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { ConfirmService } from '../../../shared/ui/confirm/confirm.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CONDICOES, alternarCondicao, lerCondicoes, temCondicao } from '../../../personagens/utils/condicoes';
+import { PlataformaService } from '../../../core/plataforma/plataforma.service';
+import { BottomSheet, ParadaSheet } from '../../../shared/ui/bottom-sheet/bottom-sheet';
+import { Camada } from '../../../shared/ui/camada.directive';
 
 type Ferramenta = 'mover' | 'regua' | 'revelar' | 'cobrir' | 'area' | 'parede' | 'porta' | 'janela' | 'apagar' | 'marcador' | 'desenhar' | 'borracha' | 'objeto';
 type TipoDeParede = 'parede' | 'porta' | 'janela';
+/** Os botões da barra: cada um junta as ferramentas parecidas (o lápis e a borracha, os três tipos de parede...). */
+type GrupoDeFerramenta = 'mover' | 'regua' | 'area' | 'desenhar' | 'nevoa' | 'paredes' | 'marcador' | 'objeto';
+
+interface BotaoDeFerramenta { grupo: GrupoDeFerramenta; nome: string; icone: string; dica: string; so2d?: boolean }
+
+const FERRAMENTAS_DE_JOGO: BotaoDeFerramenta[] = [
+  { grupo: 'mover', nome: 'Mover', icone: 'bi-arrows-move', dica: 'Mover tokens e o mapa' },
+  { grupo: 'regua', nome: 'Medir', icone: 'bi-rulers', dica: 'Régua: mede a distância em quadrados e metros' },
+  { grupo: 'area', nome: 'Área', icone: 'bi-bullseye', dica: 'Área de magia: esfera, cone ou linha' },
+  { grupo: 'desenhar', nome: 'Desenhar', icone: 'bi-pencil', dica: 'Desenhar à mão livre sobre o mapa' },
+];
+
+const FERRAMENTAS_DO_MESTRE: BotaoDeFerramenta[] = [
+  { grupo: 'nevoa', nome: 'Névoa', icone: 'bi-cloud-fog2', dica: 'Névoa de guerra: os jogadores só veem o que você revelar' },
+  { grupo: 'paredes', nome: 'Paredes', icone: 'bi-bricks', dica: 'Paredes, portas e janelas: bloqueiam a visão e o movimento' },
+  { grupo: 'marcador', nome: 'Marcador', icone: 'bi-geo-alt', dica: 'Marcador: toque no mapa para fixar um ponto de interesse', so2d: true },
+  { grupo: 'objeto', nome: 'Cenário', icone: 'bi-box', dica: 'Cenário 3D: árvores, mesas, estátuas...' },
+];
+
+/** A linha de ajuda da faixa de opções de cada grupo. */
+const DICAS_DO_GRUPO: Partial<Record<GrupoDeFerramenta, string>> = {
+  regua: 'Arraste para medir',
+  area: 'Arraste a partir da origem',
+  nevoa: 'Arraste sobre os quadrados',
+  paredes: 'Arraste de um canto da grade a outro',
+  marcador: 'Toque no mapa para fixar um ponto',
+  objeto: 'Toque no mapa para pôr a peça',
+};
 type FormaDeArea = 'esfera' | 'cone' | 'linha';
 
 interface Gesto {
@@ -73,7 +104,8 @@ const TAMANHO_MAXIMO_IMAGEM = 8 * 1024 * 1024;
 
 @Component({
   selector: 'app-mapa-tatico',
-  imports: [FormsModule, DecimalPipe, Mapa3d],
+  imports: [FormsModule, DecimalPipe, NgTemplateOutlet, Mapa3d, BottomSheet, Camada],
+  host: { '[class.vista-mestre]': "vistaCelular() === 'mestre'", '[class.vista-jogar]': "vistaCelular() === 'jogar'" },
   templateUrl: './mapa-tatico.html',
   styleUrl: './mapa-tatico.scss',
 })
@@ -297,6 +329,33 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
   readonly menuCenas = signal(false);
   readonly adicionando = signal(false);
 
+  // ---- celular em pé: o painel vira um bottom sheet e as ferramentas do Mestre ficam numa vista própria ----
+  private plataforma = inject(PlataformaService);
+  readonly compacto = this.plataforma.compacto;
+  /** Altura do painel de tokens no celular. */
+  readonly paradaPainel = signal<ParadaSheet>('espiar');
+  /** Que ferramentas a barra mostra no celular: as de todos ("jogar") ou as do Mestre (névoa, paredes, tokens). */
+  readonly vistaCelular = signal<'jogar' | 'mestre'>('jogar');
+
+  // ---- barra de ferramentas ----
+  readonly ferramentasDeJogo = FERRAMENTAS_DE_JOGO;
+  readonly ferramentasDoMestre = FERRAMENTAS_DO_MESTRE;
+  /** Com a névoa desligada, o botão Névoa só abre as opções (ligar a névoa cobre o mapa dos jogadores na hora). */
+  private readonly opcoesDaNevoa = signal(false);
+  readonly grupoAtivo = computed<GrupoDeFerramenta>(() => {
+    if (this.opcoesDaNevoa()) return 'nevoa';
+    switch (this.ferramenta()) {
+      case 'borracha': return 'desenhar';
+      case 'revelar': case 'cobrir': return 'nevoa';
+      case 'parede': case 'porta': case 'janela': case 'apagar': return 'paredes';
+      default: return this.ferramenta() as GrupoDeFerramenta;
+    }
+  });
+  readonly dicaDoGrupo = computed(() => DICAS_DO_GRUPO[this.grupoAtivo()] ?? null);
+  readonly tituloPainel = computed(() =>
+    this.adicionando() ? 'Novo token' : this.selecionado()?.nome ?? `Tokens em cena (${this.tokens().length})`,
+  );
+
   // combate da sessão (para PV, condições e turno nos tokens)
   readonly combate = signal<any | null>(null);
   private combateConectadoId: number | null = null;
@@ -430,6 +489,23 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     effect(() => this.desenharNeblina());
     effect(() => this.carregarRetratos());
     effect(() => this.desenharAlcance());
+    // No celular, escolher um token ou abrir "Novo token" levanta o painel até a metade da tela.
+    effect(() => {
+      if ((this.selecionadoId() !== null || this.adicionando()) && this.compacto()) {
+        untracked(() => this.paradaPainel() === 'espiar' && this.paradaPainel.set('meio'));
+      }
+    });
+  }
+
+  /** Botão de painel da barra: no celular sobe/desce o bottom sheet; no resto mostra/esconde a coluna. */
+  alternarPainel(): void {
+    if (this.compacto()) this.paradaPainel.set(this.paradaPainel() === 'espiar' ? 'meio' : 'espiar');
+    else this.painelAberto.set(!this.painelAberto());
+  }
+
+  alternarVistaCelular(): void {
+    this.vistaCelular.set(this.vistaCelular() === 'jogar' ? 'mestre' : 'jogar');
+    this.plataforma.vibrar('leve');
   }
 
   ngOnInit(): void {
@@ -1503,8 +1579,20 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     };
   }
 
+  /** Um botão da barra. Tocar de novo no que já está ativo volta para Mover. */
+  escolherGrupo(g: GrupoDeFerramenta): void {
+    if (g !== 'mover' && this.grupoAtivo() === g) { this.escolherFerramenta('mover'); return; }
+    if (g === 'nevoa') {
+      this.escolherFerramenta(this.neblinaAtiva() ? 'revelar' : 'mover');
+      this.opcoesDaNevoa.set(true);
+      return;
+    }
+    this.escolherFerramenta(g === 'paredes' ? 'parede' : g);
+  }
+
   escolherFerramenta(f: Ferramenta): void {
     this.ferramenta.set(f);
+    this.opcoesDaNevoa.set(false);
     if (f !== 'regua') {
       if (this.regua() && this.compartilharRegua()) this.enviarRegua(false);
       this.regua.set(null);
@@ -1974,7 +2062,7 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     try {
       this.neblina.set(this.lerNeblina(await this.cenaService.ajustarNeblina(this.campanhaId(), cena.cenaId, { ativa: ligar })));
       if (ligar) {
-        this.ferramenta.set('revelar');
+        this.escolherFerramenta('revelar');
         this.toast.info('Névoa ligada: tudo coberto. Arraste sobre o mapa para revelar áreas.');
       } else if (this.ferramenta() === 'revelar' || this.ferramenta() === 'cobrir') {
         this.ferramenta.set('mover');
@@ -2207,9 +2295,12 @@ export class MapaTatico implements OnInit, AfterViewInit, OnDestroy {
     this.arrasto.set({ tokenId: a.tokenId, x: a.coluna * cena.tamanhoCelula, y: a.linha * cena.tamanhoCelula });
   }
 
-  alternar3d(): void {
-    this.modo3d.update(v => !v);
-    if (this.modo3d()) this.ferramenta.set('mover');
+  /** O seletor 2D/3D do topo. */
+  usar3d(ligar: boolean): void {
+    if (this.modo3d() === ligar) return;
+    this.modo3d.set(ligar);
+    if (ligar) this.escolherFerramenta('mover');
+    this.plataforma.vibrar('leve');
   }
 
   /** O 3D não conseguiu iniciar (sem WebGL, por exemplo): volta para o 2D. */

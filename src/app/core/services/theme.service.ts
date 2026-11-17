@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 export type TemaEscolhido = 'sistema' | 'claro' | 'escuro';
 
@@ -11,10 +11,17 @@ const CHAVE = 'wyvern-tema';
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private escolhido: TemaEscolhido = 'sistema';
+  /** O mesmo que `efetivo`, como signal (a barra de status do app acompanha). */
+  readonly atual = signal<'claro' | 'escuro'>('escuro');
 
   constructor() {
     this.escolhido = this.lerPreferencia();
     this.aplicar();
+    try {
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => this.atual.set(this.efetivo));
+    } catch {
+      /* sem matchMedia (testes): o tema do sistema não muda */
+    }
   }
 
   /** Tema que está valendo agora na tela (considera o sistema quando nada foi escolhido). */
@@ -34,6 +41,7 @@ export class ThemeService {
     const raiz = document.documentElement;
     if (this.escolhido === 'sistema') raiz.removeAttribute('data-theme');
     else raiz.setAttribute('data-theme', this.escolhido === 'claro' ? 'light' : 'dark');
+    this.atual.set(this.efetivo);
   }
 
   private sistemaEhClaro(): boolean {

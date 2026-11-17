@@ -22,4 +22,27 @@ describe('LayoutService', () => {
   it('o modo imersivo começa desligado', () => {
     expect(TestBed.inject(LayoutService).imersivo()).toBe(false);
   });
+
+  it('o botão voltar fecha a camada de cima primeiro', () => {
+    const layout = TestBed.inject(LayoutService);
+    const fechadas: string[] = [];
+    layout.abrirCamada(() => fechadas.push('dados'));
+    layout.abrirCamada(() => fechadas.push('confirmação'));
+
+    expect(layout.fecharCamadaDoTopo()).toBe(true);
+    expect(layout.fecharCamadaDoTopo()).toBe(true);
+    expect(layout.fecharCamadaDoTopo()).toBe(false);
+    expect(fechadas).toEqual(['confirmação', 'dados']);
+  });
+
+  it('camada solta (fechada pela tela) não é fechada de novo pelo voltar', () => {
+    const layout = TestBed.inject(LayoutService);
+    let fechou = false;
+    const soltar = layout.abrirCamada(() => (fechou = true));
+
+    soltar();
+
+    expect(layout.fecharCamadaDoTopo()).toBe(false);
+    expect(fechou).toBe(false);
+  });
 });

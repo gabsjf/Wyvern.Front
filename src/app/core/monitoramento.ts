@@ -1,7 +1,14 @@
-import { ErrorHandler, Provider } from '@angular/core';
+import { ErrorHandler, Injectable, Provider } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import * as Sentry from '@sentry/angular';
+import type * as SentryAngular from '@sentry/angular';
 import { environment } from '../../environments/environments';
+
+// O Sentry (uns 90 kB) chega depois que o app abre, num pedaço à parte: não atrasa a primeira tela. O que der erro
+// antes disso fica guardado e vai assim que ele carregar.
+let sentry: typeof SentryAngular | null = null;
+let tratadorDoSentry: ErrorHandler | null = null;
+const errosAntesDoSentry: unknown[] = [];
+let usuarioPendente: number | null | undefined;
 
 /** Ligado só com `environment.sentryDsn` preenchido (produção). */
 export const monitoramentoAtivo = !!environment.sentryDsn;
@@ -20,10 +27,19 @@ export function limparTexto(texto: string | undefined): string | undefined {
 // Respostas esperadas da API (sessão vencida, sem permissão, não encontrado, limite) e queda de rede não são bug.
 const STATUS_IGNORADOS = new Set([0, 401, 403, 404, 429]);
 
-/** Chamado no main.ts, antes de o Angular subir. */
+/** Chamado no main.ts, antes de o Angular subir: começa a baixar o Sentry sem esperar por ele. */
 export function iniciarMonitoramento(): void {
   if (!monitoramentoAtivo) return;
+  void import('@sentry/angular').then(Sentry => {
+    configurar(Sentry);
+    sentry = Sentry;
+    tratadorDoSentry = Sentry.createErrorHandler({ showDialog: false });
+    if (usuarioPendente !== undefined) identificarUsuario(usuarioPendente);
+    errosAntesDoSentry.splice(0).forEach(erro => Sentry.captureException(erro));
+  }).catch(() => { /* sem o Sentry (bloqueador, rede): os erros ficam só no console */ });
+}
 
+function configurar(Sentry: typeof SentryAngular): void {
   Sentry.init({
     dsn: environment.sentryDsn,
     environment: environment.production ? 'production' : 'development',
@@ -70,13 +86,24 @@ export function iniciarMonitoramento(): void {
   });
 }
 
+/** Repassa ao tratador do Sentry quando ele já carregou; antes disso, mostra no console e guarda o erro. */
+@Injectable()
+class TratadorDeErros implements ErrorHandler {
+  handleError(erro: unknown): void {
+    if (tratadorDoSentry) { tratadorDoSentry.handleError(erro); return; }
+    console.error(erro);
+    if (errosAntesDoSentry.length < 20) errosAntesDoSentry.push(erro);
+  }
+}
+
 /** Os erros do Angular vão para o Sentry (e continuam no console). Sem DSN, fica o tratador padrão. */
 export function provideMonitoramento(): Provider[] {
-  return monitoramentoAtivo ? [{ provide: ErrorHandler, useValue: Sentry.createErrorHandler({ showDialog: false }) }] : [];
+  return monitoramentoAtivo ? [{ provide: ErrorHandler, useClass: TratadorDeErros }] : [];
 }
 
 /** Marca os erros com o id da conta logada (nada de nome ou e-mail); nulo ao sair. */
 export function identificarUsuario(usuarioId: number | null): void {
   if (!monitoramentoAtivo) return;
-  Sentry.setUser(usuarioId === null ? null : { id: String(usuarioId) });
+  if (!sentry) { usuarioPendente = usuarioId; return; }
+  sentry.setUser(usuarioId === null ? null : { id: String(usuarioId) });
 }

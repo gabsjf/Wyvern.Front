@@ -11,10 +11,12 @@ import { MesaService } from '../../../campaigns/services/mesa.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { CONDICOES, alternarCondicao, lerCondicoes, temCondicao } from '../../../personagens/utils/condicoes';
 import { analisarFormula, sortearFaces, totalDaRolagem } from '../../../core/utils/formula-dados';
+import { PlataformaService } from '../../../core/plataforma/plataforma.service';
+import { BottomSheet } from '../../../shared/ui/bottom-sheet/bottom-sheet';
 
 @Component({
   selector: 'app-combate-tracker',
-  imports: [CommonModule, FormsModule, NgTemplateOutlet],
+  imports: [CommonModule, FormsModule, NgTemplateOutlet, BottomSheet],
   templateUrl: './combate-tracker.html',
   styleUrl: './combate-tracker.scss'
 })
@@ -26,6 +28,13 @@ export class CombateTracker implements OnInit, OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private mesa = inject(MesaService);
   private toast = inject(ToastService);
+  private plataforma = inject(PlataformaService);
+
+  /** Celular: o combatente cujo PV está sendo ajustado no painel (bottom sheet), e a quantidade digitada. */
+  pvAberto: any | null = null;
+  /** O combatente com os controles abertos; nulo = o da vez (abre sozinho a cada turno). */
+  abertoId: number | null = null;
+  pvQtd: number | null = null;
 
   @Input() sessaoId!: number;
   @Input() campanhaId!: number;
@@ -138,7 +147,9 @@ export class CombateTracker implements OnInit, OnChanges {
           const needsStartConnection = this.combateAtivo?.combateId !== combat.combateId;
           
           if (this.previousTurnIndex !== combat.turnoAtualIndex) {
+            this.avisarMinhaVez(combat);
             this.turnDeathSaveModified = false;
+            this.abertoId = null; // o novo da vez abre sozinho
             this.previousTurnIndex = combat.turnoAtualIndex;
           }
 
@@ -291,7 +302,7 @@ export class CombateTracker implements OnInit, OnChanges {
       this.participantesSelecionados.push({
         ...personagem,
         iniciativa: 0,
-        vidaAtual: personagem.personagemCombate?.vidaAtual || 10,
+        vidaAtual: personagem.personagemCombate?.vidaAtual ?? personagem.personagemCombate?.vidaMaxima ?? 10,
         vidaMaxima: personagem.personagemCombate?.vidaMaxima || 10,
         classeArmadura: personagem.personagemCombate?.classeArmadura || 10,
         isInimigo: personagem.tipoId !== 1,
@@ -415,6 +426,56 @@ export class CombateTracker implements OnInit, OnChanges {
     }
 
     this.salvarParticipante(p);
+  }
+
+  /** Jogador: quando a vez passa para o seu herói, o celular vibra e aparece um aviso. */
+  private avisarMinhaVez(combat: any) {
+    if (this.previousTurnIndex < 0 || this.userRole === 'Mestre') return;
+    const atual = combat.participantes?.[combat.turnoAtualIndex];
+    if (!atual || !this.isMeuPersonagem(atual.personagemId)) return;
+    this.plataforma.vibrar('forte');
+    this.toast.info(`Sua vez: ${atual.nomeNPC}!`);
+  }
+
+  // ---- um combatente aberto por vez ----
+  estaAberto(p: any, ehTurno: boolean): boolean {
+    return this.abertoId === null ? ehTurno : this.abertoId === p.participanteId;
+  }
+
+  alternarCard(p: any, ehTurno: boolean) {
+    // fechar o da vez deixa todos fechados (-1); abrir outro guarda o id dele
+    this.abertoId = this.estaAberto(p, ehTurno) ? -1 : p.participanteId;
+    this.plataforma.vibrar('leve');
+  }
+
+  /** O meu combatente, quando é a vez dele (o jogador vê um aviso no topo). */
+  minhaVez(): any | null {
+    if (this.userRole === 'Mestre' || !this.combateAtivo) return null;
+    const atual = this.participantesCombate[this.combateAtivo.turnoAtualIndex];
+    return atual && this.isMeuPersonagem(atual.personagemId) ? atual : null;
+  }
+
+  // ---- celular: PV num painel que sobe da base ----
+  abrirPv(p: any) {
+    this.pvAberto = p;
+    this.pvQtd = null;
+    this.plataforma.vibrar('leve');
+  }
+
+  fecharPv() {
+    this.pvAberto = null;
+  }
+
+  ajustarPvQtd(delta: number) {
+    this.pvQtd = Math.max(0, (this.pvQtd ?? 0) + delta);
+    this.plataforma.vibrar('leve');
+  }
+
+  aplicarPv(isCura: boolean) {
+    if (!this.pvAberto || !this.pvQtd) return;
+    this.aplicarDano(this.pvAberto, String(this.pvQtd), isCura);
+    this.plataforma.vibrar(isCura ? 'sucesso' : 'media');
+    this.pvQtd = null;
   }
 
   isMeuPersonagem(personagemId: number): boolean {

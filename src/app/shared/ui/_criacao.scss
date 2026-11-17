@@ -1,3 +1,5 @@
+@use 'mobile';
+
 // Layout das telas de criação (campanha, sessão): etapas numeradas à esquerda e a prévia fixa à direita.
 
 .page-head .eyebrow { color: var(--hi); letter-spacing: 0.14em; }
@@ -117,6 +119,20 @@
   .lado > * { max-width: 26rem; }
 }
 
-@media (max-width: 560px) {
+@include mobile.compacto {
   .criar { width: 100%; }
+}
+
+// Celular: o botão de criar fica preso na base, acima da barra de navegação, sempre ao alcance do polegar.
+@include mobile.compacto {
+  .acoes {
+    position: sticky;
+    bottom: calc(var(--barra-inferior) + var(--seguro-base));
+    z-index: 20;
+    margin: 0 calc(-1 * var(--spacing-md));
+    padding: 0.75rem var(--spacing-md);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  :host-context(html.teclado-aberto) .acoes { bottom: 0; }
 }

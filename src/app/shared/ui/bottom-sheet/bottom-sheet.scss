@@ -1,0 +1,147 @@
+@use 'mobile';
+
+// Quem usa pode ajustar (no elemento pai):
+// --sheet-base: distância da base da tela (ex.: para ficar acima de uma barra de abas);
+// --sheet-pad-base: folga embaixo do conteúdo (padrão: a área segura do aparelho; 0 quando já há algo embaixo).
+:host {
+  --sheet-espiar: 4.75rem; // altura recolhida do modo fixo (alça + título)
+  --_base: var(--sheet-pad-base, var(--seguro-base));
+  display: contents;
+}
+
+.fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  animation: aparece 0.2s ease;
+}
+
+.painel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--sheet-base, 0px);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--seguro-topo) - var(--sheet-base, 0px) - 1rem);
+  padding-left: var(--seguro-esq);
+  padding-right: var(--seguro-dir);
+  background: var(--surface);
+  border-top: 3px solid var(--accent);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+  outline: none;
+  animation: sobe 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  &.arrastando { transition: none; }
+
+  &[data-parada='espiar'] { height: calc(var(--sheet-espiar) + var(--_base)); }
+  &[data-parada='meio'] { height: 50dvh; }
+  &[data-parada='cheio'] { height: calc(100dvh - var(--seguro-topo) - var(--sheet-base, 0px) - 1rem); }
+}
+
+// fixo: fica junto do conteúdo (sem fundo) e um pouco abaixo dos modais
+:host(.fixo) .painel {
+  z-index: 950;
+  animation: none;
+  &:not([data-parada]) { height: calc(var(--sheet-espiar) + var(--_base)); }
+}
+
+.topo {
+  flex: none;
+  touch-action: none; // o dedo arrasta o painel, não a página
+  cursor: grab;
+}
+
+.alca {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+
+  span {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.5rem 0.5rem var(--spacing-md);
+
+  h2 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: 1.15rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.fechar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+
+  &:hover, &:active { background: var(--surface-2); color: var(--fg); }
+}
+
+.corpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--spacing-md) calc(var(--spacing-md) + var(--_base));
+}
+
+// No desktop, o modal com desktop="dialogo" vira um diálogo centralizado.
+@media (min-width: mobile.$compacto + 1) {
+  :host(.desktop-dialogo) .painel {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    width: min(520px, calc(100vw - 2rem));
+    max-height: calc(100dvh - 4rem);
+    translate: -50% -50%;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent);
+    animation: aparece 0.18s ease;
+  }
+  :host(.desktop-dialogo) .alca { display: none; }
+  :host(.desktop-dialogo) .cabecalho { padding-top: 0.75rem; }
+  :host(.desktop-dialogo) .topo { cursor: auto; }
+}
+
+@keyframes sobe {
+  from { transform: translateY(100%); }
+}
+@keyframes aparece {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .painel, .fundo { animation: none; transition: none; }
+}

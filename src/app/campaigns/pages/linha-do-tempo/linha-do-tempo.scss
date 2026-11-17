@@ -14,7 +14,8 @@
 // A linha do tempo ocupa a tela inteira (a barra lateral some enquanto ela está aberta)
 :host {
   position: fixed;
-  inset: 0;
+  // tela cheia, mas fora da barra de status, do entalhe e da barra de gestos do celular (no desktop tudo é 0)
+  inset: var(--seguro-topo) var(--seguro-dir) var(--seguro-base) var(--seguro-esq);
   z-index: 500;
   display: block;
   overflow: hidden;

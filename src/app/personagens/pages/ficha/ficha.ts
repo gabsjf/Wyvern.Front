@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FichaHeader } from '../../components/ficha-header/ficha-header';
@@ -8,6 +8,7 @@ import { MesaService } from '../../../campaigns/services/mesa.service';
 import { formulaD20, analisarFormula } from '../../../core/utils/formula-dados';
 import { CONDICOES, alternarCondicao, lerCondicoes, temCondicao } from '../../utils/condicoes';
 import { DescansoDialog, TipoDescanso } from '../../components/descanso-dialog/descanso-dialog';
+import { bonusDeAtaque, bonusDeMagia, cdDeMagia, danoDoAtaque, sinal } from '../../utils/calculos-da-ficha';
 
 import { ItemService, Item } from '../../../core/services/item.service';
 import { MagiaService, Magia } from '../../../core/services/magia.service';
@@ -18,11 +19,14 @@ import { Campaign } from '../../../campaigns/models/campaign';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BarraDeXp, barraDeXp } from '../../utils/progressao';
+import { PlataformaService } from '../../../core/plataforma/plataforma.service';
+import { BottomSheet } from '../../../shared/ui/bottom-sheet/bottom-sheet';
+import { Camada } from '../../../shared/ui/camada.directive';
 
 @Component({
   selector: 'app-ficha',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FichaHeader, FichaAtributos, DescansoDialog, MesaAoVivo],
+  imports: [CommonModule, FormsModule, RouterModule, FichaHeader, FichaAtributos, DescansoDialog, MesaAoVivo, BottomSheet, Camada],
   templateUrl: './ficha.html',
   styleUrls: ['./ficha.scss']
 })
@@ -114,6 +118,34 @@ export class FichaComponent implements OnInit {
     this.activeTab = tab;
   }
 
+  // ----- celular: menu "⋯" e deslizar o dedo entre as abas -----
+  private plataforma = inject(PlataformaService);
+  readonly abas = ['atributos', 'combate', 'magias', 'inventario', 'caracteristicas'];
+  readonly menuAcoes = signal(false);
+  private toqueInicio: { x: number; y: number } | null = null;
+
+  aoTocar(evento: TouchEvent) {
+    const t = evento.touches[0];
+    // gestos que começam em algo rolável na horizontal (tabelas, faixas) não trocam de aba
+    const alvo = evento.target as HTMLElement;
+    this.toqueInicio = evento.touches.length === 1 && !alvo.closest('input, textarea, select, .rola-x') ? { x: t.clientX, y: t.clientY } : null;
+  }
+
+  aoSoltar(evento: TouchEvent) {
+    if (!this.toqueInicio || !this.plataforma.compacto()) return;
+    const t = evento.changedTouches[0];
+    const dx = t.clientX - this.toqueInicio.x;
+    const dy = t.clientY - this.toqueInicio.y;
+    this.toqueInicio = null;
+    // só um arrasto claramente horizontal
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+    const i = this.abas.indexOf(this.activeTab) + (dx < 0 ? 1 : -1);
+    if (i < 0 || i >= this.abas.length) return;
+    this.setTab(this.abas[i]);
+    this.plataforma.vibrar('leve');
+    document.getElementById('aba-' + this.abas[i])?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }
+
 
   // ----- rolagens -----
   /** Um teste pedido pelas perícias, salvaguardas, modificadores ou iniciativa: d20 + bônus. */
@@ -122,6 +154,7 @@ export class FichaComponent implements OnInit {
   }
 
   async rolarFormula(rotulo: string, formula: string) {
+    this.plataforma.vibrar('media');
     try {
       const r = await this.mesa.rolar(rotulo, formula, this.personagem?.nome);
       // com a mesa conectada, o resultado já aparece no painel; sem ela, avisa aqui
@@ -415,69 +448,25 @@ export class FichaComponent implements OnInit {
     });
   }
 
-  getModValue(score: number | undefined): number {
-    if (score === undefined || score === null) return 0;
-    return Math.floor((score - 10) / 2);
-  }
-
   /** Bônus de acerto como número (atributo + proficiência + bônus fixo da arma). */
   bonusAtaqueNumero(ataque: any): number {
-    let mod = 0;
-    if (ataque.atributoBase && this.personagem?.atributo) {
-      mod += this.getModValue(this.personagem.atributo[ataque.atributoBase.toLowerCase()]);
-    }
-    if (ataque.proficiente) mod += this.personagem?.personagemCombate?.proficienciaBonus || 0;
-    return mod + (ataque.bonusAcerto || 0);
+    return bonusDeAtaque(this.personagem, ataque);
   }
 
   getBonusAtaque(ataque: any): string {
-    let mod = 0;
-    if (ataque.atributoBase && this.personagem?.atributo) {
-      // Normalize to match property names
-      let attr = ataque.atributoBase.toLowerCase();
-      if (attr === 'constituicao') attr = 'constituicao'; // just in case
-      const score = this.personagem.atributo[attr];
-      mod += this.getModValue(score);
-    }
-    if (ataque.proficiente) {
-      mod += (this.personagem?.personagemCombate?.proficienciaBonus || 0);
-    }
-    mod += (ataque.bonusAcerto || 0); // Flat bonus (e.g. magic weapons +1)
-    
-    return mod >= 0 ? `+${mod}` : `${mod}`;
+    return sinal(bonusDeAtaque(this.personagem, ataque));
   }
 
   getDanoAtaque(ataque: any): string {
-    let mod = 0;
-    if (ataque.atributoBase && this.personagem?.atributo) {
-      let attr = ataque.atributoBase.toLowerCase();
-      const score = this.personagem.atributo[attr];
-      mod += this.getModValue(score);
-    }
-    if (mod === 0) return ataque.dano || '';
-    
-    const modStr = mod > 0 ? `+${mod}` : `${mod}`;
-    return `${ataque.dano || ''}${modStr}`;
+    return danoDoAtaque(this.personagem, ataque);
   }
 
   getBonusMagia(): string {
-    if (!this.personagem?.personagemConjuracao || this.personagem.personagemConjuracao.atributoConjuracao === 'Nenhum') return '+0';
-    let attr = this.personagem.personagemConjuracao.atributoConjuracao.toLowerCase();
-    if (attr === 'inteligencia') attr = 'inteligencia';
-    const score = this.personagem.atributo[attr];
-    const mod = this.getModValue(score);
-    const pb = this.personagem?.personagemCombate?.proficienciaBonus || 0;
-    const total = mod + pb;
-    return total >= 0 ? `+${total}` : `${total}`;
+    return sinal(bonusDeMagia(this.personagem));
   }
 
   getCdMagia(): number {
-    if (!this.personagem?.personagemConjuracao || this.personagem.personagemConjuracao.atributoConjuracao === 'Nenhum') return 10;
-    let attr = this.personagem.personagemConjuracao.atributoConjuracao.toLowerCase();
-    const score = this.personagem.atributo[attr];
-    const mod = this.getModValue(score);
-    const pb = this.personagem?.personagemCombate?.proficienciaBonus || 0;
-    return 8 + mod + pb;
+    return cdDeMagia(this.personagem);
   }
 
 }

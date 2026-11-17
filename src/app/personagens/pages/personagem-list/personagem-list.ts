@@ -1,3 +1,6 @@
+import { Camada } from '../../../shared/ui/camada.directive';
+import { Fab } from '../../../shared/ui/fab/fab';
+import { PuxarAtualizar } from '../../../shared/ui/puxar-atualizar.directive';
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +20,7 @@ const ESPERA_DA_BUSCA_MS = 300;
 
 @Component({
   selector: 'app-personagem-list',
-  imports: [CommonModule, FormsModule, RouterModule, Emblema, Paginacao],
+  imports: [CommonModule, FormsModule, RouterModule, Emblema, Paginacao, Fab, PuxarAtualizar, Camada],
   templateUrl: './personagem-list.html',
   styleUrl: './personagem-list.scss',
 })

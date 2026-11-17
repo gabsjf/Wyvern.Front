@@ -1,3 +1,5 @@
+@use 'mobile';
+
 :host {
   position: absolute;
   inset: 0;
@@ -13,7 +15,7 @@
   canvas { display: block; outline: none; }
 }
 
-/* câmera: no canto de baixo, longe da barra de ferramentas */
+/* câmera: no canto de baixo à direita, no mesmo lugar do zoom do 2D */
 .comandos {
   position: absolute;
   right: 0.75rem;
@@ -22,14 +24,15 @@
   display: flex;
   background: color-mix(in srgb, var(--surface) 93%, transparent);
   border: 1px solid var(--line);
+  border-radius: 10px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(6px);
+  overflow: hidden;
 }
 
-/* editor de cenário: no canto de baixo à esquerda, longe dos comandos da câmera */
+/* editor de cenário: logo acima da câmera (a coluna de ferramentas do mapa fica à esquerda) */
 .comandos.editor {
-  right: auto;
-  left: 0.75rem;
+  bottom: calc(0.75rem + 44px + 0.5rem);
 }
 
 .cmd {
@@ -78,8 +81,32 @@
   pointer-events: none;
 }
 
-@media (max-width: 640px) {
+/* celular deitado: o mapa tem pouca altura, a câmera encolhe */
+@include mobile.paisagem-baixa {
+  .comandos { right: 0.4rem; bottom: 0.4rem; }
+  .comandos.editor { bottom: calc(0.4rem + 40px + 0.4rem); }
+  .cmd { width: 40px; height: 40px; }
   .dica { display: none; }
+}
+
+/* celular em pé: embaixo ficam as ferramentas e o painel de tokens, então a câmera sobe para a lateral direita,
+   logo abaixo do topo do mapa, e o editor de cenário vem embaixo dela */
+@include mobile.compacto {
+  .comandos {
+    top: calc(0.5rem + 44px + 0.5rem);
+    right: 0.5rem;
+    bottom: auto;
+    flex-direction: column;
+  }
+  .comandos.editor { top: calc(0.5rem + 44px + 0.5rem + 3 * 40px + 0.75rem); }
+  .cmd { width: 40px; height: 40px; }
+  .cmd + .cmd { border-left: 0; border-top: 1px solid var(--line); }
+  .dica {
+    bottom: calc(4.75rem + 0.5rem + 56px + 0.75rem);
+    max-width: calc(100% - 1rem);
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

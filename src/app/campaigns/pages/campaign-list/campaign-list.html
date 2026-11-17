@@ -1,4 +1,4 @@
-<div class="container animate-fade-in">
+<div class="container animate-fade-in" appPuxarAtualizar (atualizar)="carregar(pagina()?.pagina ?? 1)">
   <header class="page-head">
     <div>
       <p class="eyebrow">Sua estante</p>
@@ -14,7 +14,8 @@
       }
     </div>
     @if (usuario()?.podeCriarCampanha) {
-      <a class="btn-primary" routerLink="/campaigns/create">+ Nova campanha</a>
+      <app-fab rotulo="Nova campanha" link="/campaigns/create" />
+      <a class="btn-primary esconde-celular" routerLink="/campaigns/create">+ Nova campanha</a>
     } @else if (usuario()) {
       <a class="btn-secondary" routerLink="/perfil" title="Você atingiu o limite de campanhas do seu plano">Limite do plano atingido</a>
     }
@@ -73,6 +74,7 @@
     @if (mostraCartaoNovo) {
       <li>
         @if (usuario()?.podeCriarCampanha) {
+      <app-fab rotulo="Nova campanha" link="/campaigns/create" />
           <a class="tomo tomo-novo" routerLink="/campaigns/create">
             <span class="novo-mais" aria-hidden="true">+</span>
             <strong>{{ total === 0 ? 'Comece sua primeira campanha' : 'Nova campanha' }}</strong>

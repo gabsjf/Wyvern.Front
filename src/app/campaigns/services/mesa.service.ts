@@ -14,13 +14,16 @@ export interface RolagemMesa {
   total: number;
   dados: number[];
   quando: string;
+  /** Rolagem do Mestre: o servidor só a manda para os Mestres da campanha. */
+  secreta?: boolean;
 }
 
 const LIMITE_NA_TELA = 40;
 
 /**
  * A mesa ao vivo de uma campanha: tudo o que se rola (na ficha, no combate...) aparece em tempo real para
- * os outros participantes. Quem entra vê também as últimas rolagens.
+ * os outros participantes. Quem entra vê também as últimas rolagens. As do Mestre são secretas: o servidor
+ * não as manda para os jogadores.
  */
 @Injectable({ providedIn: 'root' })
 export class MesaService {

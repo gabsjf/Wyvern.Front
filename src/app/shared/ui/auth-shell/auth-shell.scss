@@ -1,7 +1,10 @@
+@use 'mobile';
+
 .auth-shell {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   min-height: 100vh;
+  min-height: 100dvh; // no celular, a altura que sobra entre as barras do sistema
   background: var(--bg);
 }
 
@@ -173,4 +176,12 @@
   .auth-art { display: none; }
   .auth-brand-mobile { display: inline-flex; }
   .auth-painel { justify-content: flex-start; padding-top: 3rem; }
+}
+
+/* celular: respeita o entalhe e a barra de gestos; com o teclado aberto, a marca some e o formulário sobe */
+@include mobile.celular {
+  .auth-painel { padding: calc(2rem + var(--seguro-topo)) max(1.25rem, var(--seguro-dir)) calc(1.5rem + var(--seguro-base)) max(1.25rem, var(--seguro-esq)); }
+  .auth-brand-mobile { margin-bottom: 1.75rem; }
+  :host-context(html.teclado-aberto) .auth-painel { padding-top: calc(0.75rem + var(--seguro-topo)); }
+  :host-context(html.teclado-aberto) .auth-brand-mobile { display: none; }
 }

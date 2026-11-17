@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PersonagemService, EstadoParcial } from '../../services/personagem.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -12,9 +12,32 @@ import { alternarMarca, aplicarCura, aplicarDano } from '../../utils/regras-vida
   templateUrl: './ficha-header.html',
   styleUrls: ['./ficha-header.scss']
 })
-export class FichaHeader {
+export class FichaHeader implements AfterViewInit, OnDestroy {
   private personagens = inject(PersonagemService);
   private toast = inject(ToastService);
+
+  /** O bloco de PV saiu da tela ao rolar: no celular aparece a faixa fixa com PV, CA e Iniciativa. */
+  readonly encolhido = signal(false);
+  private bloco = viewChild<ElementRef<HTMLElement>>('bloco');
+  private observador?: IntersectionObserver;
+
+  ngAfterViewInit() {
+    const bloco = this.bloco()?.nativeElement;
+    if (!bloco || typeof IntersectionObserver === 'undefined') return;
+    // a faixa entra quando o fim do cartão de vida passa da borda de cima
+    this.observador = new IntersectionObserver(([e]) => {
+      const encolhido = !e.isIntersecting && e.boundingClientRect.top < 0;
+      this.encolhido.set(encolhido);
+      // as abas da ficha (presas no topo) descem a altura da faixa
+      document.documentElement.style.setProperty('--ficha-faixa', encolhido && this.combate ? '46px' : '0px');
+    }, { rootMargin: '-56px 0px 0px 0px' });
+    this.observador.observe(bloco);
+  }
+
+  ngOnDestroy() {
+    this.observador?.disconnect();
+    document.documentElement.style.removeProperty('--ficha-faixa');
+  }
 
   @Input() personagem: any;
   /** Clicar na iniciativa pede a rolagem de um d20 com o bônus dela. */

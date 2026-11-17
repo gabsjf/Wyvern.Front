@@ -1,3 +1,5 @@
+import { Fab } from '../../../shared/ui/fab/fab';
+import { PuxarAtualizar } from '../../../shared/ui/puxar-atualizar.directive';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -12,7 +14,7 @@ const ESPERA_DA_BUSCA_MS = 300;
 
 @Component({
   selector: 'app-campaign-list',
-  imports: [CommonModule, RouterModule, Emblema, Paginacao],
+  imports: [CommonModule, RouterModule, Emblema, Paginacao, Fab, PuxarAtualizar],
   templateUrl: './campaign-list.html',
   styleUrl: './campaign-list.scss',
 })

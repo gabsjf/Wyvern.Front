@@ -1,3 +1,5 @@
+@use 'mobile';
+
 .combate-container {
   position: relative;
   display: flex;
@@ -195,102 +197,121 @@ li:last-child > .item-disponivel { border-bottom: 0; }
 .tracker-list {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 23rem), 1fr));
-  gap: var(--spacing-md);
-  align-items: start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  align-content: start;
 }
 
-.tracker-card {
-  position: relative;
+/* aviso do jogador quando é a vez dele */
+.sua-vez {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: var(--spacing-md);
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--spacing-md);
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--hi);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--hi) 16%, var(--surface));
+  color: var(--fg);
+  font: 600 1.15rem var(--font-display);
+  letter-spacing: 0.04em;
+  animation: chama 1.6s ease-in-out infinite;
+
+  i { color: var(--hi); }
+}
+@keyframes chama { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--hi) 25%, transparent); } }
+
+.tracker-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-left: 3px solid var(--line);
   border-radius: var(--radius-lg);
+  overflow: hidden;
 
   &.inimigo { border-left-color: var(--accent); }
 
   &.active-turn {
     background: color-mix(in srgb, var(--hi) 8%, var(--surface));
     border-color: var(--hi);
-    border-left-width: 3px;
     box-shadow: 0 0 0 1px var(--hi), 0 10px 30px rgba(var(--hi-rgb), 0.12);
   }
 
   &.dead { opacity: 0.55; }
 }
 
-.selo-turno {
-  position: absolute;
-  top: -0.7rem;
-  right: 0.9rem;
-  padding: 0.1rem 0.7rem;
-  border-radius: 999px;
-  background: var(--hi);
-  color: var(--hi-fg);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.linha-principal {
-  display: flex;
+/* a linha de cada combatente: iniciativa, nome e condições, vida, CA */
+.cabeca {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: var(--spacing-sm);
+  width: 100%;
+  min-height: 60px;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled { cursor: default; opacity: 1; }
+  &:not(:disabled):hover { background: var(--tint-1); }
+  &:focus-visible { outline: 2px solid var(--hi); outline-offset: -2px; }
 }
+.aberto .seta { transform: rotate(180deg); }
+.seta { color: var(--muted); font-size: 0.85rem; transition: transform 0.15s; }
 
 .ini {
   display: grid;
   place-items: center;
-  flex: none;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.4rem;
+  height: 2.4rem;
   border-radius: 50%;
   background: var(--surface-2);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 500;
 }
-
 .active-turn .ini { background: var(--hi); color: var(--hi-fg); }
 
-.quem {
-  flex: 1;
-  min-width: 0;
+.quem { display: grid; gap: 0.2rem; min-width: 0; }
+.nome { font: 600 1.2rem/1.1 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cond-mini {
+  padding: 0 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 60%, transparent);
+  border-radius: 999px;
+  color: var(--danger);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
 
-  h3 { margin: 0; font-size: 1.4rem; line-height: 1.05; overflow-wrap: anywhere; }
-  .meta { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+.vida-resumo {
+  display: grid;
+  justify-items: end;
+  gap: 0.25rem;
+  min-width: 5.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+
+  strong { color: var(--fg); font-size: 1.2rem; }
+  .bar { width: 100%; height: 6px; }
 }
 
 .ca {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: none;
-  min-width: 3rem;
-  padding: 0.15rem 0.5rem 0.3rem;
+  min-width: 2.6rem;
+  padding: 0.1rem 0.4rem 0.25rem;
   border: 1.5px solid var(--line);
-  border-radius: 4px 4px 14px 14px;
-  font-size: 1.5rem;
+  border-radius: 4px 4px 12px 12px;
+  font-size: 1.2rem;
   line-height: 1.05;
 
-  small { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; color: var(--muted); }
+  small { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.14em; color: var(--muted); }
 }
-
-.vida { min-width: 0; }
-
-.vida-nums {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-}
-
-.pv-input { width: 5rem; min-height: 44px; text-align: center; font-size: 1.3rem; }
-.pv-max { color: var(--muted); font-size: 1rem; }
 
 .bar {
   height: 10px;
@@ -309,19 +330,28 @@ li:last-child > .item-disponivel { border-bottom: 0; }
   }
 }
 
-.acoes-linha {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* os controles do combatente aberto */
+.detalhe {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.25rem 0.75rem 0.75rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.75rem;
+  animation: abre 0.15s ease-out;
 }
+@keyframes abre { from { opacity: 0; transform: translateY(-4px); } }
 
 .dano-cura {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-xs);
 
-  .qtd { width: 5rem; min-height: 44px; text-align: center; font-size: 1.1rem; }
-  .btn-danger, .btn-cura { flex: 1; min-height: 44px; padding-inline: 0.75rem; font-size: 1.05rem; }
+  .pv-direto { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: auto; }
+  .pv-input { width: 4.5rem; min-height: 44px; text-align: center; font-size: 1.2rem; }
+  .pv-max { color: var(--muted); }
+  .qtd { width: 4.5rem; min-height: 44px; text-align: center; font-size: 1.1rem; }
+  .btn-danger, .btn-cura { min-height: 44px; padding-inline: 1rem; font-size: 1rem; }
   .btn-cura { color: var(--ok); border-color: var(--ok); }
 }
 
@@ -338,9 +368,10 @@ li:last-child > .item-disponivel { border-bottom: 0; }
     letter-spacing: 0.1em;
     color: var(--muted);
   }
+}
 
-  .form-control { flex: 1; min-height: 44px; font-size: 1rem; }
-  .efeitos-texto { flex: 1; font-size: 1rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .sua-vez, .detalhe { animation: none; }
 }
 
 /* ---------- salvaguardas de morte ---------- */
@@ -425,14 +456,15 @@ li:last-child > .item-disponivel { border-bottom: 0; }
 
 .dados-rapidos {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(3.75rem, 1fr)); // botões baixos: numa coluna estreita viram duas fileiras, na largura toda uma só
   gap: var(--spacing-xs);
 }
 
 .dado {
   display: grid;
   place-items: center;
-  aspect-ratio: 1;
+  min-height: 3.5rem;
+  padding: 0 0.25rem;
   background: var(--surface-2);
   color: var(--fg);
   border: 1px solid var(--line);
@@ -444,10 +476,10 @@ li:last-child > .item-disponivel { border-bottom: 0; }
   &:active { transform: scale(0.96); }
 
   // o d20 ganha destaque: é o dado que mais se rola
-  &.d20 { grid-column: span 2; aspect-ratio: auto; background: var(--accent); border-color: var(--accent); color: var(--accent-fg); &:hover { background: var(--accent-hover); } .dado-faces { font-size: 2.2rem; } }
+  &.d20 { grid-column: span 2; background: var(--accent); border-color: var(--accent); color: var(--accent-fg); &:hover { background: var(--accent-hover); } .dado-faces { font-size: 1.6rem; } }
 }
 
-.dado-faces { font-size: 1.5rem; font-weight: 500; }
+.dado-faces { font-size: 1.25rem; font-weight: 500; }
 
 .dados-formula {
   display: flex;
@@ -501,11 +533,11 @@ li:last-child > .item-disponivel { border-bottom: 0; }
   .dados { gap: var(--spacing-sm); padding: var(--spacing-sm); }
   .dados-titulo { display: none; }
 
-  // atalhos numa fileira só que rola de lado: a bandeja ocupa pouca altura
-  .dados-rapidos { display: flex; overflow-x: auto; scrollbar-width: none; }
-  .dado, .dado.d20 { flex: none; min-width: 4rem; aspect-ratio: auto; min-height: 48px; padding: 0 0.75rem; }
-  .dado.d20 { background: var(--accent); order: -1; }
-  .dado.d20 .dado-faces { font-size: 1.5rem; }
+  // os sete dados numa fileira só, sem rolar de lado: a bandeja ocupa pouca altura e nenhum dado fica escondido
+  .dados-rapidos { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .dado, .dado.d20 { grid-column: auto; min-width: 0; min-height: 44px; padding: 0; border-radius: var(--radius-sm); }
+  .dado.d20 { order: -1; }
+  .dado-faces, .dado.d20 .dado-faces { font-size: clamp(0.85rem, 3.4vw, 1.15rem); }
 
   .dados-resultado { min-height: 0; flex-direction: row; gap: var(--spacing-md); padding: 0.25rem var(--spacing-sm); border: 0; }
   .dados-resultado.vazio { display: none; }
@@ -514,9 +546,14 @@ li:last-child > .item-disponivel { border-bottom: 0; }
   .historico { display: none; }
 }
 
-@media (max-width: 720px) {
-  .combate-acoes { width: 100%; > button { flex: 1; } }
-  .tracker-list { grid-template-columns: minmax(0, 1fr); }
+@include mobile.compacto {
+  // as ações do Mestre descem para a barra fixa da base
+  .combate-topo .combate-acoes { display: none; }
+  // PV: no lugar do campo e dos botões de dano/cura, um botão que abre o painel
+  .dano-cura { display: none; }
+  .vida-resumo { min-width: 4.5rem; }
+  .cabeca { gap: 0.5rem; padding-inline: 0.6rem; }
+
   .campo-curto { width: 88px; }
 }
 
@@ -530,7 +567,26 @@ li:last-child > .item-disponivel { border-bottom: 0; }
   border-bottom: 1px solid var(--line);
 
   &:last-child { border-bottom: 0; }
-  .nome { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .nome { flex: 1; min-width: 0; overflow-wrap: break-word; }
+}
+
+/* lista estreita (celular, tablet em pé): nome e tipo numa linha, quantidade e "Adicionar" na de baixo,
+   em vez de espremer o nome até quebrar letra por letra */
+.lista-disponiveis { container-type: inline-size; }
+
+@container (max-width: 480px) {
+  .disponivel {
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
+    padding-block: 0.6rem;
+
+    .nome { flex: 1 1 0; font-weight: 600; }
+    .qtd-passo { order: 1; }
+    .btn-sm { order: 2; margin-left: auto; min-height: 40px; }
+
+    // quebra de linha depois do tipo: o que tem ordem maior (quantidade e botão) desce
+    &::after { content: ''; flex-basis: 100%; height: 0; }
+  }
 }
 
 .qtd-passo {
@@ -580,4 +636,93 @@ li:last-child > .item-disponivel { border-bottom: 0; }
 
   &:hover { border-color: var(--hi); color: var(--fg); }
   option { color: var(--fg); background: var(--surface); }
+}
+
+/* ---- celular: PV por toque, painel de PV e ações fixas do Mestre ---- */
+.pv-toque,
+.acoes-fixas { display: none; }
+
+.pv-toque {
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+
+  > .num { flex: none; strong { color: var(--fg); font-size: 1.35rem; } }
+  .bar { flex: 1; }
+  > i { flex: none; color: var(--hi); font-size: 1.1rem; }
+  &:active { background: var(--tint-2); }
+}
+
+.pv-sheet {
+  display: grid;
+  gap: 0.75rem;
+  padding-bottom: var(--spacing-sm);
+
+  .form-label { margin: 0.25rem 0 0; }
+}
+
+.pv-grande {
+  margin: 0;
+  color: var(--muted);
+  strong { color: var(--fg); font-size: 3rem; line-height: 1; }
+}
+
+.qtd-linha {
+  display: grid;
+  grid-template-columns: repeat(2, 48px) minmax(0, 1fr) repeat(2, 48px);
+  gap: 0.4rem;
+
+  input { min-height: 52px; text-align: center; font-size: 1.4rem; }
+}
+
+.passo {
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--fg);
+  font: 600 1rem var(--font-mono);
+  cursor: pointer;
+  &:active { background: var(--tint-3); }
+}
+
+.pv-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+
+  button { min-height: 52px; font-size: 1.1rem; }
+  .btn-cura { color: var(--ok); border-color: var(--ok); }
+}
+
+@include mobile.compacto {
+  .acoes-fixas {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 0.5rem;
+    margin: var(--spacing-md) calc(-1 * clamp(0.75rem, 2.4vw, 2.75rem)) 0;
+    padding: 0.6rem clamp(0.75rem, 2.4vw, 2.75rem);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--line);
+
+    button { min-height: 52px; }
+  }
+}
+
+@include mobile.compacto {
+  .pv-toque { display: flex; }
+  // fora da sessão (rota /combate) a barra de navegação do app fica embaixo: as ações param acima dela
+  :host-context(.app-container:not(.no-sidebar)) .acoes-fixas { bottom: calc(var(--barra-inferior) + var(--seguro-base)); }
 }

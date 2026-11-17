@@ -1,0 +1,254 @@
+@if (personagem(); as p) {
+  <div class="fr">
+    @if (cabecalho()) {
+      <header class="fr-topo">
+        <div class="fr-quem">
+          <h2 class="fr-nome">{{ p.nome }}</h2>
+          <span class="fr-classe">{{ p.personagemPlayer?.classe || 'Sem classe' }} · Nv {{ p.personagemPlayer?.nivel || 1 }}</span>
+        </div>
+        <ng-content select="[fr-acoes]" />
+      </header>
+    }
+
+    <!-- o que se olha toda hora: sempre à vista, em qualquer aba -->
+    <div class="fr-resumo">
+      <button type="button" class="fr-pv" [class.baixa]="vida().baixa" [class.caido]="vida().caido" (click)="escolherAba('estado')"
+              [attr.aria-label]="'Pontos de vida: ' + vida().atual + ' de ' + vida().maxima + '. Abrir vida e condições'">
+        <span class="fr-rot">PV</span>
+        <span class="fr-pv-num num"><strong>{{ vida().atual }}</strong>/{{ vida().maxima }}@if (vida().temporaria > 0) { <small>+{{ vida().temporaria }}</small> }</span>
+        <span class="fr-pv-barra" aria-hidden="true"><i [style.width.%]="vida().pct"></i></span>
+      </button>
+      <div class="fr-stat">
+        <span class="fr-rot">CA</span>
+        <span class="fr-val num">{{ combate()?.classeArmadura || 10 }}</span>
+      </div>
+      <button type="button" class="fr-stat rolavel" (click)="rolarIniciativa()" [attr.aria-label]="'Rolar iniciativa, ' + sinal(iniciativa())" title="Rolar iniciativa">
+        <span class="fr-rot">Inic.</span>
+        <span class="fr-val num">{{ sinal(iniciativa()) }}</span>
+      </button>
+      <div class="fr-stat">
+        <span class="fr-rot">Desl.</span>
+        <span class="fr-val num">{{ combate()?.deslocamento || '9m' }}</span>
+      </div>
+    </div>
+
+    @if (condicoes().length || combate()?.inspiracaoHeroica) {
+      <p class="fr-condicoes">
+        @if (combate()?.inspiracaoHeroica) { <span class="fr-chip inspiracao"><i class="bi bi-star-fill" aria-hidden="true"></i> Inspiração</span> }
+        @for (c of condicoes(); track c) { <span class="fr-chip">{{ c }}</span> }
+      </p>
+    }
+
+    @if (ultimo(); as u) {
+      <div class="fr-ultimo" role="status" [class.critico]="u.natural === 20" [class.falha]="u.natural === 1">
+        <span class="fr-ultimo-rotulo">{{ u.rotulo }}<small class="num">{{ u.formula }}</small></span>
+        @if (u.natural === 20) { <span class="fr-ultimo-selo">Crítico!</span> }
+        @else if (u.natural === 1) { <span class="fr-ultimo-selo">Falha crítica</span> }
+        <strong class="num">{{ u.total }}</strong>
+      </div>
+    }
+
+    <div class="fr-abas" role="tablist" aria-label="Partes da ficha rápida">
+      <button type="button" role="tab" [class.ativa]="aba() === 'acoes'" [attr.aria-selected]="aba() === 'acoes'" (click)="escolherAba('acoes')">
+        <i class="bi bi-lightning-charge" aria-hidden="true"></i> Ações
+      </button>
+      <button type="button" role="tab" [class.ativa]="aba() === 'testes'" [attr.aria-selected]="aba() === 'testes'" (click)="escolherAba('testes')">
+        <i class="bi bi-dice-5" aria-hidden="true"></i> Testes
+      </button>
+      <button type="button" role="tab" [class.ativa]="aba() === 'estado'" [attr.aria-selected]="aba() === 'estado'" (click)="escolherAba('estado')">
+        <i class="bi bi-heart-pulse" aria-hidden="true"></i> Vida
+      </button>
+    </div>
+
+    <div class="fr-corpo" role="tabpanel">
+      @switch (aba()) {
+        @case ('acoes') {
+          <section class="fr-secao" aria-label="Ataques">
+            <h3 class="fr-titulo">Ataques</h3>
+            @for (x of ataques(); track x.ataque.personagemAtaqueId ?? $index) {
+              <div class="fr-ataque">
+                <div class="fr-ataque-info">
+                  <strong>{{ x.ataque.nome }}</strong>
+                  <small>{{ x.detalhe }}</small>
+                </div>
+                <button type="button" class="fr-rolar" (click)="rolarAtaque(x.ataque, x.acerto)" [attr.aria-label]="'Rolar ataque de ' + x.ataque.nome + ', ' + sinal(x.acerto)">
+                  <span class="fr-rolar-rot">Acerto</span><span class="num">{{ sinal(x.acerto) }}</span>
+                </button>
+                <button type="button" class="fr-rolar dano" (click)="rolarDano(x.ataque, x.dano)" [disabled]="!x.dano" [attr.aria-label]="'Rolar dano de ' + x.ataque.nome + ', ' + x.dano">
+                  <span class="fr-rolar-rot">Dano</span><span class="num">{{ x.dano || '—' }}</span>
+                </button>
+              </div>
+            } @empty {
+              <p class="fr-vazio">Nenhum ataque na ficha. Cadastre armas e ataques na ficha completa.</p>
+            }
+          </section>
+
+          @if (conjurador() || magiasPorCirculo().length) {
+            <section class="fr-secao" aria-label="Magias">
+              <h3 class="fr-titulo">Magias
+                @if (conjurador()) { <span class="fr-titulo-extra num">CD {{ cdMagia() }} · Ataque {{ sinal(bonusMagia()) }}</span> }
+              </h3>
+
+              @for (e of espacos(); track e.nivel) {
+                <div class="fr-espacos" role="group" [attr.aria-label]="'Espaços do ' + e.nivel + 'º círculo'">
+                  <span class="fr-espacos-nome">{{ e.nivel }}º</span>
+                  <span class="fr-marcas">
+                    @for (i of marcas(e.maximo); track i) {
+                      <button type="button" class="fr-marca" [class.cheia]="i < e.atual" (click)="alternarEspaco(e.nivel, i)" [attr.aria-pressed]="i < e.atual"
+                              [attr.aria-label]="e.nivel + 'º círculo, espaço ' + (i + 1) + (i < e.atual ? ', disponível. Toque para gastar' : ', gasto. Toque para recuperar')"></button>
+                    }
+                  </span>
+                  <span class="fr-espacos-conta num">{{ e.atual }}/{{ e.maximo }}</span>
+                </div>
+              }
+
+              @for (g of magiasPorCirculo(); track g.nivel) {
+                <p class="fr-subtitulo">{{ g.titulo }}</p>
+                <ul class="fr-lista">
+                  @for (m of g.magias; track m.personagemMagiaId ?? $index) {
+                    @let chave = 'magia-' + (m.personagemMagiaId ?? m.nome);
+                    <li>
+                      <button type="button" class="fr-item" (click)="alternarAberto(chave)" [attr.aria-expanded]="aberto() === chave">
+                        <span class="fr-item-nome">{{ m.nome }}</span>
+                        <small>{{ m.escola }}@if (m.verbal || m.somatico || m.material) { · {{ m.verbal ? 'V' : '' }}{{ m.somatico ? 'S' : '' }}{{ m.material ? 'M' : '' }} }</small>
+                        <i class="bi bi-chevron-down fr-seta" aria-hidden="true"></i>
+                      </button>
+                      @if (aberto() === chave) { <p class="fr-descricao">{{ m.descricao || 'Sem descrição.' }}</p> }
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          }
+
+          @for (g of outrasAcoes(); track g.titulo) {
+            <section class="fr-secao" [attr.aria-label]="g.titulo">
+              <h3 class="fr-titulo">{{ g.titulo }}</h3>
+              <ul class="fr-lista">
+                @for (a of g.itens; track $index) {
+                  @let chave = g.titulo + '-' + $index;
+                  <li>
+                    <button type="button" class="fr-item" (click)="alternarAberto(chave)" [attr.aria-expanded]="aberto() === chave">
+                      <span class="fr-item-nome">{{ a.nome }}</span>
+                      <i class="bi bi-chevron-down fr-seta" aria-hidden="true"></i>
+                    </button>
+                    @if (aberto() === chave) { <p class="fr-descricao">{{ previa(a) }}</p> }
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        }
+
+        @case ('testes') {
+          <section class="fr-secao" aria-label="Salvaguardas">
+            <h3 class="fr-titulo">Salvaguardas</h3>
+            <div class="fr-grade">
+              @for (s of salvaguardas(); track s.chave) {
+                <button type="button" class="fr-teste" [class.prof]="s.proficiente" (click)="rolarSalvaguarda(s.nome, s.bonus)"
+                        [attr.aria-label]="'Rolar salvaguarda de ' + s.nome + ', ' + sinal(s.bonus) + (s.proficiente ? ', proficiente' : '')">
+                  <span class="fr-teste-sigla">{{ s.sigla }}</span><span class="num">{{ sinal(s.bonus) }}</span>
+                </button>
+              }
+            </div>
+          </section>
+
+          <section class="fr-secao" aria-label="Perícias">
+            <h3 class="fr-titulo">Perícias</h3>
+            <div class="fr-pericias">
+              @for (x of pericias(); track x.nome) {
+                <button type="button" class="fr-pericia" [class.prof]="x.proficiente" (click)="rolarPericia(x, x.bonus)"
+                        [attr.aria-label]="'Rolar ' + x.nome + ', ' + sinal(x.bonus) + (x.proficiente ? ', proficiente' : '')">
+                  <span class="fr-ponto" aria-hidden="true"></span>
+                  <span class="fr-pericia-nome">{{ x.nome }}</span>
+                  <span class="num">{{ sinal(x.bonus) }}</span>
+                </button>
+              }
+            </div>
+          </section>
+
+          <section class="fr-secao" aria-label="Testes de atributo">
+            <h3 class="fr-titulo">Atributos</h3>
+            <div class="fr-grade">
+              @for (a of atributos(); track a.chave) {
+                <button type="button" class="fr-teste" (click)="rolarAtributo(a.nome, a.bonus)" [attr.aria-label]="'Rolar teste de ' + a.nome + ', ' + sinal(a.bonus)">
+                  <span class="fr-teste-sigla">{{ a.sigla }}</span><span class="num">{{ sinal(a.bonus) }}</span>
+                  @if (a.valor !== null) { <small class="num">{{ a.valor }}</small> }
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        @case ('estado') {
+          @if (combate()) {
+            <section class="fr-secao" aria-label="Pontos de vida">
+              <h3 class="fr-titulo">Pontos de vida</h3>
+              <div class="fr-vida-controles">
+                <label class="visually-hidden" for="fr-qtd">Quantidade de dano ou cura</label>
+                <input id="fr-qtd" type="number" min="1" inputmode="numeric" class="num" placeholder="Qtd" [value]="quantidade() ?? ''"
+                       (input)="mudarQuantidade($event)" (keyup.enter)="aplicarDano()" />
+                <button type="button" class="fr-btn perigo" (click)="aplicarDano()" [disabled]="!quantidade()">Dano</button>
+                <button type="button" class="fr-btn ok" (click)="aplicarCura()" [disabled]="!quantidade()">Cura</button>
+              </div>
+              <div class="fr-linha">
+                <span>PV temporários</span>
+                <span class="fr-contador" role="group" aria-label="PV temporários">
+                  <button type="button" (click)="ajustarTemporarios(-1)" [disabled]="vida().temporaria <= 0" aria-label="Um PV temporário a menos">−</button>
+                  <span class="num">{{ vida().temporaria }}</span>
+                  <button type="button" (click)="ajustarTemporarios(1)" aria-label="Um PV temporário a mais">+</button>
+                </span>
+              </div>
+              <div class="fr-linha">
+                <span>Dados de vida</span>
+                <span class="num">{{ combate()?.dadoVidaMaximo || '—' }}</span>
+              </div>
+            </section>
+
+            <section class="fr-secao" [class.destaque]="vida().caido" aria-label="Salvaguardas de morte">
+              <h3 class="fr-titulo">Salvaguardas de morte</h3>
+              <div class="fr-linha">
+                <span>Sucessos</span>
+                <span class="fr-bolinhas">
+                  @for (n of [1, 2, 3]; track n) {
+                    <button type="button" [class.on]="(combate()?.deathSaveSucessos || 0) >= n" [attr.aria-pressed]="(combate()?.deathSaveSucessos || 0) >= n"
+                            [attr.aria-label]="'Sucesso ' + n" (click)="marcarMorte('sucesso', n)"></button>
+                  }
+                </span>
+              </div>
+              <div class="fr-linha">
+                <span>Falhas</span>
+                <span class="fr-bolinhas falha">
+                  @for (n of [1, 2, 3]; track n) {
+                    <button type="button" [class.on]="(combate()?.deathSaveFalhas || 0) >= n" [attr.aria-pressed]="(combate()?.deathSaveFalhas || 0) >= n"
+                            [attr.aria-label]="'Falha ' + n" (click)="marcarMorte('falha', n)"></button>
+                  }
+                </span>
+              </div>
+            </section>
+
+            <section class="fr-secao" aria-label="Condições">
+              <h3 class="fr-titulo">Condições</h3>
+              <div class="fr-condicoes-edicao">
+                <button type="button" class="fr-chip-btn inspiracao" [class.on]="combate()?.inspiracaoHeroica" [attr.aria-pressed]="!!combate()?.inspiracaoHeroica" (click)="alternarInspiracao()">
+                  <i class="bi" [class.bi-star-fill]="combate()?.inspiracaoHeroica" [class.bi-star]="!combate()?.inspiracaoHeroica" aria-hidden="true"></i> Inspiração heroica
+                </button>
+                @for (c of condicoesPadrao; track c) {
+                  <button type="button" class="fr-chip-btn" [class.on]="temCondicao(c)" [attr.aria-pressed]="temCondicao(c)" (click)="alternarCondicao(c)">{{ c }}</button>
+                }
+              </div>
+            </section>
+          } @else {
+            <p class="fr-vazio">Esta ficha ainda não tem pontos de vida definidos. Preencha na ficha completa.</p>
+          }
+        }
+      }
+    </div>
+
+    <a class="fr-completa" [routerLink]="['/ficha', p.personagemId]">
+      <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Abrir a ficha completa
+    </a>
+  </div>
+} @else {
+  <p class="fr-carregando" role="status">Abrindo a ficha…</p>
+}

@@ -157,113 +157,115 @@
       }
     </header>
 
+    @if (minhaVez(); as vez) {
+      <div class="sua-vez" role="status"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Sua vez, {{ vez.nomeNPC }}!</div>
+    }
+
     <div class="mesa">
+      <!-- cada combatente numa linha; os controles (dano, cura, condições, salvaguardas) só no que está aberto:
+           o da vez abre sozinho, e um toque abre outro -->
       <ol class="tracker-list" aria-label="Combatentes">
-        @for (p of participantesCombate; track $index) {
+        @for (p of participantesCombate; track p.participanteId ?? $index) {
           @let ehTurno = $index === combateAtivo.turnoAtualIndex;
           @let morto = estaMorto(p);
           @let controla = userRole === 'Mestre' || isMeuPersonagem(p.personagemId);
-          @let veDetalhes = userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId);
+          @let veNumeros = userRole === 'Mestre' || !p.isInimigo || isMeuPersonagem(p.personagemId);
+          @let aberto = controla && estaAberto(p, ehTurno);
           @let pct = p.vidaMaxima > 0 ? (p.vidaAtual / p.vidaMaxima) * 100 : 0;
-          <li class="tracker-card" [class.active-turn]="ehTurno" [class.inimigo]="p.isInimigo" [class.dead]="morto"
+          @let caido = p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3;
+          <li class="tracker-card" [class.active-turn]="ehTurno" [class.inimigo]="p.isInimigo" [class.dead]="morto" [class.aberto]="aberto"
               [attr.aria-current]="ehTurno ? 'step' : null">
-            @if (ehTurno) { <span class="selo-turno">Turno atual</span> }
+            <button type="button" class="cabeca" (click)="alternarCard(p, ehTurno)" [disabled]="!controla"
+                    [attr.aria-expanded]="controla ? aberto : null"
+                    [attr.aria-label]="p.nomeNPC + (ehTurno ? ', vez dele' : '') + (controla ? (aberto ? '. Fechar controles' : '. Abrir controles') : '')">
+              <span class="ini num" title="Iniciativa">{{ p.iniciativa }}</span>
 
-            <div class="linha-principal">
-              <div class="ini num" title="Iniciativa">{{ p.iniciativa }}</div>
-
-              <div class="quem">
-                <h3>{{ p.nomeNPC }}</h3>
-                <p class="meta">
-                  @if (p.isInimigo) { <span class="chip chip-danger">Inimigo</span> } @else { <span class="chip chip-hi">Herói</span> }
+              <span class="quem">
+                <span class="nome">{{ p.nomeNPC }}</span>
+                <span class="meta">
+                  @if (ehTurno) { <span class="chip chip-hi">Vez</span> }
                   @if (morto) { <span class="chip chip-danger">{{ p.isInimigo ? 'Abatido' : 'Morto' }}</span> }
-                </p>
-              </div>
+                  @else if (caido) { <span class="chip chip-danger">Caído</span> }
+                  @for (c of condicoesDe(p); track c) { <span class="cond-mini">{{ c }}</span> }
+                </span>
+              </span>
 
-              @if (veDetalhes) {
-                <div class="ca num" title="Classe de armadura"><small>CA</small>{{ p.classeArmadura }}</div>
-              }
-            </div>
-
-            <div class="vida">
-              @if (controla) {
-                <div class="vida-nums">
-                  <label class="visually-hidden" [for]="'pv-' + $index">PV de {{ p.nomeNPC }}</label>
-                  <input [id]="'pv-' + $index" type="number" min="0" class="form-control num pv-input" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" />
-                  <span class="num pv-max">/ {{ p.vidaMaxima }} PV</span>
-                </div>
-                <div class="bar" role="img" [attr.aria-label]="'Vida em ' + (pct | number:'1.0-0') + '%'">
-                  <i [style.width.%]="pct" [class.low]="pct < 30"></i>
-                </div>
-              } @else if (!p.isInimigo) {
-                <span class="chip" [class.chip-ok]="obterStatusVida(p).tone === 'ok'" [class.chip-hi]="obterStatusVida(p).tone === 'hi'" [class.chip-danger]="obterStatusVida(p).tone === 'danger'">{{ obterStatusVida(p).text }}</span>
-              } @else {
-                <span class="chip">Estado desconhecido</span>
-              }
-            </div>
-
-            @if (controla || veDetalhes) {
-              <div class="acoes-linha">
-                @if (controla) {
-                  <div class="dano-cura">
-                    <label class="visually-hidden" [for]="'dano-' + $index">Quantidade de dano ou cura para {{ p.nomeNPC }}</label>
-                    <input [id]="'dano-' + $index" type="number" min="0" #danoInput class="form-control num qtd" placeholder="Qtd" />
-                    <button type="button" class="btn-danger" (click)="aplicarDano(p, danoInput.value, false)">Dano</button>
-                    <button type="button" class="btn-secondary btn-cura" (click)="aplicarDano(p, danoInput.value, true)">Cura</button>
-                  </div>
+              <span class="vida-resumo">
+                @if (veNumeros) {
+                  <span class="num"><strong>{{ p.vidaAtual }}</strong>/{{ p.vidaMaxima }}</span>
+                  <span class="bar" aria-hidden="true"><i [style.width.%]="pct" [class.low]="pct < 30"></i></span>
+                } @else {
+                  <span class="chip" [class.chip-ok]="obterStatusVida(p).tone === 'ok'" [class.chip-hi]="obterStatusVida(p).tone === 'hi'"
+                        [class.chip-danger]="obterStatusVida(p).tone === 'danger'">{{ obterStatusVida(p).text }}</span>
                 }
+              </span>
 
-                @if (veDetalhes) {
-                  <div class="efeitos">
-                    <span class="efeitos-rotulo">Efeitos</span>
-                    <div class="chips-condicao">
-                      @for (c of condicoesDe(p); track c) {
-                        @if (controla) {
-                          <button type="button" class="cond on" (click)="removerCondicao(p, c)" [attr.aria-label]="'Remover ' + c">{{ c }} <span aria-hidden="true">×</span></button>
-                        } @else {
-                          <span class="cond on">{{ c }}</span>
+              @if (veNumeros) {
+                <span class="ca num" title="Classe de armadura"><small>CA</small>{{ p.classeArmadura }}</span>
+              }
+              @if (controla) { <i class="bi bi-chevron-down seta" aria-hidden="true"></i> }
+            </button>
+
+            @if (aberto) {
+              <div class="detalhe">
+                <!-- celular: tocar abre o painel de PV (dano, cura e o valor direto) -->
+                <button type="button" class="pv-toque" (click)="abrirPv(p)" [attr.aria-label]="'Ajustar PV de ' + p.nomeNPC + ': ' + p.vidaAtual + ' de ' + p.vidaMaxima">
+                  <span class="num"><strong>{{ p.vidaAtual }}</strong> / {{ p.vidaMaxima }} PV</span>
+                  <span class="bar" aria-hidden="true"><i [style.width.%]="pct" [class.low]="pct < 30"></i></span>
+                  <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                </button>
+                <div class="dano-cura">
+                  <label class="visually-hidden" [for]="'pv-' + $index">PV atual de {{ p.nomeNPC }}</label>
+                  <span class="pv-direto">
+                    <input [id]="'pv-' + $index" type="number" min="0" class="form-control num pv-input" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" />
+                    <span class="num pv-max">/ {{ p.vidaMaxima }}</span>
+                  </span>
+                  <label class="visually-hidden" [for]="'dano-' + $index">Quantidade de dano ou cura para {{ p.nomeNPC }}</label>
+                  <input [id]="'dano-' + $index" type="number" min="0" #danoInput class="form-control num qtd" placeholder="Qtd"
+                         (keyup.enter)="aplicarDano(p, danoInput.value, false); danoInput.value = ''" />
+                  <button type="button" class="btn-danger" (click)="aplicarDano(p, danoInput.value, false); danoInput.value = ''">Dano</button>
+                  <button type="button" class="btn-secondary btn-cura" (click)="aplicarDano(p, danoInput.value, true); danoInput.value = ''">Cura</button>
+                </div>
+
+                <div class="efeitos">
+                  <span class="efeitos-rotulo">Condições</span>
+                  <div class="chips-condicao">
+                    @for (c of condicoesDe(p); track c) {
+                      <button type="button" class="cond on" (click)="removerCondicao(p, c)" [attr.aria-label]="'Remover ' + c">{{ c }} <span aria-hidden="true">×</span></button>
+                    }
+                    <select class="cond-add" aria-label="Adicionar condição" (change)="adicionarCondicao(p, $any($event.target).value); $any($event.target).value = ''">
+                      <option value="">+ Condição</option>
+                      @for (c of condicoesPadrao; track c) {
+                        @if (!temCondicao(p, c)) { <option [value]="c">{{ c }}</option> }
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                @if (caido) {
+                  @let podeRolar = ehTurno;
+                  <div class="salvaguardas" role="group" [attr.aria-label]="'Salvaguardas de morte de ' + p.nomeNPC">
+                    @if (!ehTurno) { <p class="aviso">As salvaguardas são marcadas no turno deste herói.</p> }
+                    <div class="grupo" [class.travado]="!podeRolar">
+                      <span class="rotulo ok">Sucessos</span>
+                      <span class="bolas">
+                        @for (n of [1, 2, 3]; track n) {
+                          <button type="button" class="bola ok" [class.on]="p.sucessosMorte >= n" [attr.aria-pressed]="p.sucessosMorte >= n"
+                                  [attr.aria-label]="'Sucesso ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleSucessoMorte(p, n, podeRolar)"></button>
                         }
-                      }
-                      @if (controla) {
-                        <select class="cond-add" aria-label="Adicionar condição" (change)="adicionarCondicao(p, $any($event.target).value); $any($event.target).value = ''">
-                          <option value="">+ Condição</option>
-                          @for (c of condicoesPadrao; track c) {
-                            @if (!temCondicao(p, c)) { <option [value]="c">{{ c }}</option> }
-                          }
-                        </select>
-                      } @else if (condicoesDe(p).length === 0) {
-                        <span class="efeitos-texto">Nenhum</span>
-                      }
+                      </span>
+                    </div>
+                    <div class="grupo" [class.travado]="!podeRolar">
+                      <span class="rotulo ruim">Falhas</span>
+                      <span class="bolas">
+                        @for (n of [1, 2, 3]; track n) {
+                          <button type="button" class="bola ruim" [class.on]="p.falhasMorte >= n" [attr.aria-pressed]="p.falhasMorte >= n"
+                                  [attr.aria-label]="'Falha ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleFalhaMorte(p, n, podeRolar)"></button>
+                        }
+                      </span>
                     </div>
                   </div>
                 }
-              </div>
-            }
-
-            @if (p.vidaAtual <= 0 && !p.isInimigo && p.falhasMorte < 3) {
-              @let podeRolar = ehTurno && controla;
-              <div class="salvaguardas" role="group" [attr.aria-label]="'Salvaguardas de morte de ' + p.nomeNPC">
-                @if (!ehTurno) {
-                  <p class="aviso">As salvaguardas são marcadas no turno deste herói.</p>
-                }
-                <div class="grupo" [class.travado]="!podeRolar">
-                  <span class="rotulo ok">Sucessos</span>
-                  <span class="bolas">
-                    @for (n of [1, 2, 3]; track n) {
-                      <button type="button" class="bola ok" [class.on]="p.sucessosMorte >= n" [attr.aria-pressed]="p.sucessosMorte >= n"
-                              [attr.aria-label]="'Sucesso ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleSucessoMorte(p, n, podeRolar)"></button>
-                    }
-                  </span>
-                </div>
-                <div class="grupo" [class.travado]="!podeRolar">
-                  <span class="rotulo ruim">Falhas</span>
-                  <span class="bolas">
-                    @for (n of [1, 2, 3]; track n) {
-                      <button type="button" class="bola ruim" [class.on]="p.falhasMorte >= n" [attr.aria-pressed]="p.falhasMorte >= n"
-                              [attr.aria-label]="'Falha ' + n" [attr.aria-disabled]="!podeRolar" (click)="toggleFalhaMorte(p, n, podeRolar)"></button>
-                    }
-                  </span>
-                </div>
               </div>
             }
           </li>
@@ -274,6 +276,42 @@
         <ng-container *ngTemplateOutlet="bandeja"></ng-container>
       </aside>
     </div>
+
+    <!-- celular: as ações do Mestre ficam presas na base, ao alcance do polegar -->
+    @if (userRole === 'Mestre') {
+      <div class="acoes-fixas">
+        <button type="button" class="btn-secondary" (click)="encerrarCombate()">Encerrar</button>
+        <button type="button" class="btn-primary" [disabled]="isProcessingTurn" (click)="proximoTurno()">
+          {{ isProcessingTurn ? 'Aguarde...' : 'Próximo turno' }} <i class="bi bi-skip-forward-fill" aria-hidden="true"></i>
+        </button>
+      </div>
+    }
+
+    @if (pvAberto; as p) {
+      @let pctSheet = p.vidaMaxima > 0 ? (p.vidaAtual / p.vidaMaxima) * 100 : 0;
+      <app-bottom-sheet [aberto]="true" (fechar)="fecharPv()" [titulo]="p.nomeNPC">
+        <div class="pv-sheet">
+          <p class="pv-grande num"><strong>{{ p.vidaAtual }}</strong> <span>/ {{ p.vidaMaxima }} PV</span></p>
+          <div class="bar" aria-hidden="true"><i [style.width.%]="pctSheet" [class.low]="pctSheet < 30"></i></div>
+
+          <label class="form-label" for="pv-qtd">Quantidade</label>
+          <div class="qtd-linha">
+            <button type="button" class="passo" (click)="ajustarPvQtd(-5)" aria-label="5 a menos">−5</button>
+            <button type="button" class="passo" (click)="ajustarPvQtd(-1)" aria-label="1 a menos">−1</button>
+            <input id="pv-qtd" type="number" inputmode="numeric" min="0" class="form-control num" [(ngModel)]="pvQtd" placeholder="0" />
+            <button type="button" class="passo" (click)="ajustarPvQtd(1)" aria-label="1 a mais">+1</button>
+            <button type="button" class="passo" (click)="ajustarPvQtd(5)" aria-label="5 a mais">+5</button>
+          </div>
+          <div class="pv-acoes">
+            <button type="button" class="btn-danger" [disabled]="!pvQtd" (click)="aplicarPv(false)">Dano</button>
+            <button type="button" class="btn-secondary btn-cura" [disabled]="!pvQtd" (click)="aplicarPv(true)">Cura</button>
+          </div>
+
+          <label class="form-label" for="pv-direto">Ou defina o PV atual</label>
+          <input id="pv-direto" type="number" inputmode="numeric" min="0" class="form-control num" [(ngModel)]="p.vidaAtual" (blur)="salvarParticipante(p)" />
+        </div>
+      </app-bottom-sheet>
+    }
   } @else {
     <ng-container *ngTemplateOutlet="bandeja"></ng-container>
   }

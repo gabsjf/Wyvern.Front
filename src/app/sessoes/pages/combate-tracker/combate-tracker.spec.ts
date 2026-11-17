@@ -50,6 +50,31 @@ const heroi = (extra: any = {}) => ({ participanteId: 1, nomeNPC: 'Lyra', isInim
 const goblin = (extra: any = {}) => ({ participanteId: 2, nomeNPC: 'Goblin', isInimigo: true, vidaAtual: 7, vidaMaxima: 7, ...extra });
 
 describe('CombateTracker', () => {
+  describe('um combatente aberto por vez', () => {
+    it('o da vez abre sozinho; tocar em outro troca; tocar no aberto fecha', () => {
+      const { c } = montar();
+      emCombate(c, [heroi(), goblin()]);
+      expect([c.estaAberto(heroi(), true), c.estaAberto(goblin(), false)]).toEqual([true, false]);
+
+      c.alternarCard(goblin(), false);
+      expect([c.estaAberto(heroi(), true), c.estaAberto(goblin(), false)]).toEqual([false, true]);
+
+      c.alternarCard(goblin(), false);
+      expect([c.estaAberto(heroi(), true), c.estaAberto(goblin(), false)]).toEqual([false, false]);
+    });
+
+    it('o jogador vê "Sua vez" só no turno do próprio herói', () => {
+      const { c } = montar();
+      c.userRole = 'Jogador';
+      c.personagensMeusIds = [10];
+      emCombate(c, [heroi({ personagemId: 10 }), goblin()]);
+      expect(c.minhaVez()?.nomeNPC).toBe('Lyra');
+
+      c.combateAtivo.turnoAtualIndex = 1;
+      expect(c.minhaVez()).toBeNull();
+    });
+  });
+
   describe('passar o turno', () => {
     it('vai para o próximo e avisa o servidor uma vez', () => {
       const { c, combate } = montar();

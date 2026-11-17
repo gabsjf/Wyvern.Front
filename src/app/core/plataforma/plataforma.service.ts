@@ -104,7 +104,10 @@ export class PlataformaService {
   private media(consulta: string): Signal<boolean> {
     const lista = typeof window.matchMedia === 'function' ? window.matchMedia(consulta) : null;
     const valor = signal(lista?.matches ?? false);
-    lista?.addEventListener('change', e => valor.set(e.matches));
+    // WebViews antigos (e os dublês dos testes) só têm addListener, ou nenhum dos dois
+    const aoMudar = (e: MediaQueryListEvent) => valor.set(e.matches);
+    if (typeof lista?.addEventListener === 'function') lista.addEventListener('change', aoMudar);
+    else lista?.addListener?.(aoMudar);
     return valor.asReadonly();
   }
 }
